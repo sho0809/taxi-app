@@ -1,0 +1,1787 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="タクシー管理">
+<meta name="theme-color" content="#1a73e8">
+<meta name="description" content="タクシードライバー向け業務管理アプリ">
+<link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22%E3%82%BF%E3%82%AF%E3%82%B7%E3%83%BC%E6%A5%AD%E5%8B%99%E7%AE%A1%E7%90%86%22%2C%22short_name%22%3A%22%E3%82%BF%E3%82%AF%E3%82%B7%E3%83%BC%E7%AE%A1%E7%90%86%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%231a73e8%22%2C%22theme_color%22%3A%22%231a73e8%22%2C%22start_url%22%3A%22.%2F%22%2C%22lang%22%3A%22ja%22%7D">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' rx='40' fill='%231a73e8'/%3E%3Ctext x='96' y='130' font-size='110' text-anchor='middle'%3E%F0%9F%9A%96%3C/text%3E%3C/svg%3E">
+<title>タクシー業務管理</title>
+<style>
+  :root {
+    --primary: #1a73e8;
+    --primary-dark: #1557b0;
+    --success: #34a853;
+    --warning: #fbbc04;
+    --danger: #ea4335;
+    --bg: #f5f5f7;
+    --card: #ffffff;
+    --text: #1d1d1f;
+    --muted: #6e6e73;
+    --border: #d2d2d7;
+    --nav-h: 70px;
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; overflow-x: hidden; }
+
+  /* Header */
+  .header { background: var(--primary); color: white; padding: 14px 18px 12px; padding-top: calc(14px + env(safe-area-inset-top, 0px)); position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
+  .header h1 { font-size: 18px; font-weight: 700; letter-spacing: -0.3px; }
+  .header .date { font-size: 12px; opacity: 0.85; margin-top: 2px; }
+
+  /* Content area */
+  .content { padding: 14px; padding-bottom: calc(var(--nav-h) + var(--safe-bottom) + 14px); }
+
+  /* Bottom nav */
+  .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: white; border-top: 1px solid var(--border); display: flex; z-index: 200; padding-bottom: var(--safe-bottom); box-shadow: 0 -2px 12px rgba(0,0,0,0.1); }
+  .nav-btn { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 10px 4px 8px; gap: 3px; background: none; border: none; color: var(--muted); font-size: 10px; font-weight: 500; cursor: pointer; transition: color 0.15s; }
+  .nav-btn.active { color: var(--primary); }
+  .nav-btn svg { width: 24px; height: 24px; }
+
+  /* Cards */
+  .card { background: var(--card); border-radius: 16px; padding: 16px; margin-bottom: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+  .card-title { font-size: 13px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; }
+
+  /* Timer display */
+  .timer-display { text-align: center; font-size: 52px; font-weight: 700; letter-spacing: -2px; font-variant-numeric: tabular-nums; color: var(--text); line-height: 1; padding: 12px 0; }
+  .timer-display.running { color: var(--success); }
+  .timer-display.waiting { color: var(--warning); }
+
+  /* Timer status badges */
+  .status-row { display: flex; justify-content: center; gap: 8px; margin-bottom: 12px; }
+  .badge { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+  .badge-green { background: #e8f5e9; color: var(--success); }
+  .badge-yellow { background: #fffde7; color: #f57f17; }
+  .badge-blue { background: #e3f2fd; color: var(--primary); }
+  .badge-red { background: #ffebee; color: var(--danger); }
+  .dot { width: 7px; height: 7px; border-radius: 50%; }
+  .dot-green { background: var(--success); animation: pulse 1.2s infinite; }
+  .dot-yellow { background: var(--warning); animation: pulse 1.2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+  /* Buttons */
+  .btn { display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%; padding: 14px; border-radius: 12px; border: none; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.15s; letter-spacing: -0.2px; }
+  .btn:active { transform: scale(0.97); }
+  .btn-primary { background: var(--primary); color: white; }
+  .btn-success { background: var(--success); color: white; }
+  .btn-warning { background: var(--warning); color: #333; }
+  .btn-danger { background: var(--danger); color: white; }
+  .btn-outline { background: white; color: var(--primary); border: 2px solid var(--primary); }
+  .btn-gray { background: #f0f0f0; color: var(--text); }
+  .btn-sm { padding: 9px 14px; font-size: 14px; width: auto; border-radius: 10px; }
+
+  .btn-row { display: flex; gap: 10px; margin-top: 10px; }
+  .btn-row .btn { flex: 1; }
+
+  /* Inputs */
+  .input-group { margin-bottom: 12px; }
+  .input-label { font-size: 13px; font-weight: 600; color: var(--muted); margin-bottom: 5px; display: block; }
+  .input-field { width: 100%; padding: 12px 14px; border: 1.5px solid var(--border); border-radius: 12px; font-size: 16px; background: white; color: var(--text); outline: none; transition: border-color 0.15s; -webkit-appearance: none; }
+  .input-field:focus { border-color: var(--primary); }
+  .input-row { display: flex; gap: 8px; }
+  .input-row .input-group { flex: 1; }
+
+  /* Tabs (sub) */
+  .tab-bar { display: flex; background: #f0f0f5; border-radius: 12px; padding: 3px; margin-bottom: 14px; }
+  .tab-item { flex: 1; text-align: center; padding: 8px 6px; border-radius: 10px; font-size: 13px; font-weight: 600; color: var(--muted); cursor: pointer; transition: all 0.15s; }
+  .tab-item.active { background: white; color: var(--primary); box-shadow: 0 1px 4px rgba(0,0,0,0.12); }
+
+  /* Trip list items */
+  .trip-item { background: white; border-radius: 14px; padding: 14px; margin-bottom: 10px; box-shadow: 0 1px 4px rgba(0,0,0,0.07); position: relative; }
+  .trip-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+  .trip-fare { font-size: 22px; font-weight: 700; color: var(--success); }
+  .trip-time { font-size: 12px; color: var(--muted); text-align: right; }
+  .trip-route { display: flex; flex-direction: column; gap: 4px; font-size: 13px; }
+  .route-item { display: flex; align-items: center; gap: 6px; }
+  .route-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .route-dot-start { background: var(--primary); }
+  .route-dot-end { background: var(--danger); }
+  .route-line { width: 1.5px; height: 10px; background: var(--border); margin-left: 3.25px; }
+  .trip-meta { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+  .meta-chip { background: var(--bg); border-radius: 6px; padding: 3px 8px; font-size: 11px; color: var(--muted); }
+  .delete-btn { position: absolute; top: 12px; right: 12px; background: none; border: none; color: #ccc; font-size: 18px; cursor: pointer; padding: 4px; }
+  .delete-btn:active { color: var(--danger); }
+  .trip-actions { display: flex; gap: 8px; margin-top: 10px; }
+  .trip-actions .btn-edit { flex: 1; padding: 8px; border-radius: 10px; border: 1.5px solid var(--primary); background: white; color: var(--primary); font-size: 13px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 4px; }
+  .trip-actions .btn-del { flex: 1; padding: 8px; border-radius: 10px; border: 1.5px solid var(--danger); background: white; color: var(--danger); font-size: 13px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 4px; }
+  .trip-actions .btn-edit:active { background: #e3f2fd; }
+  .trip-actions .btn-del:active { background: #ffebee; }
+  /* Confirm overlay */
+  .confirm-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 500; display: flex; align-items: flex-end; }
+  .confirm-sheet { background: white; width: 100%; border-radius: 16px 16px 0 0; padding: 20px; padding-bottom: calc(20px + env(safe-area-inset-bottom)); }
+  .confirm-sheet h3 { font-size: 17px; font-weight: 700; text-align: center; margin-bottom: 6px; }
+  .confirm-sheet p { font-size: 14px; color: var(--muted); text-align: center; margin-bottom: 18px; }
+  .confirm-sheet .confirm-btns { display: flex; flex-direction: column; gap: 10px; }
+  .confirm-sheet .c-btn-del { padding: 15px; border-radius: 12px; border: none; background: var(--danger); color: white; font-size: 16px; font-weight: 700; cursor: pointer; }
+  .confirm-sheet .c-btn-cancel { padding: 15px; border-radius: 12px; border: none; background: #f0f0f0; color: var(--text); font-size: 16px; font-weight: 600; cursor: pointer; }
+
+  /* Daily report transfer screen */
+  .transfer-row { display: flex; align-items: center; background: white; border-radius: 12px; padding: 12px 14px; margin-bottom: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.07); gap: 10px; }
+  .transfer-row.section-head { background: var(--primary); color: white; border-radius: 10px; padding: 10px 14px; margin-top: 14px; margin-bottom: 4px; }
+  .transfer-row.section-head span { font-size: 13px; font-weight: 700; color: white; }
+  .transfer-label { flex: 1; font-size: 14px; font-weight: 600; color: var(--text); }
+  .transfer-sub { font-size: 11px; color: var(--muted); font-weight: 400; display: block; margin-top: 1px; }
+  .transfer-value { font-size: 20px; font-weight: 700; color: var(--success); min-width: 90px; text-align: right; }
+  .transfer-value.small { font-size: 16px; }
+  .copy-btn { flex-shrink: 0; background: var(--bg); border: 1.5px solid var(--border); border-radius: 10px; padding: 8px 12px; font-size: 13px; font-weight: 700; color: var(--primary); cursor: pointer; white-space: nowrap; }
+  .copy-btn.copied { background: #e8f5e9; border-color: var(--success); color: var(--success); }
+  .copy-btn:active { transform: scale(0.95); }
+  .date-selector-row { display: flex; gap: 8px; align-items: center; margin-bottom: 14px; }
+  .date-selector-row input { flex: 1; }
+
+  /* Reservation items */
+  .res-item { background: white; border-radius: 14px; padding: 14px; margin-bottom: 10px; box-shadow: 0 1px 4px rgba(0,0,0,0.07); border-left: 4px solid var(--primary); position: relative; }
+  .res-item.past { border-left-color: #ccc; opacity: 0.7; }
+  .res-item.today { border-left-color: var(--success); }
+  .res-name { font-size: 16px; font-weight: 700; margin-bottom: 4px; }
+  .res-datetime { font-size: 14px; color: var(--primary); font-weight: 600; margin-bottom: 6px; }
+  .res-route { font-size: 13px; color: var(--muted); }
+  .res-note { font-size: 12px; color: var(--muted); margin-top: 6px; font-style: italic; }
+  .res-tags { display: flex; gap: 6px; margin-top: 8px; }
+  .tag { padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: 600; }
+  .tag-today { background: #e8f5e9; color: var(--success); }
+  .tag-upcoming { background: #e3f2fd; color: var(--primary); }
+  .tag-past { background: #f5f5f5; color: var(--muted); }
+
+  /* Stats */
+  .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+  .stat-card { background: white; border-radius: 14px; padding: 14px; box-shadow: 0 1px 4px rgba(0,0,0,0.07); }
+  .stat-value { font-size: 24px; font-weight: 700; color: var(--text); }
+  .stat-label { font-size: 11px; color: var(--muted); font-weight: 500; margin-top: 2px; }
+  .stat-card.accent { background: var(--primary); }
+  .stat-card.accent .stat-value, .stat-card.accent .stat-label { color: white; }
+  .stat-card.accent .stat-label { opacity: 0.8; }
+
+  /* Modal */
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 300; display: flex; align-items: flex-end; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
+  .modal-overlay.open { opacity: 1; pointer-events: all; }
+  .modal { background: white; border-radius: 20px 20px 0 0; padding: 20px; padding-bottom: calc(20px + var(--safe-bottom)); width: 100%; transform: translateY(100%); transition: transform 0.25s cubic-bezier(0.32,0.72,0,1); max-height: 90vh; overflow-y: auto; }
+  .modal-overlay.open .modal { transform: translateY(0); }
+  .modal-handle { width: 40px; height: 4px; background: #ddd; border-radius: 2px; margin: 0 auto 16px; }
+  .modal-title { font-size: 18px; font-weight: 700; margin-bottom: 16px; }
+
+  /* Empty state */
+  .empty { text-align: center; padding: 48px 24px; color: var(--muted); }
+  .empty svg { width: 56px; height: 56px; opacity: 0.3; margin-bottom: 12px; }
+  .empty p { font-size: 15px; }
+
+  /* Alert */
+  .alert { padding: 12px 16px; border-radius: 12px; margin-bottom: 12px; font-size: 14px; font-weight: 500; }
+  .alert-success { background: #e8f5e9; color: #2e7d32; }
+  .alert-info { background: #e3f2fd; color: #1565c0; }
+
+  /* Page sections */
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* Section label */
+  .section-label { font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.8px; margin: 16px 0 8px; }
+
+  /* Fare input with ¥ */
+  .fare-wrap { position: relative; }
+  .fare-wrap .yen { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); font-size: 16px; color: var(--muted); }
+
+  /* Payment method buttons */
+  .pay-btns { display: flex; gap: 6px; flex-wrap: wrap; }
+  .pay-btn { flex: 1; min-width: 56px; padding: 10px 4px; border-radius: 10px; border: 1.5px solid var(--border); background: white; color: var(--muted); font-size: 13px; font-weight: 600; cursor: pointer; text-align: center; transition: all 0.15s; }
+  .pay-btn.active { border-color: var(--primary); background: #e3f2fd; color: var(--primary); }
+  .pay-btn.active.go { border-color: #ff6b00; background: #fff3e0; color: #ff6b00; }
+  .pay-btn.active.paypay { border-color: #e00; background: #fff0f0; color: #e00; }
+  .pay-btn.active.credit { border-color: var(--success); background: #e8f5e9; color: var(--success); }
+  .pay-btn:active { transform: scale(0.96); }
+  .pay-btn.active.dpay { border-color: #b00068; background: #fce4ec; color: #b00068; }
+
+  /* Trip type selector */
+  .trip-type-row { display: flex; gap: 8px; }
+  .type-btn { flex: 1; padding: 11px 4px; border-radius: 12px; border: 1.5px solid var(--border); background: white; color: var(--muted); font-size: 14px; font-weight: 700; cursor: pointer; text-align: center; transition: all 0.15s; }
+  .type-btn.active { border-color: var(--primary); background: #e3f2fd; color: var(--primary); }
+  .type-btn.active.haisha { border-color: #ff6b00; background: #fff3e0; color: #ff6b00; }
+  .type-btn:active { transform: scale(0.97); }
+
+  /* GPS button */
+  .loc-wrap { display: flex; gap: 8px; align-items: center; }
+  .loc-wrap .input-field { flex: 1; }
+  .gps-btn { flex-shrink: 0; padding: 12px 12px; border-radius: 12px; border: 1.5px solid var(--primary); background: white; color: var(--primary); font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+  .gps-btn:active { background: #e3f2fd; transform: scale(0.95); }
+  .gps-btn.loading { border-color: var(--warning); color: var(--warning); animation: spin 1s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .fare-wrap .input-field { padding-left: 28px; }
+
+  /* CSV export button */
+  .export-btn { background: white; border: 1.5px solid var(--border); color: var(--text); display: flex; align-items: center; gap: 8px; padding: 12px 16px; border-radius: 12px; font-size: 14px; font-weight: 600; cursor: pointer; width: 100%; }
+  .export-btn:active { background: var(--bg); }
+
+  /* Divider */
+  .divider { height: 1px; background: var(--border); margin: 12px 0; }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+  <h1>🚖 タクシー業務管理</h1>
+  <div class="date" id="headerDate"></div>
+</div>
+
+<!-- Pages -->
+<div class="content">
+
+  <!-- ===== PAGE: 運行記録 ===== -->
+  <div class="page active" id="page-record">
+
+    <!-- Timer Card -->
+    <div class="card">
+      <div class="card-title">タイマー</div>
+      <div class="status-row" id="statusBadgeRow">
+        <span class="badge badge-blue"><span class="dot" style="background:#1a73e8"></span>待機中</span>
+      </div>
+      <div class="timer-display" id="mainTimer">00:00:00</div>
+      <div class="btn-row" style="margin-top:14px;">
+        <button class="btn btn-success" id="btnStartTrip" onclick="startTrip()">
+          <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M8 5v14l11-7z"/></svg>
+          乗車開始
+        </button>
+        <button class="btn btn-warning" id="btnStartWait" onclick="startWait()">
+          <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67V7z"/></svg>
+          待機開始
+        </button>
+      </div>
+      <div id="activeControls" style="display:none; margin-top:10px;">
+        <button class="btn btn-danger" id="btnStop" onclick="stopCurrent()">
+          <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M6 6h12v12H6z"/></svg>
+          停止して記録
+        </button>
+      </div>
+    </div>
+
+    <!-- Trip Entry Form -->
+    <div class="card" id="tripFormCard">
+      <div class="card-title">乗降記録入力</div>
+
+      <div class="input-group">
+        <label class="input-label">🟢 乗車場所</label>
+        <input class="input-field" id="pickupLoc" type="text" placeholder="例：紅葉町" autocomplete="off">
+      </div>
+
+      <div class="input-group">
+        <label class="input-label">🔴 降車場所</label>
+        <input class="input-field" id="dropoffLoc" type="text" placeholder="例：道後温泉" autocomplete="off">
+      </div>
+
+      <div class="input-row">
+        <div class="input-group">
+          <label class="input-label">⏱ 乗車時刻</label>
+          <input class="input-field" id="pickupTime" type="time">
+        </div>
+        <div class="input-group">
+          <label class="input-label">🏁 降車時刻</label>
+          <input class="input-field" id="dropoffTime" type="time">
+        </div>
+      </div>
+
+      <div class="input-group">
+        <label class="input-label">🚖 種別</label>
+        <div class="trip-type-row">
+          <button class="type-btn active" id="type-流し" onclick="selectType('流し')">流　し</button>
+          <button class="type-btn haisha" id="type-配車" onclick="selectType('配車')">配　車</button>
+          <button class="type-btn go" id="type-GO" onclick="selectType('GO')">GO</button>
+        </div>
+      </div>
+
+      <div class="input-row">
+        <div class="input-group">
+          <label class="input-label">💴 現金</label>
+          <div class="fare-wrap">
+            <span class="yen">¥</span>
+            <input class="input-field" id="cashFare" type="number" placeholder="0" inputmode="numeric">
+          </div>
+        </div>
+        <div class="input-group">
+          <label class="input-label">📱 未収</label>
+          <div class="fare-wrap">
+            <span class="yen">¥</span>
+            <input class="input-field" id="uncollectedFare" type="number" placeholder="0" inputmode="numeric">
+          </div>
+        </div>
+      </div>
+
+      <div class="input-row">
+        <div class="input-group" style="flex:2;">
+          <label class="input-label">🎁 チップ</label>
+          <div class="fare-wrap">
+            <span class="yen">¥</span>
+            <input class="input-field" id="tipAmount" type="number" placeholder="0" inputmode="numeric">
+          </div>
+        </div>
+        <div class="input-group" style="flex:1;">
+          <label class="input-label">👥 人員</label>
+          <input class="input-field" id="passengerCount" type="number" value="1" min="1" max="9" inputmode="numeric" style="text-align:center;">
+        </div>
+      </div>
+
+      <div class="input-group">
+        <label class="input-label">💳 支払方法</label>
+        <div class="pay-btns">
+          <button class="pay-btn active" id="pay-現金" onclick="selectPay('現金')">現金</button>
+          <button class="pay-btn go" id="pay-GO" onclick="selectPay('GO')">GO</button>
+          <button class="pay-btn paypay" id="pay-PayPay" onclick="selectPay('PayPay')">PayPay</button>
+          <button class="pay-btn credit" id="pay-クレジット" onclick="selectPay('クレジット')">カード</button>
+          <button class="pay-btn dpay" id="pay-d払い" onclick="selectPay('d払い')">d払い</button>
+          <button class="pay-btn" id="pay-その他" onclick="selectPay('その他')">その他</button>
+        </div>
+        <input type="hidden" id="payMethod" value="現金">
+      </div>
+
+      <div class="input-group">
+        <label class="input-label">📝 メモ</label>
+        <input class="input-field" id="tripMemo" type="text" placeholder="任意">
+      </div>
+
+      <button class="btn btn-primary" onclick="saveTrip()">
+        <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z"/></svg>
+        乗降記録を保存
+      </button>
+    </div>
+
+    <!-- Today Summary -->
+    <div class="card">
+      <div class="card-title">本日サマリー</div>
+      <div class="stat-grid">
+        <div class="stat-card accent">
+          <div class="stat-value" id="todaySales">¥0</div>
+          <div class="stat-label">本日売上</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="todayTrips">0件</div>
+          <div class="stat-label">乗車回数</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="todayAvg">¥0</div>
+          <div class="stat-label">平均料金</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="todayWait">0分</div>
+          <div class="stat-label">待機時間計</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== PAGE: 予約管理 ===== -->
+  <div class="page" id="page-reservations">
+
+    <button class="btn btn-primary" style="margin-bottom:14px;" onclick="openResModal()">
+      <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/></svg>
+      新規予約を追加
+    </button>
+
+    <div class="tab-bar">
+      <div class="tab-item active" id="resTab-upcoming" onclick="switchResTab('upcoming')">今後</div>
+      <div class="tab-item" id="resTab-today" onclick="switchResTab('today')">本日</div>
+      <div class="tab-item" id="resTab-all" onclick="switchResTab('all')">全て</div>
+    </div>
+
+    <div id="reservationList"></div>
+  </div>
+
+  <!-- ===== PAGE: 履歴 ===== -->
+  <div class="page" id="page-history">
+    <div class="card" style="padding:12px 14px;">
+      <div style="display:flex;gap:8px;align-items:center;">
+        <div class="input-group" style="flex:1;margin:0;">
+          <input class="input-field" id="historyFilter" type="date" onchange="renderHistory()">
+        </div>
+        <button class="btn btn-gray btn-sm" onclick="clearHistoryFilter()">全て</button>
+      </div>
+    </div>
+
+    <button class="export-btn" onclick="exportDailyReport()" style="margin-bottom:8px;border-color:#34a853;color:#34a853;">
+      <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
+      日報用エクスポート（Excel貼付用）
+    </button>
+    <button class="export-btn" onclick="exportCSV()">
+      <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+      CSVでエクスポート（全データ）
+    </button>
+
+    <div style="height:10px;"></div>
+    <div id="historyList"></div>
+  </div>
+
+  <!-- ===== PAGE: 統計 ===== -->
+  <div class="page" id="page-stats">
+
+    <div class="tab-bar">
+      <div class="tab-item active" id="statTab-day" onclick="switchStatTab('day')">日別</div>
+      <div class="tab-item" id="statTab-week" onclick="switchStatTab('week')">週</div>
+      <div class="tab-item" id="statTab-month" onclick="switchStatTab('month')">月</div>
+    </div>
+
+    <div class="stat-grid">
+      <div class="stat-card accent" style="grid-column:1/-1;">
+        <div class="stat-value" id="statSales">¥0</div>
+        <div class="stat-label" id="statSalesLabel">本日の売上</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="statTrips">0</div>
+        <div class="stat-label">乗車件数</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="statAvg">¥0</div>
+        <div class="stat-label">平均料金</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="statWait">0分</div>
+        <div class="stat-label">待機時間計</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="statDrive">0分</div>
+        <div class="stat-label">走行時間計</div>
+      </div>
+    </div>
+
+    <div class="section-label">売上ランキング（上位日）</div>
+    <div id="rankingList"></div>
+
+    <div class="section-label">最近の記録</div>
+    <div id="recentList"></div>
+  </div>
+
+
+  <!-- ===== PAGE: 日報転記 ===== -->
+  <div class="page" id="page-transfer">
+
+    <!-- 日付選択 -->
+    <div class="card" style="padding:12px 14px; margin-bottom:8px;">
+      <div class="date-selector-row">
+        <input class="input-field" id="transferDate" type="date" onchange="renderTransfer()">
+        <button class="btn btn-gray btn-sm" onclick="setTransferToday()">今日</button>
+      </div>
+    </div>
+
+    <!-- Google Sheets 連携カード -->
+    <div class="card" id="sheetSettingCard" style="margin-bottom:8px;padding:12px 14px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;" onclick="toggleSheetSetting()">
+        <div style="font-weight:700;font-size:13px;">📊 スプレッドシート連携</div>
+        <div id="sheetStatusBadge" style="font-size:11px;padding:2px 8px;border-radius:10px;background:var(--muted-bg);color:var(--muted);">未設定</div>
+      </div>
+      <div id="sheetSettingBody" style="display:none;margin-top:10px;">
+        <div style="font-size:12px;color:var(--muted);margin-bottom:8px;">Apps Script の URL を貼り付けてください</div>
+        <input class="input-field" id="gasUrlInput" type="url" placeholder="https://script.google.com/macros/s/..." style="font-size:12px;">
+        <div style="display:flex;gap:8px;margin-top:8px;">
+          <button class="btn btn-gray btn-sm" style="flex:1;" onclick="testGasConnection()">接続テスト</button>
+          <button class="btn btn-primary btn-sm" style="flex:1;" onclick="saveGasUrl()">保存</button>
+        </div>
+        <div id="gasTestResult" style="margin-top:8px;font-size:12px;display:none;"></div>
+        <details style="margin-top:10px;">
+          <summary style="font-size:12px;color:var(--muted);cursor:pointer;">設定の手順を見る</summary>
+          <div style="font-size:11px;color:var(--muted);line-height:1.8;margin-top:6px;padding:8px;background:var(--muted-bg);border-radius:8px;">
+            ① スプレッドシートを開く<br>
+            ② 拡張機能 → Apps Script<br>
+            ③ スクリプトを貼り付けて保存<br>
+            ④ デプロイ → 新しいデプロイ<br>
+            ⑤ 種類: ウェブアプリ<br>
+            　　実行者: 自分<br>
+            　　アクセス: 全員<br>
+            ⑥ URLをここに貼り付けて保存
+          </div>
+        </details>
+      </div>
+    </div>
+
+    <!-- シートに送信ボタン -->
+    <div id="sheetSendRow" style="display:none;margin-bottom:8px;">
+      <button class="btn btn-primary" style="width:100%;font-size:15px;padding:14px;" onclick="sendToSheet()">
+        📤 スプレッドシートに送信
+      </button>
+      <div id="sendResult" style="margin-top:6px;font-size:13px;text-align:center;display:none;"></div>
+    </div>
+
+    <div id="transferList"></div>
+  </div>
+
+</div><!-- end content -->
+
+<!-- Bottom Navigation -->
+<nav class="bottom-nav">
+  <button class="nav-btn active" id="nav-record" onclick="switchPage('record')">
+    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z"/></svg>
+    運行記録
+  </button>
+  <button class="nav-btn" id="nav-reservations" onclick="switchPage('reservations')">
+    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/></svg>
+    予約管理
+  </button>
+  <button class="nav-btn" id="nav-history" onclick="switchPage('history')">
+    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/></svg>
+    履歴
+  </button>
+  <button class="nav-btn" id="nav-stats" onclick="switchPage('stats')">
+    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 3c1.93 0 3.5 1.57 3.5 3.5S13.93 13 12 13s-3.5-1.57-3.5-3.5S10.07 6 12 6zm7 13H5v-.23c0-.62.28-1.2.76-1.58C7.47 15.82 9.64 15 12 15s4.53.82 6.24 2.19c.48.38.76.97.76 1.58V19z"/></svg>
+    統計
+  </button>
+  <button class="nav-btn" id="nav-transfer" onclick="switchPage('transfer')">
+    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/></svg>
+    日報転記
+  </button>
+</nav>
+
+<!-- Reservation Modal -->
+<div class="modal-overlay" id="resModal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="resModalTitle">新規予約</div>
+
+    <div class="input-group">
+      <label class="input-label">👤 お客様名</label>
+      <input class="input-field" id="resName" type="text" placeholder="例：田中 様">
+    </div>
+    <div class="input-row">
+      <div class="input-group">
+        <label class="input-label">📅 日付</label>
+        <input class="input-field" id="resDate" type="date">
+      </div>
+      <div class="input-group">
+        <label class="input-label">⏰ 時刻</label>
+        <input class="input-field" id="resTime" type="time">
+      </div>
+    </div>
+    <div class="input-group">
+      <label class="input-label">🟢 乗車場所</label>
+      <input class="input-field" id="resPickup" type="text" placeholder="例：羽田空港">
+    </div>
+    <div class="input-group">
+      <label class="input-label">🔴 降車場所</label>
+      <input class="input-field" id="resDropoff" type="text" placeholder="例：品川駅">
+    </div>
+    <div class="input-group">
+      <label class="input-label">📞 連絡先</label>
+      <input class="input-field" id="resPhone" type="tel" placeholder="任意" inputmode="tel">
+    </div>
+    <div class="input-group">
+      <label class="input-label">📝 備考</label>
+      <input class="input-field" id="resNote" type="text" placeholder="任意">
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-gray" onclick="closeResModal()">キャンセル</button>
+      <button class="btn btn-primary" onclick="saveReservation()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- Trip Edit Modal -->
+<div class="modal-overlay" id="tripEditModal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">乗降記録を修正</div>
+
+    <div class="input-group">
+      <label class="input-label">🟢 乗車場所</label>
+      <input class="input-field" id="editPickupLoc" type="text" placeholder="例：渋谷駅前" autocomplete="off">
+    </div>
+    <div class="input-group">
+      <label class="input-label">🔴 降車場所</label>
+      <input class="input-field" id="editDropoffLoc" type="text" placeholder="例：新宿三丁目" autocomplete="off">
+    </div>
+    <div class="input-row">
+      <div class="input-group">
+        <label class="input-label">⏱ 乗車時刻</label>
+        <input class="input-field" id="editPickupTime" type="time">
+      </div>
+      <div class="input-group">
+        <label class="input-label">🏁 降車時刻</label>
+        <input class="input-field" id="editDropoffTime" type="time">
+      </div>
+    </div>
+    <div class="input-group">
+      <label class="input-label">🚖 種別</label>
+      <div class="trip-type-row">
+        <button class="type-btn active" id="edittype-流し" onclick="selectEditType('流し')">流　し</button>
+        <button class="type-btn haisha" id="edittype-配車" onclick="selectEditType('配車')">配　車</button>
+        <button class="type-btn go" id="edittype-GO" onclick="selectEditType('GO')">GO</button>
+      </div>
+    </div>
+    <div class="input-row">
+      <div class="input-group">
+        <label class="input-label">💴 現金</label>
+        <div class="fare-wrap">
+          <span class="yen">¥</span>
+          <input class="input-field" id="editCashFare" type="number" placeholder="0" inputmode="numeric">
+        </div>
+      </div>
+      <div class="input-group">
+        <label class="input-label">📱 未収</label>
+        <div class="fare-wrap">
+          <span class="yen">¥</span>
+          <input class="input-field" id="editUncollectedFare" type="number" placeholder="0" inputmode="numeric">
+        </div>
+      </div>
+    </div>
+    <div class="input-row">
+      <div class="input-group" style="flex:2;">
+        <label class="input-label">🎁 チップ</label>
+        <div class="fare-wrap">
+          <span class="yen">¥</span>
+          <input class="input-field" id="editTipAmount" type="number" placeholder="0" inputmode="numeric">
+        </div>
+      </div>
+      <div class="input-group" style="flex:1;">
+        <label class="input-label">👥 人員</label>
+        <input class="input-field" id="editPassengerCount" type="number" value="1" min="1" max="9" inputmode="numeric" style="text-align:center;">
+      </div>
+    </div>
+    <div class="input-group">
+      <label class="input-label">💳 支払方法</label>
+      <div class="pay-btns">
+        <button class="pay-btn active" id="editpay-現金" onclick="selectEditPay('現金')">現金</button>
+        <button class="pay-btn go" id="editpay-GO" onclick="selectEditPay('GO')">GO</button>
+        <button class="pay-btn paypay" id="editpay-PayPay" onclick="selectEditPay('PayPay')">PayPay</button>
+        <button class="pay-btn credit" id="editpay-クレジット" onclick="selectEditPay('クレジット')">カード</button>
+        <button class="pay-btn dpay" id="editpay-d払い" onclick="selectEditPay('d払い')">d払い</button>
+        <button class="pay-btn" id="editpay-その他" onclick="selectEditPay('その他')">その他</button>
+      </div>
+      <input type="hidden" id="editPayMethod" value="現金">
+    </div>
+    <div class="input-group">
+      <label class="input-label">📝 メモ</label>
+      <input class="input-field" id="editTripMemo" type="text" placeholder="任意">
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-gray" onclick="closeTripEditModal()">キャンセル</button>
+      <button class="btn btn-primary" onclick="saveTripEdit()">保存</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ==================== DATA STORAGE ====================
+const TRIPS_KEY = 'taxi_trips';
+const RESERVATIONS_KEY = 'taxi_reservations';
+const WAITS_KEY = 'taxi_waits';
+
+function getTrips() { try { return JSON.parse(localStorage.getItem(TRIPS_KEY) || '[]'); } catch(e) { return []; } }
+function saveTrips(d) { localStorage.setItem(TRIPS_KEY, JSON.stringify(d)); }
+function getReservations() { try { return JSON.parse(localStorage.getItem(RESERVATIONS_KEY) || '[]'); } catch(e) { return []; } }
+function saveReservations(d) { localStorage.setItem(RESERVATIONS_KEY, JSON.stringify(d)); }
+function getWaits() { try { return JSON.parse(localStorage.getItem(WAITS_KEY) || '[]'); } catch(e) { return []; } }
+function saveWaits(d) { localStorage.setItem(WAITS_KEY, JSON.stringify(d)); }
+
+// ==================== TIMER ====================
+let timerInterval = null;
+let timerStart = null;
+let timerMode = null; // 'trip' or 'wait'
+let elapsedSeconds = 0;
+let waitSessions = []; // [{start, end, duration}]
+let tripStartTime = null;
+
+function pad(n) { return String(n).padStart(2,'0'); }
+function fmtSeconds(s) {
+  const h = Math.floor(s/3600), m = Math.floor((s%3600)/60), sec = s%60;
+  return `${pad(h)}:${pad(m)}:${pad(sec)}`;
+}
+
+function startTrip() {
+  if (timerMode === 'trip') return;
+  if (timerMode === 'wait') stopCurrent(true);
+  timerMode = 'trip';
+  timerStart = Date.now() - elapsedSeconds * 1000;
+  tripStartTime = new Date();
+  setPickupTimeNow();
+  autoGetLocation('pickupLoc'); // 乗車開始時に自動GPS取得
+  startTimerLoop();
+  updateTimerUI();
+  document.getElementById('activeControls').style.display = 'block';
+}
+
+function startWait() {
+  if (timerMode === 'wait') return;
+  if (timerMode === 'trip') stopCurrent(true);
+  timerMode = 'wait';
+  timerStart = Date.now();
+  elapsedSeconds = 0;
+  startTimerLoop();
+  updateTimerUI();
+  document.getElementById('activeControls').style.display = 'block';
+}
+
+function startTimerLoop() {
+  clearInterval(timerInterval);
+  timerInterval = setInterval(() => {
+    elapsedSeconds = Math.floor((Date.now() - timerStart) / 1000);
+    document.getElementById('mainTimer').textContent = fmtSeconds(elapsedSeconds);
+  }, 1000);
+}
+
+function stopCurrent(silent = false) {
+  clearInterval(timerInterval);
+  const duration = elapsedSeconds;
+  if (timerMode === 'wait') {
+    const waits = getWaits();
+    waits.push({ date: todayStr(), start: timerStart, duration });
+    saveWaits(waits);
+  } else if (timerMode === 'trip') {
+    setDropoffTimeNow();
+    autoGetLocation('dropoffLoc'); // 降車停止時に自動GPS取得
+  }
+  timerMode = null;
+  elapsedSeconds = 0;
+  timerStart = null;
+  document.getElementById('mainTimer').textContent = '00:00:00';
+  document.getElementById('activeControls').style.display = 'none';
+  updateTimerUI();
+  updateTodaySummary();
+  if (!silent && duration > 0) {
+    // nothing extra
+  }
+}
+
+function updateTimerUI() {
+  const el = document.getElementById('mainTimer');
+  const row = document.getElementById('statusBadgeRow');
+  el.className = 'timer-display';
+  if (timerMode === 'trip') {
+    el.classList.add('running');
+    row.innerHTML = '<span class="badge badge-green"><span class="dot dot-green"></span>乗車中</span>';
+  } else if (timerMode === 'wait') {
+    el.classList.add('waiting');
+    row.innerHTML = '<span class="badge badge-yellow"><span class="dot dot-yellow"></span>待機中</span>';
+  } else {
+    row.innerHTML = '<span class="badge badge-blue"><span class="dot" style="background:#1a73e8"></span>停止中</span>';
+  }
+}
+
+function setPickupTimeNow() {
+  const now = new Date();
+  const val = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
+  const el = document.getElementById('pickupTime');
+  el.value = val;
+  flashField(el);
+}
+function setDropoffTimeNow() {
+  const now = new Date();
+  const val = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
+  const el = document.getElementById('dropoffTime');
+  el.value = val;
+  flashField(el);
+}
+function flashField(el) {
+  el.style.transition = 'background 0.15s';
+  el.style.background = '#e8f5e9';
+  el.style.borderColor = 'var(--success)';
+  setTimeout(() => {
+    el.style.background = 'white';
+    el.style.borderColor = 'var(--border)';
+  }, 1200);
+}
+
+// ==================== GPS / LOCATION ====================
+function getLocation(type) {
+  if (!navigator.geolocation) {
+    showToast('この端末はGPSに対応していません');
+    return;
+  }
+  const btnId = type === 'pickup' ? 'gpsPickupBtn' : 'gpsDropoffBtn';
+  const fieldId = type === 'pickup' ? 'pickupLoc' : 'dropoffLoc';
+  const btn = document.getElementById(btnId);
+
+  // ローディング表示
+  btn.textContent = '⏳';
+  btn.classList.add('loading');
+  btn.disabled = true;
+
+  navigator.geolocation.getCurrentPosition(
+    async (pos) => {
+      const { latitude, longitude } = pos.coords;
+      try {
+        const addr = await reverseGeocode(latitude, longitude);
+        document.getElementById(fieldId).value = addr;
+        showToast(`📍 ${type === 'pickup' ? '乗車' : '降車'}場所を取得しました`);
+      } catch(e) {
+        // 住所取得失敗時は座標を表示
+        document.getElementById(fieldId).value = `${latitude.toFixed(5)}, ${longitude.toFixed(5)}`;
+        showToast('住所の取得に失敗しました（座標で記録）');
+      }
+      btn.textContent = '📍';
+      btn.classList.remove('loading');
+      btn.disabled = false;
+    },
+    (err) => {
+      btn.textContent = '📍';
+      btn.classList.remove('loading');
+      btn.disabled = false;
+      const msgs = {
+        1: '位置情報の使用が許可されていません。\n設定→プライバシーとセキュリティ→位置情報サービスでSafariを許可してください。',
+        2: '位置情報を取得できませんでした。',
+        3: '位置情報の取得がタイムアウトしました。'
+      };
+      showToast(msgs[err.code] || '位置情報の取得に失敗しました');
+    },
+    { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+  );
+}
+
+async function reverseGeocode(lat, lon) {
+  const url = `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&accept-language=ja&zoom=17`;
+  const res = await fetch(url, { headers: { 'Accept-Language': 'ja' } });
+  if (!res.ok) throw new Error('API error');
+  const data = await res.json();
+  const a = data.address || {};
+
+  // 地名のみ表示（施設名・建物名は除外、町丁目レベルまで）
+  const parts = [];
+  // 町・丁目・字レベル
+  const sub = a.quarter || a.neighbourhood || a.suburb || a.hamlet;
+  if (sub) parts.push(sub);
+  // 道路名（番地なし）
+  if (a.road && !sub) parts.push(a.road);
+  // 何も取れなかった場合のフォールバック
+  if (parts.length === 0) {
+    const fallback = a.city_district || a.district || a.county;
+    if (fallback) parts.push(fallback);
+  }
+
+  return parts.length > 0 ? parts.join('') : (data.display_name || `${lat},${lon}`);
+}
+
+// タイマー開始・停止時に自動でGPS取得（常に上書き）
+async function autoGetLocation(fieldId) {
+  if (!navigator.geolocation) return;
+  navigator.geolocation.getCurrentPosition(
+    async (pos) => {
+      try {
+        const addr = await reverseGeocode(pos.coords.latitude, pos.coords.longitude);
+        const el = document.getElementById(fieldId);
+        el.value = addr;
+        flashField(el);
+      } catch(e) {}
+    },
+    () => {},
+    { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
+  );
+}
+
+// ==================== TRIP SAVE ====================
+// 種別選択
+let currentTripType = '流し';
+function selectType(type) {
+  currentTripType = type;
+  const styles = { '流し': '', '配車': ' haisha', 'GO': ' go' };
+  ['流し','配車','GO'].forEach(t => {
+    const btn = document.getElementById(`type-${t}`);
+    if (!btn) return;
+    btn.className = `type-btn${styles[t]||''}${t === type ? ' active' : ''}`;
+  });
+  // GOを選んだら支払方法もGOに自動設定
+  if (type === 'GO') selectPay('GO');
+}
+
+// 支払方法選択
+let currentPayMethod = '現金';
+function selectPay(method) {
+  currentPayMethod = method;
+  document.getElementById('payMethod').value = method;
+  ['現金','GO','PayPay','クレジット','d払い','その他'].forEach(m => {
+    const btn = document.getElementById(`pay-${m}`);
+    if (!btn) return;
+    btn.className = 'pay-btn' + ({GO:' go', PayPay:' paypay', クレジット:' credit', 'd払い':' dpay'}[m]||'');
+    if (m === method) btn.className += ' active';
+  });
+  // 支払方法GOを選んだら種別もGOに
+  if (method === 'GO' && currentTripType !== 'GO') selectType('GO');
+}
+
+// 料金合計ヘルパー（後方互換）
+function getTripFare(t) {
+  if (t.cashFare !== undefined || t.uncollectedFare !== undefined) {
+    return (t.cashFare||0) + (t.uncollectedFare||0);
+  }
+  return t.fare || 0;
+}
+
+function saveTrip() {
+  const pickup = document.getElementById('pickupLoc').value.trim();
+  const dropoff = document.getElementById('dropoffLoc').value.trim();
+  const cashFare = parseInt(document.getElementById('cashFare').value) || 0;
+  const uncollectedFare = parseInt(document.getElementById('uncollectedFare').value) || 0;
+  const tip = parseInt(document.getElementById('tipAmount').value) || 0;
+  const pickupTime = document.getElementById('pickupTime').value;
+  const dropoffTime = document.getElementById('dropoffTime').value;
+  const memo = document.getElementById('tripMemo').value.trim();
+  const payMethod = document.getElementById('payMethod').value || '現金';
+  const passengers = parseInt(document.getElementById('passengerCount').value) || 1;
+  const tripType = currentTripType;
+
+  if (!pickup && !dropoff && cashFare === 0 && uncollectedFare === 0) {
+    showToast('乗降場所または料金を入力してください');
+    return;
+  }
+
+  const trips = getTrips();
+  trips.unshift({
+    id: Date.now(),
+    date: todayStr(),
+    pickup, dropoff,
+    cashFare, uncollectedFare, tip,
+    fare: cashFare + uncollectedFare, // 後方互換
+    pickupTime, dropoffTime,
+    payMethod, passengers, tripType, memo,
+    createdAt: new Date().toISOString()
+  });
+  saveTrips(trips);
+
+  // フォームリセット
+  ['pickupLoc','dropoffLoc','cashFare','uncollectedFare','tipAmount','tripMemo'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  document.getElementById('pickupTime').value = '';
+  document.getElementById('dropoffTime').value = '';
+  document.getElementById('passengerCount').value = '1';
+  selectPay('現金');
+  selectType('流し');
+
+  updateTodaySummary();
+  showToast('乗降記録を保存しました ✓');
+}
+
+// ==================== TODAY SUMMARY ====================
+function todayStr() {
+  const d = new Date();
+  // シフト日計算: 深夜0:00〜4:59は前日のシフトとして扱う
+  if (d.getHours() < 5) {
+    d.setDate(d.getDate() - 1);
+  }
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+}
+
+function updateTodaySummary() {
+  const today = todayStr();
+  const trips = getTrips().filter(t => t.date === today);
+  const waits = getWaits().filter(w => w.date === today);
+
+  const totalSales = trips.reduce((s, t) => s + getTripFare(t), 0);
+  const totalWaitSec = waits.reduce((s, w) => s + (w.duration||0), 0);
+  const avgFare = trips.length ? Math.round(totalSales / trips.length) : 0;
+
+  document.getElementById('todaySales').textContent = `¥${totalSales.toLocaleString()}`;
+  document.getElementById('todayTrips').textContent = `${trips.length}件`;
+  document.getElementById('todayAvg').textContent = `¥${avgFare.toLocaleString()}`;
+  document.getElementById('todayWait').textContent = `${Math.floor(totalWaitSec/60)}分`;
+}
+
+// ==================== HISTORY ====================
+function renderHistory() {
+  const filterDate = document.getElementById('historyFilter').value;
+  let trips = getTrips();
+  if (filterDate) trips = trips.filter(t => t.date === filterDate);
+
+  const el = document.getElementById('historyList');
+  if (trips.length === 0) {
+    el.innerHTML = emptyState('記録がありません');
+    return;
+  }
+
+  // Group by date
+  const grouped = {};
+  trips.forEach(t => {
+    if (!grouped[t.date]) grouped[t.date] = [];
+    grouped[t.date].push(t);
+  });
+
+  el.innerHTML = Object.keys(grouped).sort((a,b)=>b.localeCompare(a)).map(date => {
+    const dayTrips = grouped[date];
+    const dayTotal = dayTrips.reduce((s,t)=>s+(t.fare||0),0);
+    return `
+      <div class="section-label">${fmtDate(date)} <span style="float:right;color:var(--success);font-size:13px;">合計 ¥${dayTotal.toLocaleString()}</span></div>
+      ${dayTrips.map(t => tripCard(t)).join('')}
+    `;
+  }).join('');
+}
+
+function tripCard(t) {
+  const duration = t.pickupTime && t.dropoffTime ? calcDuration(t.pickupTime, t.dropoffTime) : '';
+  const payColors = {GO:'#ff6b00', PayPay:'#e00', クレジット:'#34a853', 現金:'#1a73e8', 'd払い':'#b00068', その他:'#888'};
+  const pay = t.payMethod || '現金';
+  const payColor = payColors[pay] || '#888';
+  const pax = t.passengers || 1;
+  const type = t.tripType || '流し';
+  const typeColor = type === '配車' ? '#ff6b00' : '#1a73e8';
+  const cashF = t.cashFare !== undefined ? t.cashFare : (t.fare||0);
+  const uncollF = t.uncollectedFare || 0;
+  const tip = t.tip || 0;
+  const total = cashF + uncollF;
+  const fareStr = total > 0
+    ? `¥${total.toLocaleString()}${tip > 0 ? `<span style="font-size:11px;color:#666;"> (+チップ¥${tip.toLocaleString()})</span>` : ''}`
+    : '未設定';
+  const fareDetail = (cashF > 0 && uncollF > 0)
+    ? `<span class="meta-chip">💴 現金¥${cashF.toLocaleString()}</span><span class="meta-chip">📱 未収¥${uncollF.toLocaleString()}</span>`
+    : (uncollF > 0 ? `<span class="meta-chip">📱 未収¥${uncollF.toLocaleString()}</span>` : '');
+  return `
+    <div class="trip-item">
+      <div class="trip-header">
+        <div class="trip-fare">${fareStr}</div>
+        <div style="text-align:right;">
+          <span style="display:inline-block;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:700;background:${typeColor}22;color:${typeColor};margin-bottom:2px;">${type}</span><br>
+          <span style="display:inline-block;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:700;background:${payColor}22;color:${payColor};">${pay}</span>
+          <div class="trip-time" style="margin-top:2px;">${t.pickupTime||'--:--'} → ${t.dropoffTime||'--:--'}${duration ? '<br>'+duration : ''}</div>
+        </div>
+      </div>
+      <div class="trip-route">
+        <div class="route-item"><span class="route-dot route-dot-start"></span>${t.pickup||'（乗車場所未設定）'}</div>
+        <div style="margin-left:3.25px"><div class="route-line"></div></div>
+        <div class="route-item"><span class="route-dot route-dot-end"></span>${t.dropoff||'（降車場所未設定）'}</div>
+      </div>
+      <div class="trip-meta">
+        <span class="meta-chip">👥 ${pax}名</span>
+        ${fareDetail}
+        ${t.memo ? `<span class="meta-chip">📝 ${t.memo}</span>` : ''}
+      </div>
+      <div class="trip-actions">
+        <button class="btn-edit" onclick="openTripEditModal(${t.id})">✏️ 修正</button>
+        <button class="btn-del" onclick="deleteTrip(${t.id})">🗑 削除</button>
+      </div>
+    </div>
+  `;
+}
+
+function calcDuration(s, e) {
+  const [sh,sm] = s.split(':').map(Number);
+  const [eh,em] = e.split(':').map(Number);
+  let min = (eh*60+em) - (sh*60+sm);
+  if (min < 0) min += 24*60;
+  if (min <= 0) return '';
+  return `${Math.floor(min/60)?Math.floor(min/60)+'時間':''}${min%60}分`;
+}
+
+function deleteTrip(id) {
+  showConfirm('この乗降記録を削除しますか？', '削除すると元に戻せません', () => {
+    const trips = getTrips().filter(t => t.id !== id);
+    saveTrips(trips);
+    renderHistory();
+    updateTodaySummary();
+    showToast('記録を削除しました');
+  });
+}
+
+// ==================== TRIP EDIT ====================
+let editTripId = null;
+
+function selectEditType(type) {
+  const styles = { '流し': '', '配車': ' haisha', 'GO': ' go' };
+  ['流し','配車','GO'].forEach(t => {
+    const btn = document.getElementById(`edittype-${t}`);
+    if (!btn) return;
+    btn.className = `type-btn${styles[t]||''}${t === type ? ' active' : ''}`;
+  });
+  document.getElementById('tripEditModal').dataset.tripType = type;
+  if (type === 'GO') selectEditPay('GO');
+}
+
+function selectEditPay(method) {
+  document.getElementById('editPayMethod').value = method;
+  ['現金','GO','PayPay','クレジット','d払い','その他'].forEach(m => {
+    const btn = document.getElementById(`editpay-${m}`);
+    if (!btn) return;
+    btn.className = 'pay-btn' + ({GO:' go', PayPay:' paypay', クレジット:' credit', 'd払い':' dpay'}[m]||'');
+    if (m === method) btn.className += ' active';
+  });
+  if (method === 'GO' && document.getElementById('tripEditModal').dataset.tripType !== 'GO') {
+    selectEditType('GO');
+  }
+}
+
+function openTripEditModal(id) {
+  const trip = getTrips().find(t => t.id === id);
+  if (!trip) return;
+  editTripId = id;
+  document.getElementById('editPickupLoc').value = trip.pickup || '';
+  document.getElementById('editDropoffLoc').value = trip.dropoff || '';
+  document.getElementById('editPickupTime').value = trip.pickupTime || '';
+  document.getElementById('editDropoffTime').value = trip.dropoffTime || '';
+  // 後方互換: 旧データは fare フィールドのみ
+  const cf = trip.cashFare !== undefined ? trip.cashFare : (trip.fare||0);
+  document.getElementById('editCashFare').value = cf || '';
+  document.getElementById('editUncollectedFare').value = trip.uncollectedFare || '';
+  document.getElementById('editTipAmount').value = trip.tip || '';
+  document.getElementById('editPassengerCount').value = trip.passengers || 1;
+  document.getElementById('editTripMemo').value = trip.memo || '';
+  selectEditPay(trip.payMethod || '現金');
+  selectEditType(trip.tripType || '流し');
+  document.getElementById('tripEditModal').classList.add('open');
+}
+
+function closeTripEditModal() {
+  document.getElementById('tripEditModal').classList.remove('open');
+  editTripId = null;
+}
+
+function saveTripEdit() {
+  if (!editTripId) return;
+  const trips = getTrips();
+  const idx = trips.findIndex(t => t.id === editTripId);
+  if (idx === -1) return;
+  const cashFare = parseInt(document.getElementById('editCashFare').value) || 0;
+  const uncollectedFare = parseInt(document.getElementById('editUncollectedFare').value) || 0;
+  const tip = parseInt(document.getElementById('editTipAmount').value) || 0;
+  const tripType = document.getElementById('tripEditModal').dataset.tripType || '流し';
+  trips[idx] = {
+    ...trips[idx],
+    pickup: document.getElementById('editPickupLoc').value.trim(),
+    dropoff: document.getElementById('editDropoffLoc').value.trim(),
+    pickupTime: document.getElementById('editPickupTime').value,
+    dropoffTime: document.getElementById('editDropoffTime').value,
+    cashFare, uncollectedFare, tip,
+    fare: cashFare + uncollectedFare, // 後方互換
+    passengers: parseInt(document.getElementById('editPassengerCount').value) || 1,
+    payMethod: document.getElementById('editPayMethod').value || '現金',
+    tripType,
+    memo: document.getElementById('editTripMemo').value.trim(),
+    updatedAt: new Date().toISOString()
+  };
+  saveTrips(trips);
+  closeTripEditModal();
+  renderHistory();
+  updateTodaySummary();
+  showToast('記録を修正しました ✓');
+}
+
+document.getElementById('tripEditModal').addEventListener('click', function(e) {
+  if (e.target === this) closeTripEditModal();
+});
+
+function clearHistoryFilter() {
+  document.getElementById('historyFilter').value = '';
+  renderHistory();
+}
+
+function fmtDate(str) {
+  const d = new Date(str);
+  const days = ['日','月','火','水','木','金','土'];
+  return `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日（${days[d.getDay()]}）`;
+}
+
+// ==================== CSV EXPORT ====================
+function exportCSV() {
+  const trips = getTrips();
+  if (trips.length === 0) { showToast('データがありません'); return; }
+  const header = ['日付','乗車時刻','降車時刻','乗車場所','降車場所','料金','メモ'];
+  const rows = trips.map(t => [t.date, t.pickupTime||'', t.dropoffTime||'', t.pickup||'', t.dropoff||'', t.fare||0, t.memo||'']);
+  const csv = [header, ...rows].map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+  downloadCSV(csv, `taxi_log_${todayStr()}.csv`);
+}
+
+// スプレッドシート「タクシー営収 年間管理表」の青セル対応エクスポート
+function exportDailyReport() {
+  const filterDate = document.getElementById('historyFilter').value || todayStr();
+  const trips = getTrips().filter(t => t.date === filterDate);
+  if (trips.length === 0) { showToast(`${filterDate} のデータがありません`); return; }
+
+  const sorted = trips.slice().reverse();
+
+  // 支払方法別集計
+  const byPay = (method) => sorted.filter(t => (t.payMethod||'現金') === method);
+  const sumFare = (arr) => arr.reduce((s,t) => s+(t.fare||0), 0);
+  const totalFare   = sumFare(sorted);
+  const cashTrips   = byPay('現金');
+  const goTrips     = byPay('GO');
+  const paypayTrips = byPay('PayPay');
+  const creditTrips = byPay('クレジット');
+  const otherTrips  = byPay('その他');
+  const totalPax    = sorted.reduce((s,t) => s+(t.passengers||1), 0);
+  const avgFare     = sorted.length ? Math.round(totalFare / sorted.length) : 0;
+
+  // ── Section 1: 日別サマリー（スプレッドシートの青セル転記用）──
+  const summary = [
+    ['■ スプレッドシート転記用サマリー', `対象日: ${filterDate}`],
+    ['項目','値','スプレッドシート対応列'],
+    ['営収（合計）', totalFare, '営収 列'],
+    ['件数', sorted.length, '件数 列'],
+    ['1日平均', avgFare, '1日平均 列'],
+    ['乗客数', totalPax, '乗客数 列'],
+    ['現金 件数', cashTrips.length, '現金(回数)列'],
+    ['現金 金額', sumFare(cashTrips), '現金(売り)列'],
+    ['GO 件数', goTrips.length, 'GO(回数)列'],
+    ['GO 金額', sumFare(goTrips), 'GO(売り)列'],
+    ['PayPay 件数', paypayTrips.length, 'PayPay列'],
+    ['PayPay 金額', sumFare(paypayTrips), 'PayPay(売り)列'],
+    ['クレジット 件数', creditTrips.length, 'クレジット列'],
+    ['クレジット 金額', sumFare(creditTrips), 'クレジット(売り)列'],
+    ['その他 金額', sumFare(otherTrips), 'その他列'],
+    [],
+    // ── Section 2: 個別乗降記録 ──
+    ['■ 個別乗降記録'],
+    ['回数','乗車場所','降車場所','乗車時刻','降車時刻','人員','料金','支払方法','メモ'],
+    ...sorted.map((t,i) => [
+      i+1, t.pickup||'', t.dropoff||'',
+      t.pickupTime||'', t.dropoffTime||'',
+      t.passengers||1, t.fare||0,
+      t.payMethod||'現金', t.memo||''
+    ]),
+    [],
+    ['合計','','','','', totalPax, totalFare,'','']
+  ];
+
+  const csv = summary.map(r =>
+    r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')
+  ).join('\n');
+  downloadCSV(csv, `日報_${filterDate}.csv`);
+  showToast(`${filterDate} の日報データをエクスポートしました ✓`);
+}
+
+function downloadCSV(csv, filename) {
+  const bom = '\uFEFF';
+  const blob = new Blob([bom+csv], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ==================== RESERVATIONS ====================
+let currentResTab = 'upcoming';
+let editResId = null;
+
+function openResModal(id = null) {
+  editResId = id;
+  const modal = document.getElementById('resModal');
+  if (id) {
+    const res = getReservations().find(r => r.id === id);
+    if (!res) return;
+    document.getElementById('resModalTitle').textContent = '予約を編集';
+    document.getElementById('resName').value = res.name || '';
+    document.getElementById('resDate').value = res.date || '';
+    document.getElementById('resTime').value = res.time || '';
+    document.getElementById('resPickup').value = res.pickup || '';
+    document.getElementById('resDropoff').value = res.dropoff || '';
+    document.getElementById('resPhone').value = res.phone || '';
+    document.getElementById('resNote').value = res.note || '';
+  } else {
+    document.getElementById('resModalTitle').textContent = '新規予約';
+    document.getElementById('resName').value = '';
+    document.getElementById('resDate').value = todayStr();
+    document.getElementById('resTime').value = '';
+    document.getElementById('resPickup').value = '';
+    document.getElementById('resDropoff').value = '';
+    document.getElementById('resPhone').value = '';
+    document.getElementById('resNote').value = '';
+  }
+  modal.classList.add('open');
+}
+
+function closeResModal() {
+  document.getElementById('resModal').classList.remove('open');
+  editResId = null;
+}
+
+function saveReservation() {
+  const name = document.getElementById('resName').value.trim();
+  const date = document.getElementById('resDate').value;
+  const time = document.getElementById('resTime').value;
+  if (!name || !date || !time) { alert('お客様名・日付・時刻は必須です'); return; }
+
+  const entry = {
+    id: editResId || Date.now(),
+    name, date, time,
+    pickup: document.getElementById('resPickup').value.trim(),
+    dropoff: document.getElementById('resDropoff').value.trim(),
+    phone: document.getElementById('resPhone').value.trim(),
+    note: document.getElementById('resNote').value.trim(),
+    createdAt: new Date().toISOString()
+  };
+
+  let reservations = getReservations();
+  if (editResId) {
+    reservations = reservations.map(r => r.id === editResId ? entry : r);
+  } else {
+    reservations.push(entry);
+  }
+  reservations.sort((a,b) => (a.date+a.time).localeCompare(b.date+b.time));
+  saveReservations(reservations);
+  closeResModal();
+  renderReservations();
+  showToast(editResId ? '予約を更新しました ✓' : '予約を追加しました ✓');
+}
+
+function deleteReservation(id) {
+  showConfirm('この予約を削除しますか？', '削除すると元に戻せません', () => {
+    saveReservations(getReservations().filter(r => r.id !== id));
+    renderReservations();
+    showToast('予約を削除しました');
+  });
+}
+
+function switchResTab(tab) {
+  currentResTab = tab;
+  ['upcoming','today','all'].forEach(t => {
+    document.getElementById(`resTab-${t}`).className = 'tab-item' + (t === tab ? ' active' : '');
+  });
+  renderReservations();
+}
+
+function renderReservations() {
+  const today = todayStr();
+  let reservations = getReservations();
+  if (currentResTab === 'today') reservations = reservations.filter(r => r.date === today);
+  else if (currentResTab === 'upcoming') reservations = reservations.filter(r => r.date >= today);
+
+  const el = document.getElementById('reservationList');
+  if (reservations.length === 0) {
+    el.innerHTML = emptyState('予約がありません');
+    return;
+  }
+
+  el.innerHTML = reservations.map(r => {
+    const isToday = r.date === today;
+    const isPast = r.date < today;
+    let cls = 'res-item';
+    if (isToday) cls += ' today';
+    else if (isPast) cls += ' past';
+    const tag = isToday ? '<span class="tag tag-today">本日</span>' : isPast ? '<span class="tag tag-past">過去</span>' : '<span class="tag tag-upcoming">予約済</span>';
+    return `
+      <div class="${cls}">
+        <button class="delete-btn" onclick="deleteReservation(${r.id})">✕</button>
+        <div class="res-datetime">📅 ${fmtDate(r.date)} ${r.time}</div>
+        <div class="res-name">${r.name}</div>
+        <div class="res-route">
+          ${r.pickup ? `🟢 ${r.pickup}` : ''}${r.pickup && r.dropoff ? ' → ' : ''}${r.dropoff ? `🔴 ${r.dropoff}` : ''}
+        </div>
+        ${r.phone ? `<div class="res-route">📞 ${r.phone}</div>` : ''}
+        ${r.note ? `<div class="res-note">${r.note}</div>` : ''}
+        <div class="res-tags">${tag}</div>
+        <button class="btn btn-outline btn-sm" style="margin-top:10px;" onclick="openResModal(${r.id})">編集</button>
+      </div>
+    `;
+  }).join('');
+}
+
+// ==================== STATS ====================
+let currentStatTab = 'day';
+
+function switchStatTab(tab) {
+  currentStatTab = tab;
+  ['day','week','month'].forEach(t => {
+    document.getElementById(`statTab-${t}`).className = 'tab-item' + (t === tab ? ' active' : '');
+  });
+  renderStats();
+}
+
+function renderStats() {
+  const today = todayStr();
+  const allTrips = getTrips();
+  const allWaits = getWaits();
+  let trips, waits, label;
+
+  if (currentStatTab === 'day') {
+    trips = allTrips.filter(t => t.date === today);
+    waits = allWaits.filter(w => w.date === today);
+    label = '本日の売上';
+  } else if (currentStatTab === 'week') {
+    const wStart = getWeekStart();
+    trips = allTrips.filter(t => t.date >= wStart && t.date <= today);
+    waits = allWaits.filter(w => w.date >= wStart && w.date <= today);
+    label = '今週の売上';
+  } else {
+    const mStart = today.slice(0,7) + '-01';
+    trips = allTrips.filter(t => t.date >= mStart && t.date <= today);
+    waits = allWaits.filter(w => w.date >= mStart && w.date <= today);
+    label = '今月の売上';
+  }
+
+  const totalSales = trips.reduce((s,t)=>s+(t.fare||0),0);
+  const totalWait = waits.reduce((s,w)=>s+(w.duration||0),0);
+  const avgFare = trips.length ? Math.round(totalSales/trips.length) : 0;
+
+  // Estimate drive time from pickup/dropoff times
+  const driveMin = trips.reduce((s,t) => {
+    if (t.pickupTime && t.dropoffTime) {
+      const [sh,sm]=t.pickupTime.split(':').map(Number);
+      const [eh,em]=t.dropoffTime.split(':').map(Number);
+      let min=(eh*60+em)-(sh*60+sm);
+      if(min<0) min+=24*60;
+      return s+min;
+    }
+    return s;
+  },0);
+
+  document.getElementById('statSales').textContent = `¥${totalSales.toLocaleString()}`;
+  document.getElementById('statSalesLabel').textContent = label;
+  document.getElementById('statTrips').textContent = trips.length;
+  document.getElementById('statAvg').textContent = `¥${avgFare.toLocaleString()}`;
+  document.getElementById('statWait').textContent = `${Math.floor(totalWait/60)}分`;
+  document.getElementById('statDrive').textContent = `${driveMin}分`;
+
+  // Ranking — 1日の合計売上ランキング
+  const byDate = {};
+  const byDateCount = {};
+  allTrips.forEach(t => {
+    byDate[t.date] = (byDate[t.date]||0) + (t.fare||0);
+    byDateCount[t.date] = (byDateCount[t.date]||0) + 1;
+  });
+  const ranked = Object.entries(byDate).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  document.getElementById('rankingList').innerHTML = ranked.length ? ranked.map(([d,v],i)=>`
+    <div class="trip-item" style="padding:12px 14px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div>
+          <div style="font-size:14px;font-weight:600;">${['🥇','🥈','🥉','4️⃣','5️⃣'][i]} ${fmtDate(d)}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px;">${byDateCount[d]}件 · 平均 ¥${Math.round(v/byDateCount[d]).toLocaleString()}</div>
+        </div>
+        <span style="font-size:20px;font-weight:700;color:var(--success);">¥${v.toLocaleString()}</span>
+      </div>
+    </div>
+  `).join('') : emptyState('まだデータがありません');
+
+  // Recent
+  const recent = allTrips.slice(0,5);
+  document.getElementById('recentList').innerHTML = recent.length ? recent.map(t => tripCard(t)).join('') : emptyState('まだ記録がありません');
+}
+
+function getWeekStart() {
+  const d = new Date();
+  const day = d.getDay();
+  d.setDate(d.getDate() - day);
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+}
+
+// ==================== NAVIGATION ====================
+function switchPage(page) {
+  ['record','reservations','history','stats','transfer'].forEach(p => {
+    document.getElementById(`page-${p}`).className = 'page' + (p === page ? ' active' : '');
+    document.getElementById(`nav-${p}`).className = 'nav-btn' + (p === page ? ' active' : '');
+  });
+  if (page === 'history') renderHistory();
+  if (page === 'reservations') renderReservations();
+  if (page === 'stats') renderStats();
+  if (page === 'transfer') { initSheetSetting(); renderTransfer(); }
+}
+
+// ==================== 日報転記 ====================
+
+// ---- Google Sheets 連携 ----
+function initSheetSetting() {
+  const url = localStorage.getItem('gasUrl') || '';
+  const input = document.getElementById('gasUrlInput');
+  if (input) input.value = url;
+  updateSheetBadge(url);
+  const sendRow = document.getElementById('sheetSendRow');
+  if (sendRow) sendRow.style.display = url ? 'block' : 'none';
+}
+
+function updateSheetBadge(url) {
+  const badge = document.getElementById('sheetStatusBadge');
+  if (!badge) return;
+  if (url) {
+    badge.textContent = '✓ 連携済み';
+    badge.style.background = '#d4edda';
+    badge.style.color = '#155724';
+  } else {
+    badge.textContent = '未設定';
+    badge.style.background = 'var(--muted-bg)';
+    badge.style.color = 'var(--muted)';
+  }
+}
+
+function toggleSheetSetting() {
+  const body = document.getElementById('sheetSettingBody');
+  if (body) body.style.display = body.style.display === 'none' ? 'block' : 'none';
+}
+
+function saveGasUrl() {
+  const url = document.getElementById('gasUrlInput').value.trim();
+  if (!url) { showToast('URLを入力してください'); return; }
+  localStorage.setItem('gasUrl', url);
+  updateSheetBadge(url);
+  const sendRow = document.getElementById('sheetSendRow');
+  if (sendRow) sendRow.style.display = 'block';
+  document.getElementById('sheetSettingBody').style.display = 'none';
+  showToast('URLを保存しました');
+}
+
+async function testGasConnection() {
+  const url = document.getElementById('gasUrlInput').value.trim();
+  const resultEl = document.getElementById('gasTestResult');
+  if (!url) { showToast('URLを入力してください'); return; }
+  resultEl.style.display = 'block';
+  resultEl.style.color = 'var(--muted)';
+  resultEl.textContent = '接続中...';
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      body: JSON.stringify({ action: 'ping' }),
+      redirect: 'follow'
+    });
+    const json = await res.json();
+    if (json.success) {
+      resultEl.style.color = '#155724';
+      resultEl.textContent = '✓ ' + (json.message || '接続成功！');
+    } else {
+      resultEl.style.color = '#721c24';
+      resultEl.textContent = '✗ ' + (json.error || '接続失敗');
+    }
+  } catch(e) {
+    resultEl.style.color = '#721c24';
+    resultEl.textContent = '✗ 接続できませんでした。URLとデプロイ設定を確認してください。';
+  }
+}
+
+async function sendToSheet() {
+  const gasUrl = localStorage.getItem('gasUrl');
+  if (!gasUrl) { showToast('先にURLを設定してください'); return; }
+  const date = document.getElementById('transferDate').value || todayStr();
+  const trips = getTrips().filter(t => t.date === date);
+  const waits = getWaits().filter(w => w.date === date);
+  if (trips.length === 0) { showToast('送信するデータがありません'); return; }
+
+  // ── 集計ヘルパー ──
+  const goTripsD  = trips.filter(t => (t.tripType||'流し') === 'GO');
+  const haisha    = trips.filter(t => (t.tripType||'流し') === '配車');
+  const haishaAll = trips.filter(t => ['配車','GO'].includes(t.tripType||'流し')); // H3用
+  const nashi     = trips.filter(t => (t.tripType||'流し') === '流し');
+  const sumFare  = arr => arr.reduce((s,t) => s + getTripFare(t), 0);
+  const sumUncol = arr => arr.reduce((s,t) => s + (t.uncollectedFare||0), 0);
+  const sumTip   = arr => arr.reduce((s,t) => s + (t.tip||0), 0);
+  const [yyyy, mm, dd] = date.split('-');
+  const dateJP = `${parseInt(mm)}/${parseInt(dd)}`;
+  const dayOfWeek = ['日','月','火','水','木','金','土'][new Date(date).getDay()];
+
+  const payload = {
+    date:        dateJP,
+    youbi:       dayOfWeek,
+    tripCount:   trips.length,             // B3（営業回数）
+    haishaCount: haishaAll.length,         // H3（配車＋GO回数）
+    totalPax:    trips.reduce((s,t) => s+(t.passengers||1), 0), // B7
+    haishaFare:  sumFare(haisha),           // B8（配車のみ営収）
+    nashiFare:   sumFare(nashi),           // B9（流し合計）
+    tip:         sumTip(trips),            // D9（チップ）
+    mishu:       sumUncol(trips),          // H8（未収合計）
+    goCount:     goTripsD.length,          // H10（GO回数）
+  };
+
+  const btn = document.querySelector('#sheetSendRow .btn-primary');
+  const resultEl = document.getElementById('sendResult');
+  btn.disabled = true;
+  btn.textContent = '送信中...';
+  resultEl.style.display = 'none';
+
+  try {
+    const res = await fetch(gasUrl, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+      redirect: 'follow'
+    });
+    const json = await res.json();
+    resultEl.style.display = 'block';
+    if (json.success) {
+      resultEl.style.color = '#155724';
+      resultEl.textContent = '✓ ' + (json.message || '送信しました！');
+    } else {
+      resultEl.style.color = '#721c24';
+      resultEl.textContent = '✗ ' + (json.error || '送信に失敗しました');
+    }
+  } catch(e) {
+    resultEl.style.display = 'block';
+    resultEl.style.color = '#721c24';
+    resultEl.textContent = '✗ 通信エラー。ネットワークを確認してください。';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '📤 スプレッドシートに送信';
+  }
+}
+
+function setTransferToday() {
+  document.getElementById('transferDate').value = todayStr();
+  renderTransfer();
+}
+
+function renderTransfer() {
+  const date = document.getElementById('transferDate').value || todayStr();
+  const trips = getTrips().filter(t => t.date === date);
+  const waits = getWaits().filter(w => w.date === date);
+  const el = document.getElementById('transferList');
+
+  if (trips.length === 0) {
+    el.innerHTML = `<div class="card" style="text-align:center;padding:32px;color:var(--muted);">
+      <div style="font-size:40px;margin-bottom:10px;">📋</div>
+      <div style="font-weight:600;">${date} の記録がありません</div>
+    </div>`;
+    return;
+  }
+
+  // ── 集計 ──
+  const goTrips   = trips.filter(t => (t.tripType||'流し') === 'GO');
+  const haisha    = trips.filter(t => (t.tripType||'流し') === '配車');
+  const haishaAll = trips.filter(t => ['配車','GO'].includes(t.tripType||'流し'));
+  const nashi     = trips.filter(t => (t.tripType||'流し') === '流し');
+  const sumFare  = arr => arr.reduce((s,t) => s + getTripFare(t), 0);
+  const sumUncol = arr => arr.reduce((s,t) => s + (t.uncollectedFare||0), 0);
+  const sumTip   = arr => arr.reduce((s,t) => s + (t.tip||0), 0);
+  const totalPax = trips.reduce((s,t) => s + (t.passengers||1), 0);
+  const [yyyy, mm, dd] = date.split('-');
+  const dateJP   = `${parseInt(mm)}/${parseInt(dd)}`;
+  const youbi    = ['日','月','火','水','木','金','土'][new Date(date).getDay()];
+
+  const items = [
+    { section: '📅 日付・曜日' },
+    { label: '日　付', sub: 'A1セル（例: 4/14）', value: dateJP, fmt: 'str' },
+    { label: '曜　日', sub: 'B1セル（例: 月）', value: youbi, fmt: 'str' },
+    { section: '📊 回数・人員' },
+    { label: '営業回数', sub: 'B3セル → B4に累積加算', value: trips.length, fmt: 'num' },
+    { label: '配車・GO回数', sub: 'H3セル → H4に累積加算', value: haishaAll.length, fmt: 'num' },
+    { label: '人　員', sub: 'B7セル', value: totalPax, fmt: 'num' },
+    { section: '💴 売上' },
+    { label: '配車 営収', sub: 'B8セル（配車のみ）', value: sumFare(haisha), fmt: 'yen' },
+    { label: '流し 合計', sub: 'B9セル', value: sumFare(nashi), fmt: 'yen' },
+    { label: 'チップ', sub: 'D9セル', value: sumTip(trips), fmt: 'yen' },
+    { section: '📱 未収・GO' },
+    { label: '未収 合計', sub: 'H8セル（現金以外の合計）', value: sumUncol(trips), fmt: 'yen' },
+    { label: 'GO 回数', sub: 'H10セル', value: goTrips.length, fmt: 'num' },
+  ];
+
+  const fmtVal = (v, fmt) => String(v);
+  const dispVal = (v, fmt) => {
+    if (fmt === 'yen') return `¥${Number(v).toLocaleString()}`;
+    if (fmt === 'num') return `${v}件`;
+    return `${v}`;
+  };
+
+  el.innerHTML = items.map((item, idx) => {
+    if (item.section) {
+      return `<div class="transfer-row section-head"><span>${item.section}</span></div>`;
+    }
+    const rawVal = fmtVal(item.value, item.fmt);
+    return `
+      <div class="transfer-row">
+        <div class="transfer-label">
+          ${item.label}
+          <span class="transfer-sub">${item.sub}</span>
+        </div>
+        <div class="transfer-value ${item.fmt === 'num' || item.fmt === 'min' ? 'small' : ''}">${dispVal(item.value, item.fmt)}</div>
+        <button class="copy-btn" id="copybtn-${idx}" onclick="copyValue('${rawVal}', 'copybtn-${idx}')">コピー</button>
+      </div>
+    `;
+  }).join('');
+}
+
+function copyValue(val, btnId) {
+  navigator.clipboard.writeText(val).then(() => {
+    const btn = document.getElementById(btnId);
+    if (!btn) return;
+    btn.textContent = '✓ OK';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'コピー'; btn.classList.remove('copied'); }, 2000);
+  }).catch(() => {
+    // フォールバック
+    const ta = document.createElement('textarea');
+    ta.value = val;
+    ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select(); ta.setSelectionRange(0,9999);
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    const btn = document.getElementById(btnId);
+    if (btn) { btn.textContent = '✓ OK'; btn.classList.add('copied');
+      setTimeout(() => { btn.textContent = 'コピー'; btn.classList.remove('copied'); }, 2000); }
+  });
+}
+
+// ==================== HELPERS ====================
+function emptyState(msg) {
+  return `<div class="empty"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 6h-2.18c.07-.44.18-.86.18-1.3C18 2.12 15.88 0 13.3 0c-1.4 0-2.56.65-3.3 1.67L9 3 7.99 1.67C7.24.65 6.08 0 4.68 0 2.1 0 0 2.12 0 4.7c0 .44.1.86.18 1.3H0L0 20c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-6.7-4c1.08 0 1.98.88 1.98 1.97 0 .52-.2 1-.55 1.33L13 7H9.58l-1.03-1.9A1.95 1.95 0 0 1 8.7 3.97C8.7 2.88 9.6 2 10.68 2z"/></svg><p>${msg}</p></div>`;
+}
+
+// ==================== CUSTOM CONFIRM ====================
+function showConfirm(title, desc, onOk) {
+  const overlay = document.createElement('div');
+  overlay.className = 'confirm-overlay';
+  overlay.innerHTML = `
+    <div class="confirm-sheet">
+      <h3>${title}</h3>
+      <p>${desc}</p>
+      <div class="confirm-btns">
+        <button class="c-btn-del" id="confirmOkBtn">削除する</button>
+        <button class="c-btn-cancel" id="confirmCancelBtn">キャンセル</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  overlay.querySelector('#confirmOkBtn').addEventListener('click', () => {
+    overlay.remove();
+    onOk();
+  });
+  overlay.querySelector('#confirmCancelBtn').addEventListener('click', () => overlay.remove());
+  overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+}
+
+let toastTimer;
+function showToast(msg) {
+  let t = document.getElementById('toast');
+  if (!t) {
+    t = document.createElement('div');
+    t.id = 'toast';
+    t.style.cssText = 'position:fixed;bottom:calc(80px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%) translateY(20px);background:#333;color:white;padding:10px 20px;border-radius:20px;font-size:14px;font-weight:600;z-index:500;opacity:0;transition:all 0.25s;white-space:nowrap;box-shadow:0 4px 12px rgba(0,0,0,0.3);';
+    document.body.appendChild(t);
+  }
+  t.textContent = msg;
+  requestAnimationFrame(() => { t.style.opacity = '1'; t.style.transform = 'translateX(-50%) translateY(0)'; });
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { t.style.opacity = '0'; t.style.transform = 'translateX(-50%) translateY(20px)'; }, 2200);
+}
+
+// Close modal on overlay click
+document.getElementById('resModal').addEventListener('click', function(e) {
+  if (e.target === this) closeResModal();
+});
+
+// ==================== INIT ====================
+function updateHeader() {
+  const d = new Date();
+  const days = ['日曜日','月曜日','火曜日','水曜日','木曜日','金曜日','土曜日'];
+  document.getElementById('headerDate').textContent = `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日（${days[d.getDay()]}）`;
+}
+
+updateHeader();
+updateTodaySummary();
+setInterval(updateHeader, 60000);
+document.getElementById('transferDate').value = todayStr();
+initSheetSetting();
+
+// PWA Service Worker registration
+if ('serviceWorker' in navigator) {
+  const swCode = `
+    const CACHE = 'taxi-v1';
+    self.addEventListener('install', e => {
+      e.waitUntil(caches.open(CACHE).then(c => c.addAll(['./', './index.html'])));
+      self.skipWaiting();
+    });
+    self.addEventListener('fetch', e => {
+      e.respondWith(caches.match(e.request).then(r => r || fetch(e.request).catch(() => caches.match('./'))));
+    });
+  `;
+  const blob = new Blob([swCode], {type: 'application/javascript'});
+  const swUrl = URL.createObjectURL(blob);
+  navigator.serviceWorker.register(swUrl).catch(() => {});
+}
+
+// Install prompt banner for Android/desktop (iOS uses Safari share)
+let deferredPrompt;
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredPrompt = e;
+  // Show a subtle install banner
+  const banner = document.createElement('div');
+  banner.style.cssText = 'position:fixed;top:calc(60px + env(safe-area-inset-top));left:12px;right:12px;background:white;border-radius:14px;padding:12px 16px;box-shadow:0 4px 16px rgba(0,0,0,0.15);z-index:400;display:flex;align-items:center;gap:12px;';
+  banner.innerHTML = `<span style="font-size:24px;">📲</span><div style="flex:1"><div style="font-weight:700;font-size:14px;">ホーム画面に追加</div><div style="font-size:12px;color:#666;">アプリとして使えます</div></div><button onclick="deferredPrompt.prompt();this.closest('div').remove();" style="background:#1a73e8;color:white;border:none;border-radius:8px;padding:8px 14px;font-weight:600;font-size:13px;cursor:pointer;">追加</button><button onclick="this.closest('div').remove();" style="background:none;border:none;color:#999;font-size:20px;cursor:pointer;padding:4px;">✕</button>`;
+  document.body.appendChild(banner);
+  setTimeout(() => banner.remove(), 8000);
+});
+</script>
+</body>
+</html>
