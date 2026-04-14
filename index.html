@@ -783,6 +783,14 @@ function endDay() {
   updateTodaySummary();
 }
 
+// 消費税抜き（10円単位切り捨て）
+function exTax(amount) {
+  return Math.floor(amount / 1.1 / 10) * 10;
+}
+function yenExTax(amount) {
+  return `¥${exTax(amount).toLocaleString()}`;
+}
+
 function showEndDaySummary() {
   const date = todayStr();
   const trips = getTrips().filter(t => t.date === date);
@@ -790,48 +798,49 @@ function showEndDaySummary() {
   const [,mm,dd] = date.split('-');
   const youbi = ['日','月','火','水','木','金','土'][new Date(date).getDay()];
 
-  const goT     = trips.filter(t => (t.tripType||'流し') === 'GO');
-  const haisha  = trips.filter(t => (t.tripType||'流し') === '配車');
-  const nashi   = trips.filter(t => (t.tripType||'流し') === '流し');
-  const sumF    = arr => arr.reduce((s,t) => s+getTripFare(t), 0);
-  const sumUncol= trips.reduce((s,t) => s+(t.uncollectedFare||0), 0);
-  const sumTip  = trips.reduce((s,t) => s+(t.tip||0), 0);
-  const totalPax= trips.reduce((s,t) => s+(t.passengers||1), 0);
+  const goT    = trips.filter(t => (t.tripType||'流し') === 'GO');
+  const haisha = trips.filter(t => (t.tripType||'流し') === '配車');
+  const nashi  = trips.filter(t => (t.tripType||'流し') === '流し');
+  const sumF   = arr => arr.reduce((s,t) => s+getTripFare(t), 0);
+  const sumUncol = trips.reduce((s,t) => s+(t.uncollectedFare||0), 0);
+  const sumTip   = trips.reduce((s,t) => s+(t.tip||0), 0);
+  const totalPax = trips.reduce((s,t) => s+(t.passengers||1), 0);
   const totalWait = Math.floor(waits.reduce((s,w)=>s+(w.duration||0),0) / 60);
   const totalSale = sumF(trips);
-  const haishaAll = [...haisha, ...goT];
 
-  const rows = [
-    ['営業回数',    `${trips.length}件`],
-    ['配車回数',     `${haisha.length}件`],
-    ['GO回数',      `${goT.length}件`],
-    ['人員合計',    `${totalPax}名`],
-    ['─────', '─────'],
-    ['配車 営収',   `¥${sumF(haisha).toLocaleString()}`],
-    ['GO 営収',     `¥${sumF(goT).toLocaleString()}`],
-    ['流し 合計',   `¥${sumF(nashi).toLocaleString()}`],
-    ['チップ',      `¥${sumTip.toLocaleString()}`],
-    ['─────', '─────'],
-    ['未収 合計',   `¥${sumUncol.toLocaleString()}`],
-    ['待機時間',    `${totalWait}分`],
-    ['─────', '─────'],
-    ['総売上',      `¥${totalSale.toLocaleString()}`],
-  ];
+  function row(label, value, indent=false, bold=false) {
+    return `<div style="display:flex;justify-content:space-between;padding:5px 0;font-size:14px;${indent?'padding-left:16px;':''}">
+      <span style="color:${indent?'var(--text)':'var(--muted)'};">${indent?'・':''  }${label}</span>
+      <span style="font-weight:${bold?'800':'700'};color:${bold?'var(--primary)':'var(--text)'};">${value}</span>
+    </div>`;
+  }
+  function divider() {
+    return `<div style="border-top:1px solid var(--border);margin:6px 0;"></div>`;
+  }
 
   const html = `
     <div style="text-align:center;margin-bottom:16px;">
       <div style="font-size:16px;font-weight:700;color:var(--muted);">${parseInt(mm)}月${parseInt(dd)}日（${youbi}）</div>
-      <div style="font-size:36px;font-weight:800;color:var(--primary);margin-top:6px;">¥${totalSale.toLocaleString()}</div>
+      <div style="font-size:36px;font-weight:800;color:var(--primary);margin-top:6px;">${yenExTax(totalSale)}</div>
       <div style="font-size:13px;color:var(--muted);">本日の総売上</div>
     </div>
     <div style="background:var(--bg);border-radius:12px;padding:12px 14px;">
-      ${rows.map(([k,v]) => k==='─────'
-        ? `<div style="border-top:1px solid var(--border);margin:6px 0;"></div>`
-        : `<div style="display:flex;justify-content:space-between;padding:5px 0;font-size:14px;">
-            <span style="color:var(--muted);">${k}</span>
-            <span style="font-weight:700;">${v}</span>
-           </div>`
-      ).join('')}
+      ${row('営収', '')}
+      ${row('配車', yenExTax(sumF(haisha)), true)}
+      ${row('流し', yenExTax(sumF(nashi)), true)}
+      ${row('GO', yenExTax(sumF(goT)), true)}
+      ${divider()}
+      ${row('回数', '')}
+      ${row('配車', `${haisha.length}件`, true)}
+      ${row('流し', `${nashi.length}件`, true)}
+      ${row('GO', `${goT.length}件`, true)}
+      ${divider()}
+      ${row('チップ', `¥${sumTip.toLocaleString()}`)}
+      ${row('未収合計', `¥${sumUncol.toLocaleString()}`)}
+      ${row('人数', `${totalPax}名`)}
+      ${row('待機時間', `${totalWait}分`)}
+      ${divider()}
+      ${row('総売上', yenExTax(totalSale), false, true)}
     </div>
   `;
 
@@ -1126,11 +1135,13 @@ function updateTodaySummary() {
 
   const totalSales = trips.reduce((s, t) => s + getTripFare(t), 0);
   const totalWaitSec = waits.reduce((s, w) => s + (w.duration||0), 0);
-  const avgFare = trips.length ? Math.round(totalSales / trips.length) : 0;
+  // 税抜き・10円単位
+  const totalExTax = exTax(totalSales);
+  const avgExTax = trips.length ? Math.floor(totalExTax / trips.length / 10) * 10 : 0;
 
-  document.getElementById('todaySales').textContent = `¥${totalSales.toLocaleString()}`;
+  document.getElementById('todaySales').textContent = `¥${totalExTax.toLocaleString()}`;
   document.getElementById('todayTrips').textContent = `${trips.length}件`;
-  document.getElementById('todayAvg').textContent = `¥${avgFare.toLocaleString()}`;
+  document.getElementById('todayAvg').textContent = `¥${avgExTax.toLocaleString()}`;
   document.getElementById('todayWait').textContent = `${Math.floor(totalWaitSec/60)}分`;
 }
 
