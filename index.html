@@ -214,6 +214,20 @@
 
   /* Divider */
   .divider { height: 1px; background: var(--border); margin: 12px 0; }
+
+  /* 場所分析 */
+  .loc-rank-item { background:white; border-radius:14px; padding:13px 14px; margin-bottom:8px; box-shadow:0 1px 4px rgba(0,0,0,0.07); display:flex; align-items:center; gap:12px; }
+  .loc-rank-num { font-size:18px; font-weight:800; color:var(--primary); min-width:28px; text-align:center; }
+  .loc-rank-num.gold { color:#f5a623; }
+  .loc-rank-num.silver { color:#9b9b9b; }
+  .loc-rank-num.bronze { color:#c07642; }
+  .loc-rank-body { flex:1; }
+  .loc-rank-name { font-size:15px; font-weight:700; }
+  .loc-rank-meta { font-size:12px; color:var(--muted); margin-top:2px; }
+  .loc-rank-fare { font-size:16px; font-weight:800; color:var(--success); text-align:right; }
+  .analysis-tabs { display:flex; gap:6px; margin-bottom:12px; }
+  .analysis-tab { flex:1; padding:8px 4px; border-radius:10px; border:1.5px solid var(--border); background:white; color:var(--muted); font-size:12px; font-weight:700; cursor:pointer; text-align:center; }
+  .analysis-tab.active { border-color:var(--primary); background:#e3f2fd; color:var(--primary); }
 </style>
 </head>
 <body>
@@ -411,36 +425,61 @@
       <div class="tab-item active" id="statTab-day" onclick="switchStatTab('day')">日別</div>
       <div class="tab-item" id="statTab-week" onclick="switchStatTab('week')">週</div>
       <div class="tab-item" id="statTab-month" onclick="switchStatTab('month')">月</div>
+      <div class="tab-item" id="statTab-hourly" onclick="switchStatTab('hourly')">時間帯</div>
+      <div class="tab-item" id="statTab-location" onclick="switchStatTab('location')">場所</div>
     </div>
 
-    <div class="stat-grid">
-      <div class="stat-card accent" style="grid-column:1/-1;">
-        <div class="stat-value" id="statSales">¥0</div>
-        <div class="stat-label" id="statSalesLabel">本日の売上</div>
+    <!-- 日別・週・月タブ共通 -->
+    <div id="statMain">
+      <div class="stat-grid">
+        <div class="stat-card accent" style="grid-column:1/-1;">
+          <div class="stat-value" id="statSales">¥0</div>
+          <div class="stat-label" id="statSalesLabel">本日の売上</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="statTrips">0</div>
+          <div class="stat-label">乗車件数</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="statAvg">¥0</div>
+          <div class="stat-label">平均料金</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="statWait">0分</div>
+          <div class="stat-label">待機時間計</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="statDrive">0分</div>
+          <div class="stat-label">走行時間計</div>
+        </div>
       </div>
-      <div class="stat-card">
-        <div class="stat-value" id="statTrips">0</div>
-        <div class="stat-label">乗車件数</div>
+      <div class="section-label">売上ランキング（上位日）</div>
+      <div id="rankingList"></div>
+      <div class="section-label">最近の記録</div>
+      <div id="recentList"></div>
+    </div>
+
+    <!-- 時間帯タブ -->
+    <div id="statHourly" style="display:none;">
+      <div class="card">
+        <div class="card-title">時間帯別 乗車件数（全期間）</div>
+        <canvas id="hourlyChart" style="width:100%;max-height:220px;"></canvas>
       </div>
-      <div class="stat-card">
-        <div class="stat-value" id="statAvg">¥0</div>
-        <div class="stat-label">平均料金</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-value" id="statWait">0分</div>
-        <div class="stat-label">待機時間計</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-value" id="statDrive">0分</div>
-        <div class="stat-label">走行時間計</div>
+      <div class="card" style="margin-top:8px;">
+        <div class="card-title">ピーク時間帯 TOP3</div>
+        <div id="hourlyTop"></div>
       </div>
     </div>
 
-    <div class="section-label">売上ランキング（上位日）</div>
-    <div id="rankingList"></div>
-
-    <div class="section-label">最近の記録</div>
-    <div id="recentList"></div>
+    <!-- 場所分析タブ -->
+    <div id="statLocation" style="display:none;">
+      <div class="analysis-tabs">
+        <button class="analysis-tab active" id="locTab-count" onclick="switchLocTab('count')">乗車回数順</button>
+        <button class="analysis-tab" id="locTab-avg" onclick="switchLocTab('avg')">平均単価順</button>
+        <button class="analysis-tab" id="locTab-total" onclick="switchLocTab('total')">総売上順</button>
+      </div>
+      <div id="locationRanking"></div>
+    </div>
   </div>
 
 
@@ -764,7 +803,7 @@ function showEndDaySummary() {
 
   const rows = [
     ['営業回数',    `${trips.length}件`],
-    ['配車・GO回数', `${haishaAll.length}件`],
+    ['配車回数',     `${haisha.length}件`],
     ['GO回数',      `${goT.length}件`],
     ['人員合計',    `${totalPax}名`],
     ['─────', '─────'],
@@ -1487,10 +1526,140 @@ let currentStatTab = 'day';
 
 function switchStatTab(tab) {
   currentStatTab = tab;
-  ['day','week','month'].forEach(t => {
+  ['day','week','month','hourly','location'].forEach(t => {
     document.getElementById(`statTab-${t}`).className = 'tab-item' + (t === tab ? ' active' : '');
   });
-  renderStats();
+  document.getElementById('statMain').style.display = ['day','week','month'].includes(tab) ? 'block' : 'none';
+  document.getElementById('statHourly').style.display = tab === 'hourly' ? 'block' : 'none';
+  document.getElementById('statLocation').style.display = tab === 'location' ? 'block' : 'none';
+  if (tab === 'hourly') renderHourlyChart();
+  else if (tab === 'location') renderLocationRanking();
+  else renderStats();
+}
+
+// ==================== 時間帯分析 ====================
+let hourlyChartInstance = null;
+
+// 勤務時間順の時間帯（7時〜翌5時）
+const SHIFT_HOURS = [7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,0,1,2,3,4,5];
+
+function renderHourlyChart() {
+  const trips = getTrips().filter(t => t.pickupTime);
+  const counts = Array(24).fill(0);
+  trips.forEach(t => {
+    const h = parseInt(t.pickupTime.split(':')[0]);
+    if (!isNaN(h)) counts[h]++;
+  });
+
+  // 勤務時間順に並び替え
+  const shiftCounts = SHIFT_HOURS.map(h => counts[h]);
+
+  // ピーク TOP3（0件除く）
+  const ranked = SHIFT_HOURS.map((h,i) => ({h, c: shiftCounts[i]}))
+    .filter(r => r.c > 0).sort((a,b) => b.c - a.c).slice(0,3);
+  document.getElementById('hourlyTop').innerHTML = ranked.length === 0
+    ? `<div style="color:var(--muted);text-align:center;padding:16px;">まだデータがありません</div>`
+    : ranked.map((r,i) => {
+      const medals = ['🥇','🥈','🥉'];
+      return `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);">
+        <span style="font-size:22px;">${medals[i]}</span>
+        <div style="flex:1;font-size:15px;font-weight:700;">${r.h}時台</div>
+        <span style="font-weight:700;color:var(--primary);">${r.c}件</span>
+      </div>`;
+    }).join('');
+
+  // Chart.js
+  if (typeof Chart === 'undefined') {
+    const s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js';
+    s.onload = () => drawHourlyChart(shiftCounts);
+    document.head.appendChild(s);
+  } else {
+    drawHourlyChart(shiftCounts);
+  }
+}
+
+function drawHourlyChart(shiftCounts) {
+  const ctx = document.getElementById('hourlyChart').getContext('2d');
+  if (hourlyChartInstance) hourlyChartInstance.destroy();
+  const max = Math.max(...shiftCounts);
+  hourlyChartInstance = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: SHIFT_HOURS.map(h => `${h}時`),
+      datasets: [{
+        data: shiftCounts,
+        backgroundColor: shiftCounts.map(c => c === max && max > 0 ? '#1a73e8' : '#93c4f7'),
+        borderRadius: 4,
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false } },
+      scales: {
+        y: { beginAtZero: true, ticks: { stepSize: 1 } },
+        x: { ticks: { font: { size: 10 } } }
+      }
+    }
+  });
+}
+
+// ==================== 場所分析 ====================
+let currentLocTab = 'count';
+
+function switchLocTab(tab) {
+  currentLocTab = tab;
+  ['count','avg','total'].forEach(t => {
+    document.getElementById(`locTab-${t}`).className = 'analysis-tab' + (t === tab ? ' active' : '');
+  });
+  renderLocationRanking();
+}
+
+function renderLocationRanking() {
+  const trips = getTrips().filter(t => t.pickup && t.pickup.trim() !== '');
+  if (trips.length === 0) {
+    document.getElementById('locationRanking').innerHTML =
+      `<div style="text-align:center;padding:40px;color:var(--muted);">まだデータがありません<br><small>記録を重ねると分析できます</small></div>`;
+    return;
+  }
+
+  // 乗車場所ごとに集計
+  const map = {};
+  trips.forEach(t => {
+    const loc = t.pickup.trim();
+    if (!map[loc]) map[loc] = { count:0, total:0, fares:[] };
+    const f = getTripFare(t);
+    map[loc].count++;
+    map[loc].total += f;
+    if (f > 0) map[loc].fares.push(f);
+  });
+
+  const items = Object.entries(map).map(([loc, d]) => ({
+    loc,
+    count: d.count,
+    total: d.total,
+    avg: d.fares.length ? Math.round(d.fares.reduce((s,v)=>s+v,0)/d.fares.length) : 0
+  }));
+
+  if (currentLocTab === 'count') items.sort((a,b) => b.count - a.count);
+  else if (currentLocTab === 'avg') items.sort((a,b) => b.avg - a.avg);
+  else items.sort((a,b) => b.total - a.total);
+
+  const medals = ['gold','silver','bronze'];
+  document.getElementById('locationRanking').innerHTML = items.slice(0,20).map((item, i) => `
+    <div class="loc-rank-item">
+      <div class="loc-rank-num ${medals[i]||''}">${i+1}</div>
+      <div class="loc-rank-body">
+        <div class="loc-rank-name">${item.loc}</div>
+        <div class="loc-rank-meta">${item.count}回 ／ 平均 ¥${item.avg.toLocaleString()} ／ 合計 ¥${item.total.toLocaleString()}</div>
+      </div>
+      <div class="loc-rank-fare">
+        ${currentLocTab === 'count' ? `${item.count}回`
+          : currentLocTab === 'avg' ? `¥${item.avg.toLocaleString()}`
+          : `¥${item.total.toLocaleString()}`}
+      </div>
+    </div>
+  `).join('');
 }
 
 function renderStats() {
