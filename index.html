@@ -311,16 +311,22 @@
       </div>
 
       <div class="input-row">
-        <div class="input-group" style="flex:2;">
+        <div class="input-group">
           <label class="input-label">🎁 チップ</label>
           <div class="fare-wrap">
             <span class="yen">¥</span>
             <input class="input-field" id="tipAmount" type="number" placeholder="0" inputmode="numeric">
           </div>
         </div>
-        <div class="input-group" style="flex:1;">
+        <div class="input-group">
           <label class="input-label">👥 人員</label>
-          <input class="input-field" id="passengerCount" type="number" value="1" min="1" max="9" inputmode="numeric" style="text-align:center;">
+          <div style="display:flex;gap:4px;">
+            <button class="pay-btn active" id="pax-1" onclick="selectPax(1)" style="flex:1;padding:8px 2px;font-size:12px;">1名</button>
+            <button class="pay-btn" id="pax-2" onclick="selectPax(2)" style="flex:1;padding:8px 2px;font-size:12px;">2名</button>
+            <button class="pay-btn" id="pax-3" onclick="selectPax(3)" style="flex:1;padding:8px 2px;font-size:12px;">3名</button>
+            <button class="pay-btn" id="pax-4" onclick="selectPax(4)" style="flex:1;padding:8px 2px;font-size:12px;">4名</button>
+          </div>
+          <input type="hidden" id="passengerCount" value="1">
         </div>
       </div>
 
@@ -666,16 +672,22 @@
       </div>
     </div>
     <div class="input-row">
-      <div class="input-group" style="flex:2;">
+      <div class="input-group">
         <label class="input-label">🎁 チップ</label>
         <div class="fare-wrap">
           <span class="yen">¥</span>
           <input class="input-field" id="editTipAmount" type="number" placeholder="0" inputmode="numeric">
         </div>
       </div>
-      <div class="input-group" style="flex:1;">
+      <div class="input-group">
         <label class="input-label">👥 人員</label>
-        <input class="input-field" id="editPassengerCount" type="number" value="1" min="1" max="9" inputmode="numeric" style="text-align:center;">
+        <div style="display:flex;gap:4px;">
+          <button class="pay-btn active" id="editpax-1" onclick="selectEditPax(1)" style="flex:1;padding:8px 2px;font-size:12px;">1名</button>
+          <button class="pay-btn" id="editpax-2" onclick="selectEditPax(2)" style="flex:1;padding:8px 2px;font-size:12px;">2名</button>
+          <button class="pay-btn" id="editpax-3" onclick="selectEditPax(3)" style="flex:1;padding:8px 2px;font-size:12px;">3名</button>
+          <button class="pay-btn" id="editpax-4" onclick="selectEditPax(4)" style="flex:1;padding:8px 2px;font-size:12px;">4名</button>
+        </div>
+        <input type="hidden" id="editPassengerCount" value="1">
       </div>
     </div>
     <div class="input-group">
@@ -992,6 +1004,22 @@ function selectType(type) {
 
 // 支払方法選択
 let currentPayMethod = '現金';
+function selectPax(n) {
+  document.getElementById('passengerCount').value = n;
+  [1,2,3,4].forEach(i => {
+    const btn = document.getElementById(`pax-${i}`);
+    if (btn) btn.className = 'pay-btn' + (i === n ? ' active' : '');
+  });
+}
+
+function selectEditPax(n) {
+  document.getElementById('editPassengerCount').value = n;
+  [1,2,3,4].forEach(i => {
+    const btn = document.getElementById(`editpax-${i}`);
+    if (btn) btn.className = 'pay-btn' + (i === n ? ' active' : '');
+  });
+}
+
 function selectPay(method) {
   currentPayMethod = method;
   document.getElementById('payMethod').value = method;
@@ -1051,7 +1079,7 @@ function saveTrip() {
   });
   document.getElementById('pickupTime').value = '';
   document.getElementById('dropoffTime').value = '';
-  document.getElementById('passengerCount').value = '1';
+  selectPax(1);
   selectPay('現金');
   selectType('流し');
 
@@ -1279,7 +1307,7 @@ function openTripEditModal(id) {
   document.getElementById('editCashFare').value = cf || '';
   document.getElementById('editUncollectedFare').value = trip.uncollectedFare || '';
   document.getElementById('editTipAmount').value = trip.tip || '';
-  document.getElementById('editPassengerCount').value = trip.passengers || 1;
+  selectEditPax(trip.passengers || 1);
   document.getElementById('editTripMemo').value = trip.memo || '';
   selectEditPay(trip.payMethod || '現金');
   selectEditType(trip.tripType || '流し');
