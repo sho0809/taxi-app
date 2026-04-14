@@ -908,23 +908,41 @@ function saveTrip() {
   autoSendToSheet(todayStr());
 }
 
-async function autoSendToSheet(date) {
-  const gasUrl = localStorage.getItem('gasUrl');
-  if (!gasUrl) return;
+// ── JSONP通信（CORS回避）──
+function gasJsonp(url, params) {
+  return new Promise((resolve, reject) => {
+    const cb = 'gc' + Date.now() + Math.floor(Math.random()*1000);
+    params.callback = cb;
+    const qs = Object.entries(params)
+      .map(([k,v]) => encodeURIComponent(k)+'='+encodeURIComponent(v)).join('&');
+    const script = document.createElement('script');
+    const timer = setTimeout(() => { cleanup(); reject(new Error('timeout')); }, 15000);
+    window[cb] = (data) => { cleanup(); resolve(data); };
+    function cleanup() {
+      clearTimeout(timer); delete window[cb];
+      if (script.parentNode) script.parentNode.removeChild(script);
+    }
+    script.onerror = () => { cleanup(); reject(new Error('error')); };
+    script.src = url + '?' + qs;
+    document.head.appendChild(script);
+  });
+}
+
+// 集計データを作成
+function buildPayload(date) {
   const trips = getTrips().filter(t => t.date === date);
-  if (trips.length === 0) return;
+  if (trips.length === 0) return null;
   const goTripsD  = trips.filter(t => (t.tripType||'流し') === 'GO');
   const haisha    = trips.filter(t => (t.tripType||'流し') === '配車');
   const haishaAll = trips.filter(t => ['配車','GO'].includes(t.tripType||'流し'));
   const nashi     = trips.filter(t => (t.tripType||'流し') === '流し');
-  const sumFare  = arr => arr.reduce((s,t) => s + getTripFare(t), 0);
-  const sumUncol = arr => arr.reduce((s,t) => s + (t.uncollectedFare||0), 0);
-  const sumTip   = arr => arr.reduce((s,t) => s + (t.tip||0), 0);
-  const [yyyy, mm, dd] = date.split('-');
-  const dateJP = `${parseInt(mm)}/${parseInt(dd)}`;
-  const youbi  = ['日','月','火','水','木','金','土'][new Date(date).getDay()];
-  const payload = {
-    date: dateJP, youbi,
+  const sumFare  = arr => arr.reduce((s,t) => s+getTripFare(t), 0);
+  const sumUncol = arr => arr.reduce((s,t) => s+(t.uncollectedFare||0), 0);
+  const sumTip   = arr => arr.reduce((s,t) => s+(t.tip||0), 0);
+  const [,mm,dd] = date.split('-');
+  return {
+    date:        `${parseInt(mm)}/${parseInt(dd)}`,
+    youbi:       ['日','月','火','水','木','金','土'][new Date(date).getDay()],
     tripCount:   trips.length,
     haishaCount: haishaAll.length,
     totalPax:    trips.reduce((s,t) => s+(t.passengers||1), 0),
@@ -934,14 +952,17 @@ async function autoSendToSheet(date) {
     mishu:       sumUncol(trips),
     goCount:     goTripsD.length,
   };
+}
+
+async function autoSendToSheet(date) {
+  const gasUrl = localStorage.getItem('gasUrl');
+  if (!gasUrl) return;
+  const payload = buildPayload(date);
+  if (!payload) return;
   try {
-    const params = new URLSearchParams(payload).toString();
-    const res = await fetch(`${gasUrl}?${params}`, { redirect: 'follow' });
-    const json = await res.json();
-    if (json.success) {
-      showToast('📊 スプレッドシートに反映しました');
-    }
-  } catch(e) { /* 失敗時はサイレント */ }
+    const json = await gasJsonp(gasUrl, payload);
+    if (json.success) showToast('📊 スプレッドシートに反映しました');
+  } catch(e) { /* サイレント */ }
 }
 
 // ==================== TODAY SUMMARY ====================
@@ -1506,8 +1527,7 @@ async function testGasConnection() {
   resultEl.style.color = 'var(--muted)';
   resultEl.textContent = '接続中...';
   try {
-    const res = await fetch(`${url}?action=ping`, { redirect: 'follow' });
-    const json = await res.json();
+    const json = await gasJsonp(url, { action: 'ping' });
     if (json.success) {
       resultEl.style.color = '#155724';
       resultEl.textContent = '✓ ' + (json.message || '接続成功！');
@@ -1525,34 +1545,8 @@ async function sendToSheet() {
   const gasUrl = localStorage.getItem('gasUrl');
   if (!gasUrl) { showToast('先にURLを設定してください'); return; }
   const date = document.getElementById('transferDate').value || todayStr();
-  const trips = getTrips().filter(t => t.date === date);
-  const waits = getWaits().filter(w => w.date === date);
-  if (trips.length === 0) { showToast('送信するデータがありません'); return; }
-
-  // ── 集計ヘルパー ──
-  const goTripsD  = trips.filter(t => (t.tripType||'流し') === 'GO');
-  const haisha    = trips.filter(t => (t.tripType||'流し') === '配車');
-  const haishaAll = trips.filter(t => ['配車','GO'].includes(t.tripType||'流し')); // H3用
-  const nashi     = trips.filter(t => (t.tripType||'流し') === '流し');
-  const sumFare  = arr => arr.reduce((s,t) => s + getTripFare(t), 0);
-  const sumUncol = arr => arr.reduce((s,t) => s + (t.uncollectedFare||0), 0);
-  const sumTip   = arr => arr.reduce((s,t) => s + (t.tip||0), 0);
-  const [yyyy, mm, dd] = date.split('-');
-  const dateJP = `${parseInt(mm)}/${parseInt(dd)}`;
-  const dayOfWeek = ['日','月','火','水','木','金','土'][new Date(date).getDay()];
-
-  const payload = {
-    date:        dateJP,
-    youbi:       dayOfWeek,
-    tripCount:   trips.length,             // B3（営業回数）
-    haishaCount: haishaAll.length,         // H3（配車＋GO回数）
-    totalPax:    trips.reduce((s,t) => s+(t.passengers||1), 0), // B7
-    haishaFare:  sumFare(haisha),           // B8（配車のみ営収）
-    nashiFare:   sumFare(nashi),           // B9（流し合計）
-    tip:         sumTip(trips),            // D9（チップ）
-    mishu:       sumUncol(trips),          // H8（未収合計）
-    goCount:     goTripsD.length,          // H10（GO回数）
-  };
+  const payload = buildPayload(date);
+  if (!payload) { showToast('送信するデータがありません'); return; }
 
   const btn = document.querySelector('#sheetSendRow .btn-primary');
   const resultEl = document.getElementById('sendResult');
@@ -1561,9 +1555,7 @@ async function sendToSheet() {
   resultEl.style.display = 'none';
 
   try {
-    const params = new URLSearchParams(payload).toString();
-    const res = await fetch(`${gasUrl}?${params}`, { redirect: 'follow' });
-    const json = await res.json();
+    const json = await gasJsonp(gasUrl, payload);
     resultEl.style.display = 'block';
     if (json.success) {
       resultEl.style.color = '#155724';
