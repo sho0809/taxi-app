@@ -10,7 +10,7 @@
 <meta name="theme-color" content="#1a73e8">
 <meta name="description" content="タクシードライバー向け業務管理アプリ">
 <link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22%E3%82%BF%E3%82%AF%E3%82%B7%E3%83%BC%E6%A5%AD%E5%8B%99%E7%AE%A1%E7%90%86%22%2C%22short_name%22%3A%22%E3%82%BF%E3%82%AF%E3%82%B7%E3%83%BC%E7%AE%A1%E7%90%86%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%231a73e8%22%2C%22theme_color%22%3A%22%231a73e8%22%2C%22start_url%22%3A%22.%2F%22%2C%22lang%22%3A%22ja%22%7D">
-<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' rx='40' fill='%231a73e8'/%3E%3Ctext x='96' y='130' font-size='110' text-anchor='middle'%3E%F0%9F%9A%96%3C/text%3E%3C/svg%3E">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20viewBox='0%200%20192%20192'%3E%3Crect%20width='192'%20height='192'%20rx='40'%20fill='%231a73e8'/%3E%3Ctext%20x='96'%20y='150'%20font-size='138'%20text-anchor='middle'%20fill='white'%20font-family='Hiragino%20Sans,Yu%20Gothic,sans-serif'%3E%E3%82%BF%3C/text%3E%3C/svg%3E">
 <title>タクシー業務管理</title>
 <style>
   :root {
@@ -48,12 +48,7 @@
   .card { background: var(--card); border-radius: 16px; padding: 16px; margin-bottom: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
   .card-title { font-size: 13px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; }
 
-  /* Timer display */
-  .timer-display { text-align: center; font-size: 52px; font-weight: 700; letter-spacing: -2px; font-variant-numeric: tabular-nums; color: var(--text); line-height: 1; padding: 12px 0; }
-  .timer-display.running { color: var(--success); }
-  .timer-display.waiting { color: var(--warning); }
-
-  /* Timer status badges */
+  /* Status badges */
   .status-row { display: flex; justify-content: center; gap: 8px; margin-bottom: 12px; }
   .badge { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; }
   .badge-green { background: #e8f5e9; color: var(--success); }
@@ -235,25 +230,18 @@
   <!-- ===== PAGE: 運行記録 ===== -->
   <div class="page active" id="page-record">
 
-    <!-- Timer Card -->
+    <!-- 操作カード -->
     <div class="card">
-      <div class="card-title">タイマー</div>
-      <div class="status-row" id="statusBadgeRow">
-        <span class="badge badge-blue"><span class="dot" style="background:#1a73e8"></span>待機中</span>
+      <div class="card-title">運行操作</div>
+      <div id="waitStatusRow" style="display:none; text-align:center; padding:10px 0 4px; font-size:15px; font-weight:700; color:var(--warning);">
+        ⏱ 待機中　<span id="waitTimerDisplay" style="font-size:20px; font-variant-numeric:tabular-nums;">00:00</span>
       </div>
-      <div class="timer-display" id="mainTimer">00:00:00</div>
-      <div class="btn-row" style="margin-top:14px;">
+      <div class="btn-row" style="margin-top:10px;">
         <button class="btn btn-success" id="btnStartTrip" onclick="startTrip()">
           <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M8 5v14l11-7z"/></svg>
           乗車開始
         </button>
-        <button class="btn btn-warning" id="btnStartWait" onclick="startWait()">
-          <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67V7z"/></svg>
-          待機開始
-        </button>
-      </div>
-      <div id="activeControls" style="display:none; margin-top:10px;">
-        <button class="btn btn-danger" id="btnStop" onclick="stopCurrent()">
+        <button class="btn btn-danger" id="btnStopRecord" onclick="stopAndRecord()">
           <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M6 6h12v12H6z"/></svg>
           停止して記録
         </button>
@@ -673,88 +661,55 @@ function saveReservations(d) { localStorage.setItem(RESERVATIONS_KEY, JSON.strin
 function getWaits() { try { return JSON.parse(localStorage.getItem(WAITS_KEY) || '[]'); } catch(e) { return []; } }
 function saveWaits(d) { localStorage.setItem(WAITS_KEY, JSON.stringify(d)); }
 
-// ==================== TIMER ====================
-let timerInterval = null;
-let timerStart = null;
-let timerMode = null; // 'trip' or 'wait'
-let elapsedSeconds = 0;
-let waitSessions = []; // [{start, end, duration}]
-let tripStartTime = null;
+// ==================== 操作ボタン ====================
+let waitStart = null;
+let waitInterval = null;
 
 function pad(n) { return String(n).padStart(2,'0'); }
-function fmtSeconds(s) {
-  const h = Math.floor(s/3600), m = Math.floor((s%3600)/60), sec = s%60;
-  return `${pad(h)}:${pad(m)}:${pad(sec)}`;
-}
 
 function startTrip() {
-  if (timerMode === 'trip') return;
-  if (timerMode === 'wait') stopCurrent(true);
-  timerMode = 'trip';
-  timerStart = Date.now() - elapsedSeconds * 1000;
-  tripStartTime = new Date();
+  // 待機中なら待機時間を保存して停止
+  if (waitStart) {
+    const duration = Math.floor((Date.now() - waitStart) / 1000);
+    if (duration >= 10) {
+      const waits = getWaits();
+      waits.push({ date: todayStr(), start: waitStart, duration });
+      saveWaits(waits);
+      updateTodaySummary();
+    }
+    waitStart = null;
+    clearInterval(waitInterval);
+    waitInterval = null;
+    document.getElementById('waitStatusRow').style.display = 'none';
+  }
+  // 乗車時刻・GPS自動入力
   setPickupTimeNow();
-  autoGetLocation('pickupLoc'); // 乗車開始時に自動GPS取得
-  startTimerLoop();
-  updateTimerUI();
-  document.getElementById('activeControls').style.display = 'block';
+  autoGetLocation('pickupLoc');
+  // ボタン状態更新
+  const btn = document.getElementById('btnStartTrip');
+  btn.disabled = true;
+  btn.style.opacity = '0.45';
+  showToast('乗車開始 ✓ 降車したら「停止して記録」を押してください');
 }
 
-function startWait() {
-  if (timerMode === 'wait') return;
-  if (timerMode === 'trip') stopCurrent(true);
-  timerMode = 'wait';
-  timerStart = Date.now();
-  elapsedSeconds = 0;
-  startTimerLoop();
-  updateTimerUI();
-  document.getElementById('activeControls').style.display = 'block';
-}
-
-function startTimerLoop() {
-  clearInterval(timerInterval);
-  timerInterval = setInterval(() => {
-    elapsedSeconds = Math.floor((Date.now() - timerStart) / 1000);
-    document.getElementById('mainTimer').textContent = fmtSeconds(elapsedSeconds);
+function stopAndRecord() {
+  // 降車時刻・GPS自動入力
+  setDropoffTimeNow();
+  autoGetLocation('dropoffLoc');
+  // 乗車開始ボタンを戻す
+  const btn = document.getElementById('btnStartTrip');
+  btn.disabled = false;
+  btn.style.opacity = '1';
+  // 待機タイマー開始
+  waitStart = Date.now();
+  document.getElementById('waitStatusRow').style.display = 'block';
+  document.getElementById('waitTimerDisplay').textContent = '00:00';
+  clearInterval(waitInterval);
+  waitInterval = setInterval(() => {
+    const sec = Math.floor((Date.now() - waitStart) / 1000);
+    const m = Math.floor(sec / 60), s = sec % 60;
+    document.getElementById('waitTimerDisplay').textContent = `${pad(m)}:${pad(s)}`;
   }, 1000);
-}
-
-function stopCurrent(silent = false) {
-  clearInterval(timerInterval);
-  const duration = elapsedSeconds;
-  if (timerMode === 'wait') {
-    const waits = getWaits();
-    waits.push({ date: todayStr(), start: timerStart, duration });
-    saveWaits(waits);
-  } else if (timerMode === 'trip') {
-    setDropoffTimeNow();
-    autoGetLocation('dropoffLoc'); // 降車停止時に自動GPS取得
-  }
-  timerMode = null;
-  elapsedSeconds = 0;
-  timerStart = null;
-  document.getElementById('mainTimer').textContent = '00:00:00';
-  document.getElementById('activeControls').style.display = 'none';
-  updateTimerUI();
-  updateTodaySummary();
-  if (!silent && duration > 0) {
-    // nothing extra
-  }
-}
-
-function updateTimerUI() {
-  const el = document.getElementById('mainTimer');
-  const row = document.getElementById('statusBadgeRow');
-  el.className = 'timer-display';
-  if (timerMode === 'trip') {
-    el.classList.add('running');
-    row.innerHTML = '<span class="badge badge-green"><span class="dot dot-green"></span>乗車中</span>';
-  } else if (timerMode === 'wait') {
-    el.classList.add('waiting');
-    row.innerHTML = '<span class="badge badge-yellow"><span class="dot dot-yellow"></span>待機中</span>';
-  } else {
-    row.innerHTML = '<span class="badge badge-blue"><span class="dot" style="background:#1a73e8"></span>停止中</span>';
-  }
 }
 
 function setPickupTimeNow() {
