@@ -894,7 +894,20 @@ async function reverseGeocode(lat, lon) {
     if (fallback) parts.push(fallback);
   }
 
-  return parts.length > 0 ? parts.join('') : (data.display_name || `${lat},${lon}`);
+  const result = parts.length > 0 ? parts.join('') : (data.display_name || `${lat},${lon}`);
+  return kanjiToNum(result);
+}
+
+// 漢数字を半角数字に変換（例：六丁目→6丁目）
+function kanjiToNum(str) {
+  const map = {'〇':0,'一':1,'二':2,'三':3,'四':4,'五':5,'六':6,'七':7,'八':8,'九':9,'十':10};
+  return str.replace(/[〇一二三四五六七八九十]+(?=丁目|番|号|-)/g, (kanji) => {
+    if (kanji === '十') return '10';
+    if (kanji.startsWith('十')) return '1' + (map[kanji[1]] || '0');
+    if (kanji.endsWith('十')) return String(map[kanji[0]] * 10);
+    if (kanji.length === 3 && kanji[1] === '十') return String(map[kanji[0]] * 10 + map[kanji[2]]);
+    return kanji.split('').map(c => map[c] !== undefined ? map[c] : c).join('');
+  });
 }
 
 // タイマー開始・停止時に自動でGPS取得（常に上書き）
