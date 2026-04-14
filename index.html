@@ -276,8 +276,8 @@
       <div class="input-group">
         <label class="input-label">🚖 種別</label>
         <div class="trip-type-row">
-          <button class="type-btn active" id="type-流し" onclick="selectType('流し')">流　し</button>
           <button class="type-btn haisha" id="type-配車" onclick="selectType('配車')">配　車</button>
+          <button class="type-btn active" id="type-流し" onclick="selectType('流し')">流　し</button>
           <button class="type-btn go" id="type-GO" onclick="selectType('GO')">GO</button>
         </div>
       </div>
@@ -591,8 +591,8 @@
     <div class="input-group">
       <label class="input-label">🚖 種別</label>
       <div class="trip-type-row">
-        <button class="type-btn active" id="edittype-流し" onclick="selectEditType('流し')">流　し</button>
         <button class="type-btn haisha" id="edittype-配車" onclick="selectEditType('配車')">配　車</button>
+        <button class="type-btn active" id="edittype-流し" onclick="selectEditType('流し')">流　し</button>
         <button class="type-btn go" id="edittype-GO" onclick="selectEditType('GO')">GO</button>
       </div>
     </div>
@@ -904,6 +904,44 @@ function saveTrip() {
 
   updateTodaySummary();
   showToast('乗降記録を保存しました ✓');
+  // スプレッドシートURLが設定されていれば自動送信
+  autoSendToSheet(todayStr());
+}
+
+async function autoSendToSheet(date) {
+  const gasUrl = localStorage.getItem('gasUrl');
+  if (!gasUrl) return;
+  const trips = getTrips().filter(t => t.date === date);
+  if (trips.length === 0) return;
+  const goTripsD  = trips.filter(t => (t.tripType||'流し') === 'GO');
+  const haisha    = trips.filter(t => (t.tripType||'流し') === '配車');
+  const haishaAll = trips.filter(t => ['配車','GO'].includes(t.tripType||'流し'));
+  const nashi     = trips.filter(t => (t.tripType||'流し') === '流し');
+  const sumFare  = arr => arr.reduce((s,t) => s + getTripFare(t), 0);
+  const sumUncol = arr => arr.reduce((s,t) => s + (t.uncollectedFare||0), 0);
+  const sumTip   = arr => arr.reduce((s,t) => s + (t.tip||0), 0);
+  const [yyyy, mm, dd] = date.split('-');
+  const dateJP = `${parseInt(mm)}/${parseInt(dd)}`;
+  const youbi  = ['日','月','火','水','木','金','土'][new Date(date).getDay()];
+  const payload = {
+    date: dateJP, youbi,
+    tripCount:   trips.length,
+    haishaCount: haishaAll.length,
+    totalPax:    trips.reduce((s,t) => s+(t.passengers||1), 0),
+    haishaFare:  sumFare(haisha),
+    nashiFare:   sumFare(nashi),
+    tip:         sumTip(trips),
+    mishu:       sumUncol(trips),
+    goCount:     goTripsD.length,
+  };
+  try {
+    const params = new URLSearchParams(payload).toString();
+    const res = await fetch(`${gasUrl}?${params}`, { redirect: 'follow' });
+    const json = await res.json();
+    if (json.success) {
+      showToast('📊 スプレッドシートに反映しました');
+    }
+  } catch(e) { /* 失敗時はサイレント */ }
 }
 
 // ==================== TODAY SUMMARY ====================
@@ -1468,11 +1506,7 @@ async function testGasConnection() {
   resultEl.style.color = 'var(--muted)';
   resultEl.textContent = '接続中...';
   try {
-    const res = await fetch(url, {
-      method: 'POST',
-      body: JSON.stringify({ action: 'ping' }),
-      redirect: 'follow'
-    });
+    const res = await fetch(`${url}?action=ping`, { redirect: 'follow' });
     const json = await res.json();
     if (json.success) {
       resultEl.style.color = '#155724';
@@ -1527,11 +1561,8 @@ async function sendToSheet() {
   resultEl.style.display = 'none';
 
   try {
-    const res = await fetch(gasUrl, {
-      method: 'POST',
-      body: JSON.stringify(payload),
-      redirect: 'follow'
-    });
+    const params = new URLSearchParams(payload).toString();
+    const res = await fetch(`${gasUrl}?${params}`, { redirect: 'follow' });
     const json = await res.json();
     resultEl.style.display = 'block';
     if (json.success) {
