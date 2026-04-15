@@ -24,7 +24,7 @@
     --text: #1d1d1f;
     --muted: #6e6e73;
     --border: #d2d2d7;
-    --nav-h: 70px;
+    --nav-h: 84px;
     --safe-bottom: env(safe-area-inset-bottom, 0px);
   }
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
@@ -40,7 +40,7 @@
 
   /* Bottom nav */
   .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: white; border-top: 1px solid var(--border); display: flex; z-index: 200; padding-bottom: var(--safe-bottom); box-shadow: 0 -2px 12px rgba(0,0,0,0.1); }
-  .nav-btn { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 10px 4px 8px; gap: 3px; background: none; border: none; color: var(--muted); font-size: 10px; font-weight: 500; cursor: pointer; transition: color 0.15s; }
+  .nav-btn { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 14px 4px 10px; gap: 4px; background: none; border: none; color: var(--muted); font-size: 11px; font-weight: 500; cursor: pointer; transition: color 0.15s; }
   .nav-btn.active { color: var(--primary); }
   .nav-btn svg { width: 24px; height: 24px; }
 
@@ -299,7 +299,7 @@
           <label class="input-label">💴 現金</label>
           <div class="fare-wrap">
             <span class="yen">¥</span>
-            <input class="input-field" id="cashFare" type="number" placeholder="0" inputmode="numeric">
+            <input class="input-field" id="cashFare" type="number" placeholder="0" inputmode="numeric" oninput="if(this.value>0) selectPay('現金')">
           </div>
         </div>
         <div class="input-group">
@@ -360,13 +360,9 @@
     <div class="card">
       <div class="card-title">本日サマリー</div>
       <div class="stat-grid">
-        <div class="stat-card accent">
+        <div class="stat-card accent" style="grid-column:1/-1;">
           <div class="stat-value" id="todaySales">¥0</div>
-          <div class="stat-label">本日売上</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-value" id="todayTrips">0件</div>
-          <div class="stat-label">乗車回数</div>
+          <div class="stat-label">本日営収額</div>
         </div>
         <div class="stat-card">
           <div class="stat-value" id="todayAvg">¥0</div>
@@ -375,6 +371,41 @@
         <div class="stat-card">
           <div class="stat-value" id="todayWait">0分</div>
           <div class="stat-label">待機時間計</div>
+        </div>
+        <div class="stat-card" style="grid-column:1/-1;">
+          <div class="stat-value" id="todayJissha">0分</div>
+          <div class="stat-label">実車時間計</div>
+        </div>
+      </div>
+
+      <!-- 営収額・回数内訳 -->
+      <div style="margin-top:12px;background:var(--bg);border-radius:12px;padding:10px 12px;">
+        <div style="display:flex;gap:8px;">
+          <div style="flex:1;">
+            <div style="font-size:11px;font-weight:700;color:var(--muted);margin-bottom:6px;">営収額</div>
+            <div style="font-size:12px;display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid var(--border);">
+              <span style="color:var(--muted);">・配車</span><span id="todayHaishaFare" style="font-weight:700;">¥0</span>
+            </div>
+            <div style="font-size:12px;display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid var(--border);">
+              <span style="color:var(--muted);">・流し</span><span id="todayNashiFare" style="font-weight:700;">¥0</span>
+            </div>
+            <div style="font-size:12px;display:flex;justify-content:space-between;padding:3px 0;">
+              <span style="color:var(--muted);">・GO</span><span id="todayGoFare" style="font-weight:700;">¥0</span>
+            </div>
+          </div>
+          <div style="width:1px;background:var(--border);margin:0 4px;"></div>
+          <div style="flex:1;">
+            <div style="font-size:11px;font-weight:700;color:var(--muted);margin-bottom:6px;">回数</div>
+            <div style="font-size:12px;display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid var(--border);">
+              <span style="color:var(--muted);">・配車</span><span id="todayHaishaCount" style="font-weight:700;">0件</span>
+            </div>
+            <div style="font-size:12px;display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid var(--border);">
+              <span style="color:var(--muted);">・流し</span><span id="todayNashiCount" style="font-weight:700;">0件</span>
+            </div>
+            <div style="font-size:12px;display:flex;justify-content:space-between;padding:3px 0;">
+              <span style="color:var(--muted);">・GO</span><span id="todayGoCount" style="font-weight:700;">0件</span>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -442,7 +473,7 @@
       <div class="stat-grid">
         <div class="stat-card accent" style="grid-column:1/-1;">
           <div class="stat-value" id="statSales">¥0</div>
-          <div class="stat-label" id="statSalesLabel">本日の売上</div>
+          <div class="stat-label" id="statSalesLabel">本日の営収額</div>
         </div>
         <div class="stat-card">
           <div class="stat-value" id="statTrips">0</div>
@@ -458,7 +489,7 @@
         </div>
         <div class="stat-card">
           <div class="stat-value" id="statDrive">0分</div>
-          <div class="stat-label">走行時間計</div>
+          <div class="stat-label">実車時間計</div>
         </div>
       </div>
       <div class="section-label">売上ランキング（上位日）</div>
@@ -997,7 +1028,13 @@ async function autoGetLocation(fieldId) {
 
 // ==================== TRIP SAVE ====================
 // 種別選択
-let currentTripType = '配車';
+// 時間帯によるデフォルト種別（12〜17時、20時〜はGO）
+function getDefaultType() {
+  const h = new Date().getHours();
+  return (h >= 12 && h < 17) || h >= 20 ? 'GO' : '配車';
+}
+
+let currentTripType = getDefaultType();
 function selectType(type) {
   currentTripType = type;
   const styles = { '流し': '', '配車': ' haisha', 'GO': ' go' };
@@ -1089,7 +1126,7 @@ function saveTrip() {
   document.getElementById('dropoffTime').value = '';
   selectPax(1);
   selectPay('現金');
-  selectType('配車');
+  selectType(getDefaultType());
 
   updateTodaySummary();
   showToast('乗降記録を保存しました ✓');
@@ -1195,15 +1232,38 @@ function updateTodaySummary() {
   const today = todayStr();
   const trips = getTrips().filter(t => t.date === today);
 
-  const totalSales = trips.reduce((s, t) => s + getTripFare(t), 0);
+  const haisha = trips.filter(t => (t.tripType||'流し') === '配車');
+  const nashi  = trips.filter(t => (t.tripType||'流し') === '流し');
+  const goT    = trips.filter(t => (t.tripType||'流し') === 'GO');
+  const sumF   = arr => arr.reduce((s,t) => s + getTripFare(t), 0);
+
+  const totalSales = sumF(trips);
   const totalExTax = exTax(totalSales);
   const avgExTax = trips.length ? Math.floor(totalExTax / trips.length / 10) * 10 : 0;
   const waitMin = calcWaitMinutes(today);
 
+  // 実車時間（乗車〜降車の合計）
+  const jisshaMin = trips.reduce((s,t) => {
+    if (!t.pickupTime || !t.dropoffTime) return s;
+    const [ph,pm] = t.pickupTime.split(':').map(Number);
+    const [dh,dm] = t.dropoffTime.split(':').map(Number);
+    let diff = (dh*60+dm) - (ph*60+pm);
+    if (diff < 0) diff += 24*60;
+    return s + (diff > 0 ? diff : 0);
+  }, 0);
+
   document.getElementById('todaySales').textContent = `¥${totalExTax.toLocaleString()}`;
-  document.getElementById('todayTrips').textContent = `${trips.length}件`;
   document.getElementById('todayAvg').textContent = `¥${avgExTax.toLocaleString()}`;
   document.getElementById('todayWait').textContent = fmtWait(waitMin);
+  document.getElementById('todayJissha').textContent = fmtWait(jisshaMin);
+
+  // 内訳
+  document.getElementById('todayHaishaFare').textContent  = `¥${exTax(sumF(haisha)).toLocaleString()}`;
+  document.getElementById('todayNashiFare').textContent   = `¥${exTax(sumF(nashi)).toLocaleString()}`;
+  document.getElementById('todayGoFare').textContent      = `¥${exTax(sumF(goT)).toLocaleString()}`;
+  document.getElementById('todayHaishaCount').textContent = `${haisha.length}件`;
+  document.getElementById('todayNashiCount').textContent  = `${nashi.length}件`;
+  document.getElementById('todayGoCount').textContent     = `${goT.length}件`;
 }
 
 // ==================== HISTORY ====================
@@ -1735,36 +1795,47 @@ function renderLocationRanking() {
 }
 
 // カスタム締め日（指定期間）
+// カスタム締め日（2026年度）
 const CUSTOM_PERIODS = [
-  ['2025-03-21','2025-04-19'],
-  ['2025-04-20','2025-05-19'],
-  ['2025-05-20','2025-06-18'],
-  ['2025-06-19','2025-07-18'],
-  ['2025-07-19','2025-08-17'],
-  ['2025-08-18','2025-09-16'],
-  ['2025-09-17','2025-10-16'],
-  ['2025-10-17','2025-11-15'],
-  ['2025-11-16','2025-12-15'],
+  ['2026-03-21','2026-04-19'],
+  ['2026-04-20','2026-05-19'],
+  ['2026-05-20','2026-06-18'],
+  ['2026-06-19','2026-07-18'],
+  ['2026-07-19','2026-08-17'],
+  ['2026-08-18','2026-09-16'],
+  ['2026-09-17','2026-10-16'],
+  ['2026-10-17','2026-11-15'],
+  ['2026-11-16','2026-12-15'],
 ];
 
 function getBillingPeriod(dateStr) {
+  const fmt   = str => { const d = new Date(str+'T00:00:00'); return `${d.getMonth()+1}/${d.getDate()}`; };
+  const toStr = dt  => dt.toISOString().slice(0, 10);
+
   // カスタム期間を優先
   for (const [s, e] of CUSTOM_PERIODS) {
     if (dateStr >= s && dateStr <= e) {
-      const fmt = str => { const d = new Date(str+'T00:00:00'); return `${d.getMonth()+1}/${d.getDate()}`; };
       return { startStr: s, endStr: e, label: `${fmt(s)}〜${fmt(e)}` };
     }
   }
-  // 以降：15日スタート・翌月14日締め（翌月16日が締め切り日）
+
+  // 2026/12/16以降：15日締め（16日〜翌月15日）
   const d = new Date(dateStr + 'T00:00:00');
   const day = d.getDate();
   let sy = d.getFullYear(), sm = d.getMonth() + 1;
-  if (day < 15) { sm--; if (sm === 0) { sm = 12; sy--; } }
-  const start = new Date(sy, sm - 1, 15);
-  const end   = new Date(sy, sm, 14); // 翌月14日
-  const toStr = dt => dt.toISOString().slice(0, 10);
-  const fmt   = dt => `${dt.getMonth()+1}/${dt.getDate()}`;
-  return { startStr: toStr(start), endStr: toStr(end), label: `${fmt(start)}〜${fmt(end)}` };
+  let start, end;
+  if (day >= 16) {
+    // 今月16日〜翌月15日
+    start = new Date(sy, sm - 1, 16);
+    end   = new Date(sy, sm, 15);
+  } else {
+    // 前月16日〜今月15日
+    let pm = sm - 1, py = sy;
+    if (pm === 0) { pm = 12; py--; }
+    start = new Date(py, pm - 1, 16);
+    end   = new Date(sy, sm - 1, 15);
+  }
+  return { startStr: toStr(start), endStr: toStr(end), label: `${fmt(toStr(start))}〜${fmt(toStr(end))}` };
 }
 
 function renderStats() {
@@ -1776,7 +1847,7 @@ function renderStats() {
   if (currentStatTab === 'day') {
     trips = allTrips.filter(t => t.date === today);
     waits = allWaits.filter(w => w.date === today);
-    label = '本日の売上';
+    label = '本日の営収額';
   } else if (currentStatTab === 'week') {
     const wStart = getWeekStart();
     trips = allTrips.filter(t => t.date >= wStart && t.date <= today);
@@ -1790,11 +1861,10 @@ function renderStats() {
   }
 
   const totalSales = trips.reduce((s,t)=>s+(t.fare||0),0);
-  const totalWait = waits.reduce((s,w)=>s+(w.duration||0),0);
   const avgFare = trips.length ? Math.round(totalSales/trips.length) : 0;
 
-  // Estimate drive time from pickup/dropoff times
-  const driveMin = trips.reduce((s,t) => {
+  // 実車時間（乗車〜降車の合計）
+  const jisshaMin = trips.reduce((s,t) => {
     if (t.pickupTime && t.dropoffTime) {
       const [sh,sm]=t.pickupTime.split(':').map(Number);
       const [eh,em]=t.dropoffTime.split(':').map(Number);
@@ -1805,12 +1875,21 @@ function renderStats() {
     return s;
   },0);
 
-  document.getElementById('statSales').textContent = `¥${totalSales.toLocaleString()}`;
+  // 待機時間：7:30以降の実車時間以外（日ごとに集計）
+  const dates = [...new Set(trips.map(t=>t.date))];
+  let waitMin = 0;
+  if (currentStatTab === 'day') {
+    waitMin = calcWaitMinutes(today);
+  } else {
+    dates.forEach(d => { waitMin += calcWaitMinutes(d); });
+  }
+
+  document.getElementById('statSales').textContent = `¥${exTax(totalSales).toLocaleString()}`;
   document.getElementById('statSalesLabel').textContent = label;
   document.getElementById('statTrips').textContent = trips.length;
   document.getElementById('statAvg').textContent = `¥${avgFare.toLocaleString()}`;
-  document.getElementById('statWait').textContent = `${Math.floor(totalWait/60)}分`;
-  document.getElementById('statDrive').textContent = `${driveMin}分`;
+  document.getElementById('statWait').textContent = fmtWait(waitMin);
+  document.getElementById('statDrive').textContent = `${jisshaMin}分`;
 
   // Ranking — 1日の合計売上ランキング
   const byDate = {};
@@ -2109,6 +2188,7 @@ updateTodaySummary();
 setInterval(() => { updateHeader(); updateTodaySummary(); }, 60000);
 document.getElementById('transferDate').value = todayStr();
 initSheetSetting();
+selectType(getDefaultType()); // 起動時の種別を時間帯で設定
 
 // PWA Service Worker registration
 if ('serviceWorker' in navigator) {
