@@ -287,8 +287,8 @@
       <div class="input-group">
         <label class="input-label">🚖 種別</label>
         <div class="trip-type-row">
-          <button class="type-btn haisha" id="type-配車" onclick="selectType('配車')">配　車</button>
-          <button class="type-btn active" id="type-流し" onclick="selectType('流し')">流　し</button>
+          <button class="type-btn haisha active" id="type-配車" onclick="selectType('配車')">配　車</button>
+          <button class="type-btn" id="type-流し" onclick="selectType('流し')">流　し</button>
           <button class="type-btn go" id="type-GO" onclick="selectType('GO')">GO</button>
         </div>
       </div>
@@ -790,8 +790,8 @@ function endDay() {
   btn.disabled = false;
   btn.style.opacity = '1';
 
-  // 振り返り表示
-  showEndDaySummary();
+  // 振り返り表示（業務終了時刻を記録）
+  showEndDaySummary(new Date());
   updateTodaySummary();
 }
 
@@ -803,7 +803,7 @@ function yenExTax(amount) {
   return `¥${exTax(amount).toLocaleString()}`;
 }
 
-function showEndDaySummary() {
+function showEndDaySummary(endTime) {
   const date = todayStr();
   const trips = getTrips().filter(t => t.date === date);
   const waits = getWaits().filter(w => w.date === date);
@@ -817,7 +817,7 @@ function showEndDaySummary() {
   const sumUncol = trips.reduce((s,t) => s+(t.uncollectedFare||0), 0);
   const sumTip   = trips.reduce((s,t) => s+(t.tip||0), 0);
   const totalPax = trips.reduce((s,t) => s+(t.passengers||1), 0);
-  const totalWait = Math.floor(waits.reduce((s,w)=>s+(w.duration||0),0) / 60);
+  const totalWait = calcWaitMinutes(date, endTime);
   const totalSale = sumF(trips);
 
   function row(label, value, indent=false, bold=false) {
@@ -934,28 +934,33 @@ function getLocation(type) {
   );
 }
 
+// 路線・道路名など地名以外を除外する判定
+function isNonPlaceName(name) {
+  if (!name) return true;
+  // 路線名・国道・県道・バス路線などを除外
+  return /線$|号線|国道|県道|バス|通り$|街道$/.test(name);
+}
+
 async function reverseGeocode(lat, lon) {
-  const url = `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&accept-language=ja&zoom=17`;
+  const url = `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&accept-language=ja&zoom=16`;
   const res = await fetch(url, { headers: { 'Accept-Language': 'ja' } });
   if (!res.ok) throw new Error('API error');
   const data = await res.json();
   const a = data.address || {};
 
-  // 地名のみ表示（施設名・建物名は除外、町丁目レベルまで）
-  const parts = [];
-  // 町・丁目・字レベル
+  // 町・丁目・字レベルを優先
   const sub = a.quarter || a.neighbourhood || a.suburb || a.hamlet;
-  if (sub) parts.push(sub);
-  // 道路名（番地なし）
-  if (a.road && !sub) parts.push(a.road);
-  // 何も取れなかった場合のフォールバック
-  if (parts.length === 0) {
-    const fallback = a.city_district || a.district || a.county;
-    if (fallback) parts.push(fallback);
-  }
+  if (sub && !isNonPlaceName(sub)) return kanjiToNum(sub);
 
-  const result = parts.length > 0 ? parts.join('') : (data.display_name || `${lat},${lon}`);
-  return kanjiToNum(result);
+  // 道路名が路線・幹線でなければ使用
+  if (a.road && !isNonPlaceName(a.road)) return kanjiToNum(a.road);
+
+  // フォールバック：地区・郡レベル
+  const fallback = a.city_district || a.district || a.county || a.municipality;
+  if (fallback && !isNonPlaceName(fallback)) return kanjiToNum(fallback);
+
+  // 最終フォールバック
+  return kanjiToNum(sub || a.road || data.display_name || `${lat},${lon}`);
 }
 
 // 漢数字を半角数字に変換（例：六丁目→6丁目）
@@ -989,7 +994,7 @@ async function autoGetLocation(fieldId) {
 
 // ==================== TRIP SAVE ====================
 // 種別選択
-let currentTripType = '流し';
+let currentTripType = '配車';
 function selectType(type) {
   currentTripType = type;
   const styles = { '流し': '', '配車': ' haisha', 'GO': ' go' };
@@ -1081,7 +1086,7 @@ function saveTrip() {
   document.getElementById('dropoffTime').value = '';
   selectPax(1);
   selectPay('現金');
-  selectType('流し');
+  selectType('配車');
 
   updateTodaySummary();
   showToast('乗降記録を保存しました ✓');
@@ -1156,21 +1161,46 @@ function todayStr() {
   return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
 }
 
+// 待機時間を自動計算（7:30起点 − 乗車時間合計）
+function calcWaitMinutes(date, endTime) {
+  const shiftStart = new Date(date + 'T07:30:00');
+  const now = endTime || new Date();
+  if (now <= shiftStart) return 0;
+
+  const totalShiftMin = Math.floor((now - shiftStart) / 60000);
+
+  // 乗車時間の合計（pickupTime〜dropoffTimeが揃っているものだけ）
+  const trips = getTrips().filter(t => t.date === date && t.pickupTime && t.dropoffTime);
+  let tripMin = 0;
+  trips.forEach(t => {
+    const [ph, pm] = t.pickupTime.split(':').map(Number);
+    const [dh, dm] = t.dropoffTime.split(':').map(Number);
+    let diff = (dh * 60 + dm) - (ph * 60 + pm);
+    if (diff < 0) diff += 24 * 60; // 深夜をまたぐ場合
+    if (diff > 0) tripMin += diff;
+  });
+
+  return Math.max(0, totalShiftMin - tripMin);
+}
+
+function fmtWait(min) {
+  if (min < 60) return `${min}分`;
+  return `${Math.floor(min/60)}時間${min%60 > 0 ? min%60+'分' : ''}`;
+}
+
 function updateTodaySummary() {
   const today = todayStr();
   const trips = getTrips().filter(t => t.date === today);
-  const waits = getWaits().filter(w => w.date === today);
 
   const totalSales = trips.reduce((s, t) => s + getTripFare(t), 0);
-  const totalWaitSec = waits.reduce((s, w) => s + (w.duration||0), 0);
-  // 税抜き・10円単位
   const totalExTax = exTax(totalSales);
   const avgExTax = trips.length ? Math.floor(totalExTax / trips.length / 10) * 10 : 0;
+  const waitMin = calcWaitMinutes(today);
 
   document.getElementById('todaySales').textContent = `¥${totalExTax.toLocaleString()}`;
   document.getElementById('todayTrips').textContent = `${trips.length}件`;
   document.getElementById('todayAvg').textContent = `¥${avgExTax.toLocaleString()}`;
-  document.getElementById('todayWait').textContent = `${Math.floor(totalWaitSec/60)}分`;
+  document.getElementById('todayWait').textContent = fmtWait(waitMin);
 }
 
 // ==================== HISTORY ====================
@@ -2040,7 +2070,7 @@ function updateHeader() {
 
 updateHeader();
 updateTodaySummary();
-setInterval(updateHeader, 60000);
+setInterval(() => { updateHeader(); updateTodaySummary(); }, 60000);
 document.getElementById('transferDate').value = todayStr();
 initSheetSetting();
 
