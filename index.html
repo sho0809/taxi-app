@@ -90,21 +90,21 @@
   /* Trip list items */
   .trip-item { background: white; border-radius: 14px; padding: 14px; margin-bottom: 10px; box-shadow: 0 1px 4px rgba(0,0,0,0.07); position: relative; }
   .trip-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
-  .trip-fare { font-size: 22px; font-weight: 700; color: var(--success); }
-  .trip-time { font-size: 12px; color: var(--muted); text-align: right; }
-  .trip-route { display: flex; flex-direction: column; gap: 4px; font-size: 13px; }
-  .route-item { display: flex; align-items: center; gap: 6px; }
-  .route-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .trip-fare { font-size: 24px; font-weight: 700; color: var(--success); }
+  .trip-time { font-size: 15px; font-weight: 600; color: var(--text); text-align: right; }
+  .trip-route { display: flex; flex-direction: column; gap: 5px; font-size: 16px; font-weight: 600; }
+  .route-item { display: flex; align-items: center; gap: 8px; }
+  .route-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
   .route-dot-start { background: var(--primary); }
   .route-dot-end { background: var(--danger); }
-  .route-line { width: 1.5px; height: 10px; background: var(--border); margin-left: 3.25px; }
-  .trip-meta { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
-  .meta-chip { background: var(--bg); border-radius: 6px; padding: 3px 8px; font-size: 11px; color: var(--muted); }
+  .route-line { width: 1.5px; height: 12px; background: var(--border); margin-left: 3.75px; }
+  .trip-meta { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+  .meta-chip { background: var(--bg); border-radius: 6px; padding: 4px 10px; font-size: 13px; color: var(--muted); font-weight: 500; }
   .delete-btn { position: absolute; top: 12px; right: 12px; background: none; border: none; color: #ccc; font-size: 18px; cursor: pointer; padding: 4px; }
   .delete-btn:active { color: var(--danger); }
-  .trip-actions { display: flex; gap: 8px; margin-top: 10px; }
-  .trip-actions .btn-edit { flex: 1; padding: 8px; border-radius: 10px; border: 1.5px solid var(--primary); background: white; color: var(--primary); font-size: 13px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 4px; }
-  .trip-actions .btn-del { flex: 1; padding: 8px; border-radius: 10px; border: 1.5px solid var(--danger); background: white; color: var(--danger); font-size: 13px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 4px; }
+  .trip-actions { display: flex; gap: 6px; margin-top: 10px; justify-content: flex-end; }
+  .trip-actions .btn-edit { padding: 5px 12px; border-radius: 8px; border: 1px solid var(--primary); background: white; color: var(--primary); font-size: 11px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 3px; }
+  .trip-actions .btn-del { padding: 5px 12px; border-radius: 8px; border: 1px solid var(--danger); background: white; color: var(--danger); font-size: 11px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 3px; }
   .trip-actions .btn-edit:active { background: #e3f2fd; }
   .trip-actions .btn-del:active { background: #ffebee; }
   /* Confirm overlay */
@@ -191,6 +191,7 @@
   .pay-btn.active.credit { border-color: var(--success); background: #e8f5e9; color: var(--success); }
   .pay-btn:active { transform: scale(0.96); }
   .pay-btn.active.dpay { border-color: #b00068; background: #fce4ec; color: #b00068; }
+  .pay-btn.active.ticket { border-color: #6200ea; background: #ede7f6; color: #6200ea; }
 
   /* Trip type selector */
   .trip-type-row { display: flex; gap: 8px; }
@@ -338,6 +339,7 @@
           <button class="pay-btn paypay" id="pay-PayPay" onclick="selectPay('PayPay')">PayPay</button>
           <button class="pay-btn credit" id="pay-クレジット" onclick="selectPay('クレジット')">カード</button>
           <button class="pay-btn dpay" id="pay-d払い" onclick="selectPay('d払い')">d払い</button>
+          <button class="pay-btn ticket" id="pay-チケット" onclick="selectPay('チケット')">チケット</button>
           <button class="pay-btn" id="pay-その他" onclick="selectPay('その他')">その他</button>
         </div>
         <input type="hidden" id="payMethod" value="現金">
@@ -698,6 +700,7 @@
         <button class="pay-btn paypay" id="editpay-PayPay" onclick="selectEditPay('PayPay')">PayPay</button>
         <button class="pay-btn credit" id="editpay-クレジット" onclick="selectEditPay('クレジット')">カード</button>
         <button class="pay-btn dpay" id="editpay-d払い" onclick="selectEditPay('d払い')">d払い</button>
+        <button class="pay-btn ticket" id="editpay-チケット" onclick="selectEditPay('チケット')">チケット</button>
         <button class="pay-btn" id="editpay-その他" onclick="selectEditPay('その他')">その他</button>
       </div>
       <input type="hidden" id="editPayMethod" value="現金">
@@ -950,29 +953,29 @@ async function reverseGeocode(lat, lon) {
 
   // 町・丁目・字レベルを優先
   const sub = a.quarter || a.neighbourhood || a.suburb || a.hamlet;
-  if (sub && !isNonPlaceName(sub)) return kanjiToNum(sub);
+  if (sub && !isNonPlaceName(sub)) return formatPlace(sub);
 
   // 道路名が路線・幹線でなければ使用
-  if (a.road && !isNonPlaceName(a.road)) return kanjiToNum(a.road);
+  if (a.road && !isNonPlaceName(a.road)) return formatPlace(a.road);
 
   // フォールバック：地区・郡レベル
   const fallback = a.city_district || a.district || a.county || a.municipality;
-  if (fallback && !isNonPlaceName(fallback)) return kanjiToNum(fallback);
+  if (fallback && !isNonPlaceName(fallback)) return formatPlace(fallback);
 
   // 最終フォールバック
-  return kanjiToNum(sub || a.road || data.display_name || `${lat},${lon}`);
+  return formatPlace(sub || a.road || data.display_name || `${lat},${lon}`);
 }
 
-// 漢数字を半角数字に変換（例：六丁目→6丁目）
-function kanjiToNum(str) {
-  const map = {'〇':0,'一':1,'二':2,'三':3,'四':4,'五':5,'六':6,'七':7,'八':8,'九':9,'十':10};
-  return str.replace(/[〇一二三四五六七八九十]+(?=丁目|番|号|-)/g, (kanji) => {
-    if (kanji === '十') return '10';
-    if (kanji.startsWith('十')) return '1' + (map[kanji[1]] || '0');
-    if (kanji.endsWith('十')) return String(map[kanji[0]] * 10);
-    if (kanji.length === 3 && kanji[1] === '十') return String(map[kanji[0]] * 10 + map[kanji[2]]);
-    return kanji.split('').map(c => map[c] !== undefined ? map[c] : c).join('');
-  });
+// 地名を整形（丁目除去 + 漢数字変換）
+function formatPlace(str) {
+  if (!str) return str;
+  // 「〇番町」「一番町」など番町の名前は変換せずそのまま残す
+  // 丁目の数字部分（半角・漢数字）を除去
+  let result = str
+    .replace(/[0-9０-９]+丁目/g, '')           // 半角数字+丁目 を除去
+    .replace(/[〇一二三四五六七八九十]+丁目/g, '') // 漢数字+丁目 を除去
+    .trim();
+  return result || str; // 空になった場合は元の文字列を返す
 }
 
 // タイマー開始・停止時に自動でGPS取得（常に上書き）
@@ -1028,10 +1031,10 @@ function selectEditPax(n) {
 function selectPay(method) {
   currentPayMethod = method;
   document.getElementById('payMethod').value = method;
-  ['現金','GO','PayPay','クレジット','d払い','その他'].forEach(m => {
+  ['現金','GO','PayPay','クレジット','d払い','チケット','その他'].forEach(m => {
     const btn = document.getElementById(`pay-${m}`);
     if (!btn) return;
-    btn.className = 'pay-btn' + ({GO:' go', PayPay:' paypay', クレジット:' credit', 'd払い':' dpay'}[m]||'');
+    btn.className = 'pay-btn' + ({GO:' go', PayPay:' paypay', クレジット:' credit', 'd払い':' dpay', 'チケット':' ticket'}[m]||'');
     if (m === method) btn.className += ' active';
   });
   // 支払方法GOを選んだら種別もGOに
@@ -1255,9 +1258,9 @@ function tripCard(t) {
       <div class="trip-header">
         <div class="trip-fare">${fareStr}</div>
         <div style="text-align:right;">
-          <span style="display:inline-block;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:700;background:${typeColor}22;color:${typeColor};margin-bottom:2px;">${type}</span><br>
-          <span style="display:inline-block;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:700;background:${payColor}22;color:${payColor};">${pay}</span>
-          <div class="trip-time" style="margin-top:2px;">${t.pickupTime||'--:--'} → ${t.dropoffTime||'--:--'}${duration ? '<br>'+duration : ''}</div>
+          <span style="display:inline-block;padding:3px 10px;border-radius:6px;font-size:13px;font-weight:700;background:${typeColor}22;color:${typeColor};margin-bottom:3px;">${type}</span><br>
+          <span style="display:inline-block;padding:3px 10px;border-radius:6px;font-size:13px;font-weight:700;background:${payColor}22;color:${payColor};">${pay}</span>
+          <div class="trip-time" style="margin-top:4px;">${t.pickupTime||'--:--'} → ${t.dropoffTime||'--:--'}${duration ? `<br><span style="font-size:13px;color:var(--muted);">${duration}</span>` : ''}</div>
         </div>
       </div>
       <div class="trip-route">
@@ -1313,10 +1316,10 @@ function selectEditType(type) {
 
 function selectEditPay(method) {
   document.getElementById('editPayMethod').value = method;
-  ['現金','GO','PayPay','クレジット','d払い','その他'].forEach(m => {
+  ['現金','GO','PayPay','クレジット','d払い','チケット','その他'].forEach(m => {
     const btn = document.getElementById(`editpay-${m}`);
     if (!btn) return;
-    btn.className = 'pay-btn' + ({GO:' go', PayPay:' paypay', クレジット:' credit', 'd払い':' dpay'}[m]||'');
+    btn.className = 'pay-btn' + ({GO:' go', PayPay:' paypay', クレジット:' credit', 'd払い':' dpay', 'チケット':' ticket'}[m]||'');
     if (m === method) btn.className += ' active';
   });
   if (method === 'GO' && document.getElementById('tripEditModal').dataset.tripType !== 'GO') {
@@ -1731,6 +1734,39 @@ function renderLocationRanking() {
   `).join('');
 }
 
+// カスタム締め日（指定期間）
+const CUSTOM_PERIODS = [
+  ['2025-03-21','2025-04-19'],
+  ['2025-04-20','2025-05-19'],
+  ['2025-05-20','2025-06-18'],
+  ['2025-06-19','2025-07-18'],
+  ['2025-07-19','2025-08-17'],
+  ['2025-08-18','2025-09-16'],
+  ['2025-09-17','2025-10-16'],
+  ['2025-10-17','2025-11-15'],
+  ['2025-11-16','2025-12-15'],
+];
+
+function getBillingPeriod(dateStr) {
+  // カスタム期間を優先
+  for (const [s, e] of CUSTOM_PERIODS) {
+    if (dateStr >= s && dateStr <= e) {
+      const fmt = str => { const d = new Date(str+'T00:00:00'); return `${d.getMonth()+1}/${d.getDate()}`; };
+      return { startStr: s, endStr: e, label: `${fmt(s)}〜${fmt(e)}` };
+    }
+  }
+  // 以降：15日スタート・翌月14日締め（翌月16日が締め切り日）
+  const d = new Date(dateStr + 'T00:00:00');
+  const day = d.getDate();
+  let sy = d.getFullYear(), sm = d.getMonth() + 1;
+  if (day < 15) { sm--; if (sm === 0) { sm = 12; sy--; } }
+  const start = new Date(sy, sm - 1, 15);
+  const end   = new Date(sy, sm, 14); // 翌月14日
+  const toStr = dt => dt.toISOString().slice(0, 10);
+  const fmt   = dt => `${dt.getMonth()+1}/${dt.getDate()}`;
+  return { startStr: toStr(start), endStr: toStr(end), label: `${fmt(start)}〜${fmt(end)}` };
+}
+
 function renderStats() {
   const today = todayStr();
   const allTrips = getTrips();
@@ -1747,10 +1783,10 @@ function renderStats() {
     waits = allWaits.filter(w => w.date >= wStart && w.date <= today);
     label = '今週の売上';
   } else {
-    const mStart = today.slice(0,7) + '-01';
-    trips = allTrips.filter(t => t.date >= mStart && t.date <= today);
-    waits = allWaits.filter(w => w.date >= mStart && w.date <= today);
-    label = '今月の売上';
+    const period = getBillingPeriod(today);
+    trips = allTrips.filter(t => t.date >= period.startStr && t.date <= period.endStr);
+    waits = allWaits.filter(w => w.date >= period.startStr && w.date <= period.endStr);
+    label = `${period.label} 売上`;
   }
 
   const totalSales = trips.reduce((s,t)=>s+(t.fare||0),0);
