@@ -1886,7 +1886,7 @@ function renderStats() {
   }
 
   const totalSales = trips.reduce((s,t)=>s+(t.fare||0),0);
-  const avgFare = trips.length ? Math.round(totalSales/trips.length) : 0;
+  const avgFare = trips.length ? Math.floor(exTax(totalSales) / trips.length / 10) * 10 : 0;
 
   // 実車時間（乗車〜降車の合計）
   const jisshaMin = trips.reduce((s,t) => {
