@@ -86,14 +86,14 @@
   }
   .sticky-op-wrap .card { margin-bottom: 0; }
 
-  /* Square operation buttons */
+  /* Operation buttons (slightly wider than tall) */
   .btn-op {
     flex: 1;
-    aspect-ratio: 1;
+    aspect-ratio: 3 / 2;
     flex-direction: column;
-    gap: 5px;
+    gap: 4px;
     font-size: 13px;
-    padding: 10px 4px;
+    padding: 8px 4px;
     line-height: 1.2;
   }
 
@@ -393,7 +393,7 @@
           <div class="stat-value" id="todayAvg">¥0</div>
           <div class="stat-label">平均料金</div>
         </div>
-        <div class="stat-card">
+        <div class="stat-card" id="todayWaitCard">
           <div class="stat-value" id="todayWait">0分</div>
           <div class="stat-label">待機時間計</div>
         </div>
@@ -508,7 +508,7 @@
           <div class="stat-value" id="statAvg">¥0</div>
           <div class="stat-label">平均料金</div>
         </div>
-        <div class="stat-card">
+        <div class="stat-card" id="statWaitCard">
           <div class="stat-value" id="statWait">0分</div>
           <div class="stat-label">待機時間計</div>
         </div>
@@ -785,6 +785,34 @@ function saveReservations(d) { localStorage.setItem(RESERVATIONS_KEY, JSON.strin
 function getWaits() { try { return JSON.parse(localStorage.getItem(WAITS_KEY) || '[]'); } catch(e) { return []; } }
 function saveWaits(d) { localStorage.setItem(WAITS_KEY, JSON.stringify(d)); }
 
+// 業務終了時刻の管理
+const DAY_END_KEY = 'taxi_day_end';
+function getDayEndTime(date) {
+  try {
+    const data = JSON.parse(localStorage.getItem(DAY_END_KEY) || '{}');
+    return data[date] ? new Date(data[date]) : null;
+  } catch(e) { return null; }
+}
+function saveDayEndTime(date, time) {
+  try {
+    const data = JSON.parse(localStorage.getItem(DAY_END_KEY) || '{}');
+    data[date] = time.toISOString();
+    localStorage.setItem(DAY_END_KEY, JSON.stringify(data));
+  } catch(e) {}
+}
+function clearDayEndTime(date) {
+  try {
+    const data = JSON.parse(localStorage.getItem(DAY_END_KEY) || '{}');
+    delete data[date];
+    localStorage.setItem(DAY_END_KEY, JSON.stringify(data));
+  } catch(e) {}
+}
+
+// 月・水・金かどうか（待機時間表示対象日）
+function isWaitDay(date) {
+  return [1, 3, 5].includes(new Date(date).getDay()); // 月=1, 水=3, 金=5
+}
+
 // ==================== 操作ボタン ====================
 let waitStart = null;
 let waitInterval = null;
@@ -792,6 +820,10 @@ let waitInterval = null;
 function pad(n) { return String(n).padStart(2,'0'); }
 
 function startTrip() {
+  // 業務終了フラグをクリア（乗車開始したら待機時間を再び加算）
+  // → 前回の乗降記録時点からの待機時間を即座に再表示する
+  clearDayEndTime(todayStr());
+  updateTodaySummary();
   // 待機中なら待機時間を保存して停止
   if (waitStart) {
     const duration = Math.floor((Date.now() - waitStart) / 1000);
@@ -832,6 +864,7 @@ function stopAndRecord() {
 
 // ==================== 業務終了 ====================
 function endDay() {
+  const endTime = new Date();
   // 待機タイマー停止・保存
   if (waitStart) {
     const duration = Math.floor((Date.now() - waitStart) / 1000);
@@ -844,13 +877,16 @@ function endDay() {
     clearInterval(waitInterval);
     waitInterval = null;
   }
+  // 業務終了時刻を保存（待機時間の加算をここで止める）
+  saveDayEndTime(todayStr(), endTime);
+
   // 乗車開始ボタンをリセット
   const btn = document.getElementById('btnStartTrip');
   btn.disabled = false;
   btn.style.opacity = '1';
 
-  // 振り返り表示（業務終了時刻を記録）
-  showEndDaySummary(new Date());
+  // 振り返り表示
+  showEndDaySummary(endTime);
   updateTodaySummary();
 }
 
@@ -1053,10 +1089,13 @@ async function autoGetLocation(fieldId) {
 
 // ==================== TRIP SAVE ====================
 // 種別選択
-// 時間帯によるデフォルト種別（12〜17時、20時〜はGO）
+// 時間帯によるデフォルト種別
+// 7:30〜12:00 → 配車、12:00〜17:00 → GO、17:00〜20:00 → 配車、20:00〜 → GO
 function getDefaultType() {
   const h = new Date().getHours();
-  return (h >= 12 && h < 17) || h >= 20 ? 'GO' : '配車';
+  if (h >= 12 && h < 17) return 'GO';
+  if (h >= 20) return 'GO';
+  return '配車';
 }
 
 let currentTripType = getDefaultType();
@@ -1229,7 +1268,9 @@ function todayStr() {
 // 待機時間を自動計算（7:30起点 − 乗車時間合計）
 function calcWaitMinutes(date, endTime) {
   const shiftStart = new Date(date + 'T07:30:00');
-  const now = endTime || new Date();
+  // 終了時刻の優先順位: 引数 > 保存済み業務終了時刻 > 現在時刻
+  const savedEnd = getDayEndTime(date);
+  const now = endTime || savedEnd || new Date();
   if (now <= shiftStart) return 0;
 
   const totalShiftMin = Math.floor((now - shiftStart) / 60000);
@@ -1279,8 +1320,16 @@ function updateTodaySummary() {
 
   document.getElementById('todaySales').textContent = `¥${totalExTax.toLocaleString()}`;
   document.getElementById('todayAvg').textContent = `¥${avgExTax.toLocaleString()}`;
-  document.getElementById('todayWait').textContent = fmtWait(waitMin);
   document.getElementById('todayJissha').textContent = fmtWait(jisshaMin);
+
+  // 待機時間は月・水・金のみ表示
+  const waitCard = document.getElementById('todayWaitCard');
+  if (isWaitDay(today)) {
+    if (waitCard) waitCard.style.display = '';
+    document.getElementById('todayWait').textContent = fmtWait(waitMin);
+  } else {
+    if (waitCard) waitCard.style.display = 'none';
+  }
 
   // 内訳
   document.getElementById('todayHaishaFare').textContent  = `¥${exTax(sumF(haisha)).toLocaleString()}`;
@@ -1900,14 +1949,21 @@ function renderStats() {
     return s;
   },0);
 
-  // 待機時間：7:30以降の実車時間以外（日ごとに集計）
+  // 待機時間：月・水・金のみ集計・表示
   const dates = [...new Set(trips.map(t=>t.date))];
   let waitMin = 0;
+  let showWait = false;
   if (currentStatTab === 'day') {
-    waitMin = calcWaitMinutes(today);
+    showWait = isWaitDay(today);
+    if (showWait) waitMin = calcWaitMinutes(today);
   } else {
-    dates.forEach(d => { waitMin += calcWaitMinutes(d); });
+    // 月・水・金の日付のみ合算
+    const waitDates = dates.filter(d => isWaitDay(d));
+    showWait = waitDates.length > 0;
+    waitDates.forEach(d => { waitMin += calcWaitMinutes(d); });
   }
+  const statWaitCard = document.getElementById('statWaitCard');
+  if (statWaitCard) statWaitCard.style.display = showWait ? '' : 'none';
 
   document.getElementById('statSales').textContent = `¥${exTax(totalSales).toLocaleString()}`;
   document.getElementById('statSalesLabel').textContent = label;
