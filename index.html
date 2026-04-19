@@ -460,12 +460,20 @@
 
   <!-- ===== PAGE: 履歴 ===== -->
   <div class="page" id="page-history">
-    <div class="card" style="padding:12px 14px;">
-      <div style="display:flex;gap:8px;align-items:center;">
-        <div class="input-group" style="flex:1;margin:0;">
-          <input class="input-field" id="historyFilter" type="date" onchange="renderHistory()">
+    <!-- Day navigation -->
+    <div class="card" style="padding:10px 12px;">
+      <div style="display:flex;gap:6px;align-items:center;margin-bottom:8px;">
+        <button class="btn btn-gray btn-sm" onclick="histNavPrev()" style="padding:10px 16px;font-size:20px;line-height:1;">‹</button>
+        <div style="flex:1;text-align:center;">
+          <div id="histNavLabel" style="font-size:16px;font-weight:700;color:var(--text);"></div>
+          <div id="histNavSub" style="font-size:12px;color:var(--muted);margin-top:2px;"></div>
         </div>
-        <button class="btn btn-gray btn-sm" onclick="clearHistoryFilter()">全て</button>
+        <button class="btn btn-gray btn-sm" onclick="histNavNext()" id="histNavNextBtn" style="padding:10px 16px;font-size:20px;line-height:1;">›</button>
+      </div>
+      <div style="display:flex;gap:6px;">
+        <button class="btn btn-gray btn-sm" onclick="histGoToday()" style="flex:1;">今日</button>
+        <button class="btn btn-gray btn-sm" onclick="histToggleAll()" id="histAllBtn" style="flex:1;">全期間表示</button>
+        <input class="input-field" id="historyFilter" type="date" onchange="histPickDate(this.value)" style="flex:1.5;padding:9px 10px;font-size:14px;">
       </div>
     </div>
 
@@ -1342,32 +1350,116 @@ function updateTodaySummary() {
 }
 
 // ==================== HISTORY ====================
-function renderHistory() {
-  const filterDate = document.getElementById('historyFilter').value;
-  let trips = getTrips();
-  if (filterDate) trips = trips.filter(t => t.date === filterDate);
+let histCurrentDate = todayStr(); // currently viewed date
+let histShowAll = false;          // true = show all dates
 
+function renderHistory() {
   const el = document.getElementById('historyList');
-  if (trips.length === 0) {
-    el.innerHTML = emptyState('記録がありません');
+  let trips = getTrips();
+
+  if (histShowAll) {
+    // ---- 全期間モード ----
+    document.getElementById('histNavLabel').textContent = '全期間';
+    document.getElementById('histNavSub').textContent = `全${trips.length}件`;
+    document.getElementById('histNavNextBtn').disabled = false;
+    document.getElementById('histAllBtn').textContent = '日別表示に戻す';
+    document.getElementById('historyFilter').value = '';
+
+    if (trips.length === 0) { el.innerHTML = emptyState('記録がありません'); return; }
+    const grouped = {};
+    trips.forEach(t => { if (!grouped[t.date]) grouped[t.date] = []; grouped[t.date].push(t); });
+    el.innerHTML = Object.keys(grouped).sort((a,b)=>b.localeCompare(a)).map(date => {
+      const dayTrips = grouped[date];
+      const dayTotal = dayTrips.reduce((s,t)=>s+(t.cashFare!==undefined?t.cashFare+(t.uncollectedFare||0):(t.fare||0)),0);
+      return `
+        <div class="section-label">${fmtDate(date)} <span style="float:right;color:var(--success);font-size:13px;">合計 ¥${dayTotal.toLocaleString()}</span></div>
+        ${dayTrips.sort((a,b)=>(b.pickupTime||'').localeCompare(a.pickupTime||'')).map(t => tripCard(t)).join('')}
+      `;
+    }).join('');
     return;
   }
 
-  // Group by date
-  const grouped = {};
-  trips.forEach(t => {
-    if (!grouped[t.date]) grouped[t.date] = [];
-    grouped[t.date].push(t);
-  });
+  // ---- 日別モード ----
+  document.getElementById('histAllBtn').textContent = '全期間表示';
+  document.getElementById('historyFilter').value = histCurrentDate;
 
-  el.innerHTML = Object.keys(grouped).sort((a,b)=>b.localeCompare(a)).map(date => {
-    const dayTrips = grouped[date];
-    const dayTotal = dayTrips.reduce((s,t)=>s+(t.fare||0),0);
-    return `
-      <div class="section-label">${fmtDate(date)} <span style="float:right;color:var(--success);font-size:13px;">合計 ¥${dayTotal.toLocaleString()}</span></div>
-      ${dayTrips.map(t => tripCard(t)).join('')}
-    `;
-  }).join('');
+  // 有効な日付一覧を取得
+  const allDates = [...new Set(trips.map(t=>t.date))].sort();
+  const curIdx = allDates.indexOf(histCurrentDate);
+  const hasPrev = allDates.some(d => d < histCurrentDate);
+  const hasNext = allDates.some(d => d > histCurrentDate) || histCurrentDate < todayStr();
+
+  // ナビラベル更新
+  const d = new Date(histCurrentDate + 'T00:00:00');
+  const dow = ['日','月','火','水','木','金','土'][d.getDay()];
+  const isToday = histCurrentDate === todayStr();
+  const label = `${d.getMonth()+1}月${d.getDate()}日（${dow}）`;
+  document.getElementById('histNavLabel').textContent = label + (isToday ? ' 🔵 今日' : '');
+
+  const dayTrips = trips.filter(t => t.date === histCurrentDate)
+                        .sort((a,b)=>(b.pickupTime||'').localeCompare(a.pickupTime||''));
+  const dayTotal = dayTrips.reduce((s,t)=>s+(t.cashFare!==undefined?t.cashFare+(t.uncollectedFare||0):(t.fare||0)),0);
+  document.getElementById('histNavSub').textContent = dayTrips.length > 0
+    ? `${dayTrips.length}件 ／ ¥${dayTotal.toLocaleString()}`
+    : '記録なし';
+
+  // 前後ナビ ボタン状態
+  document.getElementById('histNavNextBtn').disabled = histCurrentDate >= todayStr();
+
+  if (dayTrips.length === 0) {
+    el.innerHTML = `<div class="empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 8v4m0 4h.01"/></svg><p>この日の記録はありません</p></div>`;
+    return;
+  }
+  el.innerHTML = dayTrips.map(t => tripCard(t)).join('');
+}
+
+function histNavPrev() {
+  if (histShowAll) return;
+  const trips = getTrips();
+  const allDates = [...new Set(trips.map(t=>t.date))].filter(d => d < histCurrentDate).sort();
+  if (allDates.length > 0) {
+    histCurrentDate = allDates[allDates.length - 1];
+  } else {
+    // 記録がなくても前日に移動
+    const d = new Date(histCurrentDate + 'T00:00:00');
+    d.setDate(d.getDate() - 1);
+    histCurrentDate = d.toISOString().slice(0,10);
+  }
+  renderHistory();
+}
+
+function histNavNext() {
+  if (histShowAll) return;
+  if (histCurrentDate >= todayStr()) return;
+  const trips = getTrips();
+  const allDates = [...new Set(trips.map(t=>t.date))].filter(d => d > histCurrentDate).sort();
+  if (allDates.length > 0) {
+    histCurrentDate = allDates[0];
+  } else {
+    const d = new Date(histCurrentDate + 'T00:00:00');
+    d.setDate(d.getDate() + 1);
+    histCurrentDate = d.toISOString().slice(0,10);
+  }
+  renderHistory();
+}
+
+function histGoToday() {
+  histShowAll = false;
+  histCurrentDate = todayStr();
+  renderHistory();
+}
+
+function histToggleAll() {
+  histShowAll = !histShowAll;
+  if (!histShowAll) histCurrentDate = todayStr();
+  renderHistory();
+}
+
+function histPickDate(val) {
+  if (!val) return;
+  histShowAll = false;
+  histCurrentDate = val;
+  renderHistory();
 }
 
 function tripCard(t) {
@@ -1522,7 +1614,8 @@ document.getElementById('tripEditModal').addEventListener('click', function(e) {
 });
 
 function clearHistoryFilter() {
-  document.getElementById('historyFilter').value = '';
+  histShowAll = false;
+  histCurrentDate = todayStr();
   renderHistory();
 }
 
@@ -1544,7 +1637,7 @@ function exportCSV() {
 
 // スプレッドシート「タクシー営収 年間管理表」の青セル対応エクスポート
 function exportDailyReport() {
-  const filterDate = document.getElementById('historyFilter').value || todayStr();
+  const filterDate = (histShowAll ? todayStr() : histCurrentDate) || todayStr();
   const trips = getTrips().filter(t => t.date === filterDate);
   if (trips.length === 0) { showToast(`${filterDate} のデータがありません`); return; }
 
