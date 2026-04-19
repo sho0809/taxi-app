@@ -294,27 +294,6 @@
       <div class="card-title">乗降記録入力</div>
 
       <div class="input-group">
-        <label class="input-label">🟢 乗車場所</label>
-        <input class="input-field" id="pickupLoc" type="text" placeholder="例：紅葉町" autocomplete="off">
-      </div>
-
-      <div class="input-group">
-        <label class="input-label">🔴 降車場所</label>
-        <input class="input-field" id="dropoffLoc" type="text" placeholder="例：道後温泉" autocomplete="off">
-      </div>
-
-      <div class="input-row">
-        <div class="input-group">
-          <label class="input-label">⏱ 乗車時刻</label>
-          <input class="input-field" id="pickupTime" type="time">
-        </div>
-        <div class="input-group">
-          <label class="input-label">🏁 降車時刻</label>
-          <input class="input-field" id="dropoffTime" type="time">
-        </div>
-      </div>
-
-      <div class="input-group">
         <label class="input-label">🚖 種別</label>
         <div class="trip-type-row">
           <button class="type-btn haisha active" id="type-配車" onclick="selectType('配車')">配　車</button>
@@ -372,6 +351,27 @@
           <button class="pay-btn" id="pay-その他" onclick="selectPay('その他')">その他</button>
         </div>
         <input type="hidden" id="payMethod" value="現金">
+      </div>
+
+      <div class="input-group">
+        <label class="input-label">🟢 乗車場所</label>
+        <input class="input-field" id="pickupLoc" type="text" placeholder="例：紅葉町" autocomplete="off">
+      </div>
+
+      <div class="input-group">
+        <label class="input-label">🔴 降車場所</label>
+        <input class="input-field" id="dropoffLoc" type="text" placeholder="例：道後温泉" autocomplete="off">
+      </div>
+
+      <div class="input-row">
+        <div class="input-group">
+          <label class="input-label">⏱ 乗車時刻</label>
+          <input class="input-field" id="pickupTime" type="time">
+        </div>
+        <div class="input-group">
+          <label class="input-label">🏁 降車時刻</label>
+          <input class="input-field" id="dropoffTime" type="time">
+        </div>
       </div>
 
       <div class="input-group">
@@ -1107,8 +1107,9 @@ function selectType(type) {
     if (!btn) return;
     btn.className = `type-btn${styles[t]||''}${t === type ? ' active' : ''}`;
   });
-  // GOを選んだら支払方法もGOに自動設定
+  // 種別に応じて支払方法を自動設定
   if (type === 'GO') selectPay('GO');
+  if (type === '配車' || type === '流し') selectPay('現金');
 }
 
 // 支払方法選択
