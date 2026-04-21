@@ -302,20 +302,25 @@
         </div>
       </div>
 
-      <div class="input-row">
-        <div class="input-group">
-          <label class="input-label">💴 現金</label>
-          <div class="fare-wrap">
-            <span class="yen">¥</span>
-            <input class="input-field" id="cashFare" type="number" placeholder="0" inputmode="numeric" oninput="if(this.value>0) selectPay('現金')">
-          </div>
+      <div class="input-group">
+        <label class="input-label">💳 支払方法</label>
+        <div class="pay-btns">
+          <button class="pay-btn active" id="pay-現金" onclick="selectPay('現金')">現金</button>
+          <button class="pay-btn go" id="pay-GO" onclick="selectPay('GO')">GO</button>
+          <button class="pay-btn paypay" id="pay-PayPay" onclick="selectPay('PayPay')">PayPay</button>
+          <button class="pay-btn credit" id="pay-クレジット" onclick="selectPay('クレジット')">カード</button>
+          <button class="pay-btn dpay" id="pay-d払い" onclick="selectPay('d払い')">d払い</button>
+          <button class="pay-btn ticket" id="pay-チケット" onclick="selectPay('チケット')">チケット</button>
+          <button class="pay-btn" id="pay-その他" onclick="selectPay('その他')">その他</button>
         </div>
-        <div class="input-group">
-          <label class="input-label">📱 未収</label>
-          <div class="fare-wrap">
-            <span class="yen">¥</span>
-            <input class="input-field" id="uncollectedFare" type="number" placeholder="0" inputmode="numeric">
-          </div>
+        <input type="hidden" id="payMethod" value="現金">
+      </div>
+
+      <div class="input-group">
+        <label class="input-label" id="fareLabelMain">💴 料金（現金）</label>
+        <div class="fare-wrap">
+          <span class="yen">¥</span>
+          <input class="input-field" id="fareAmount" type="number" placeholder="0" inputmode="numeric">
         </div>
       </div>
 
@@ -337,20 +342,6 @@
           </div>
           <input type="hidden" id="passengerCount" value="1">
         </div>
-      </div>
-
-      <div class="input-group">
-        <label class="input-label">💳 支払方法</label>
-        <div class="pay-btns">
-          <button class="pay-btn active" id="pay-現金" onclick="selectPay('現金')">現金</button>
-          <button class="pay-btn go" id="pay-GO" onclick="selectPay('GO')">GO</button>
-          <button class="pay-btn paypay" id="pay-PayPay" onclick="selectPay('PayPay')">PayPay</button>
-          <button class="pay-btn credit" id="pay-クレジット" onclick="selectPay('クレジット')">カード</button>
-          <button class="pay-btn dpay" id="pay-d払い" onclick="selectPay('d払い')">d払い</button>
-          <button class="pay-btn ticket" id="pay-チケット" onclick="selectPay('チケット')">チケット</button>
-          <button class="pay-btn" id="pay-その他" onclick="selectPay('その他')">その他</button>
-        </div>
-        <input type="hidden" id="payMethod" value="現金">
       </div>
 
       <div class="input-group">
@@ -499,17 +490,6 @@
       <div class="tab-item" id="statTab-month" onclick="switchStatTab('month')">月</div>
       <div class="tab-item" id="statTab-hourly" onclick="switchStatTab('hourly')">時間帯</div>
       <div class="tab-item" id="statTab-location" onclick="switchStatTab('location')">場所</div>
-    </div>
-
-    <!-- 週・月ナビゲーション -->
-    <div id="statNavBar" class="card" style="display:none;padding:10px 12px;margin-bottom:8px;">
-      <div style="display:flex;gap:6px;align-items:center;">
-        <button class="btn btn-gray btn-sm" onclick="statNavPrev()" style="padding:10px 16px;font-size:20px;line-height:1;">&#8249;</button>
-        <div style="flex:1;text-align:center;">
-          <div id="statNavLabel" style="font-size:15px;font-weight:700;color:var(--text);"></div>
-        </div>
-        <button class="btn btn-gray btn-sm" onclick="statNavNext()" id="statNavNextBtn" style="padding:10px 16px;font-size:20px;line-height:1;">&#8250;</button>
-      </div>
     </div>
 
     <!-- 日別・週・月タブ共通 -->
@@ -1160,6 +1140,11 @@ function selectPay(method) {
   });
   // 支払方法GOを選んだら種別もGOに
   if (method === 'GO' && currentTripType !== 'GO') selectType('GO');
+  // 料金ラベルを支払方法に応じて更新
+  const label = document.getElementById('fareLabelMain');
+  if (label) {
+    label.textContent = method === '現金' ? '💴 料金（現金）' : `💴 料金（未収 / ${method}）`;
+  }
 }
 
 // 料金合計ヘルパー（後方互換）
@@ -1173,13 +1158,14 @@ function getTripFare(t) {
 function saveTrip() {
   const pickup = document.getElementById('pickupLoc').value.trim();
   const dropoff = document.getElementById('dropoffLoc').value.trim();
-  const cashFare = parseInt(document.getElementById('cashFare').value) || 0;
-  const uncollectedFare = parseInt(document.getElementById('uncollectedFare').value) || 0;
+  const fareAmount = parseInt(document.getElementById('fareAmount').value) || 0;
+  const payMethod = document.getElementById('payMethod').value || '現金';
+  const cashFare = payMethod === '現金' ? fareAmount : 0;
+  const uncollectedFare = payMethod !== '現金' ? fareAmount : 0;
   const tip = parseInt(document.getElementById('tipAmount').value) || 0;
   const pickupTime = document.getElementById('pickupTime').value;
   const dropoffTime = document.getElementById('dropoffTime').value;
   const memo = document.getElementById('tripMemo').value.trim();
-  const payMethod = document.getElementById('payMethod').value || '現金';
   const passengers = parseInt(document.getElementById('passengerCount').value) || 1;
   const tripType = currentTripType;
 
@@ -1202,7 +1188,7 @@ function saveTrip() {
   saveTrips(trips);
 
   // フォームリセット
-  ['pickupLoc','dropoffLoc','cashFare','uncollectedFare','tipAmount','tripMemo'].forEach(id => {
+  ['pickupLoc','dropoffLoc','fareAmount','tipAmount','tripMemo'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.value = '';
   });
@@ -1834,19 +1820,15 @@ function renderReservations() {
 
 // ==================== STATS ====================
 let currentStatTab = 'day';
-let statNavOffset = 0;
 
 function switchStatTab(tab) {
   currentStatTab = tab;
-  statNavOffset = 0;
   ['day','week','month','hourly','location'].forEach(t => {
     document.getElementById(`statTab-${t}`).className = 'tab-item' + (t === tab ? ' active' : '');
   });
   document.getElementById('statMain').style.display = ['day','week','month'].includes(tab) ? 'block' : 'none';
   document.getElementById('statHourly').style.display = tab === 'hourly' ? 'block' : 'none';
   document.getElementById('statLocation').style.display = tab === 'location' ? 'block' : 'none';
-  const navBar = document.getElementById('statNavBar');
-  if (navBar) navBar.style.display = (tab === 'week' || tab === 'month') ? 'block' : 'none';
   if (tab === 'hourly') renderHourlyChart();
   else if (tab === 'location') renderLocationRanking();
   else renderStats();
@@ -2032,23 +2014,15 @@ function renderStats() {
     waits = allWaits.filter(w => w.date === today);
     label = '本日の営収額';
   } else if (currentStatTab === 'week') {
-    const wr = getWeekRange(statNavOffset);
-    trips = allTrips.filter(t => t.date >= wr.startStr && t.date <= wr.endStr);
-    waits = allWaits.filter(w => w.date >= wr.startStr && w.date <= wr.endStr);
-    label = statNavOffset === 0 ? '今週の売上' : `${wr.label} 売上`;
-    const navLabel = document.getElementById('statNavLabel');
-    if (navLabel) navLabel.textContent = wr.label;
-    const nextBtn = document.getElementById('statNavNextBtn');
-    if (nextBtn) nextBtn.disabled = statNavOffset >= 0;
+    const wStart = getWeekStart();
+    trips = allTrips.filter(t => t.date >= wStart && t.date <= today);
+    waits = allWaits.filter(w => w.date >= wStart && w.date <= today);
+    label = '今週の売上';
   } else {
-    const period = getBillingForOffset(statNavOffset);
+    const period = getBillingPeriod(today);
     trips = allTrips.filter(t => t.date >= period.startStr && t.date <= period.endStr);
     waits = allWaits.filter(w => w.date >= period.startStr && w.date <= period.endStr);
     label = `${period.label} 売上`;
-    const navLabel = document.getElementById('statNavLabel');
-    if (navLabel) navLabel.textContent = period.label;
-    const nextBtn = document.getElementById('statNavNextBtn');
-    if (nextBtn) nextBtn.disabled = statNavOffset >= 0;
   }
 
   const totalSales = trips.reduce((s,t)=>s+(t.fare||0),0);
@@ -2122,45 +2096,6 @@ function getWeekStart() {
   const day = d.getDay();
   d.setDate(d.getDate() - day);
   return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
-}
-
-function getWeekRange(offset) {
-  const d = new Date();
-  const day = d.getDay();
-  const start = new Date(d);
-  start.setDate(d.getDate() - day + offset * 7);
-  const end = new Date(start);
-  end.setDate(start.getDate() + 6);
-  const toStr = dt => `${dt.getFullYear()}-${pad(dt.getMonth()+1)}-${pad(dt.getDate())}`;
-  const fmtS = str => { const dd = new Date(str+'T00:00:00'); return `${dd.getMonth()+1}/${dd.getDate()}`; };
-  return { startStr: toStr(start), endStr: toStr(end), label: `${fmtS(toStr(start))}〜${fmtS(toStr(end))}` };
-}
-
-function getBillingForOffset(offset) {
-  const today = todayStr();
-  let period = getBillingPeriod(today);
-  if (offset < 0) {
-    for (let i = 0; i > offset; i--) {
-      const prev = new Date(period.startStr + 'T00:00:00');
-      prev.setDate(prev.getDate() - 1);
-      period = getBillingPeriod(prev.toISOString().slice(0,10));
-    }
-  } else if (offset > 0) {
-    for (let i = 0; i < offset; i++) {
-      const next = new Date(period.endStr + 'T00:00:00');
-      next.setDate(next.getDate() + 1);
-      period = getBillingPeriod(next.toISOString().slice(0,10));
-    }
-  }
-  return period;
-}
-
-function statNavPrev() {
-  statNavOffset--;
-  renderStats();
-}
-function statNavNext() {
-  if (statNavOffset < 0) { statNavOffset++; renderStats(); }
 }
 
 // ==================== NAVIGATION ====================
