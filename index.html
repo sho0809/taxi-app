@@ -89,18 +89,31 @@
     padding-bottom: 4px;
     margin-bottom: 4px;
   }
-  .sticky-op-wrap .card { margin-bottom: 0; }
+  .sticky-op-wrap .card { margin-bottom: 0; padding: 8px 12px; }
+  .sticky-op-wrap .card-title { display: none; }
+  .sticky-op-wrap .btn-row { margin-top: 0; gap: 8px; }
+  .sticky-op-wrap > .btn { padding: 10px; font-size: 14px; margin-bottom: 4px; }
 
   /* Operation buttons (slightly wider than tall) */
   .btn-op {
     flex: 1;
-    aspect-ratio: 3 / 2;
-    flex-direction: column;
-    gap: 4px;
+    aspect-ratio: unset;
+    flex-direction: row;
+    gap: 6px;
     font-size: 13px;
-    padding: 8px 4px;
+    padding: 11px 4px;
     line-height: 1.2;
   }
+
+  /* コンパクトフォーム */
+  #tripFormCard { padding: 10px 12px; }
+  #tripFormCard .card-title { display: none; }
+  #tripFormCard .input-group { margin-bottom: 6px; }
+  #tripFormCard .input-label { font-size: 11px; margin-bottom: 3px; }
+  #tripFormCard .input-field { padding: 8px 12px; font-size: 15px; }
+  #tripFormCard .fare-wrap .input-field { padding-left: 26px; }
+  #tripFormCard .pay-btn { padding: 6px 4px; font-size: 11px; }
+  #tripFormCard .type-btn { padding: 8px 4px; font-size: 13px; }
 
   /* Inputs */
   .input-group { margin-bottom: 12px; }
@@ -324,32 +337,32 @@
         <input type="hidden" id="payMethod" value="現金">
       </div>
 
-      <div class="input-group">
-        <label class="input-label" id="fareLabelMain">💴 料金（現金）</label>
-        <div class="fare-wrap">
-          <span class="yen">¥</span>
-          <input class="input-field" id="fareAmount" type="number" placeholder="0" inputmode="numeric">
-        </div>
-      </div>
-
       <div class="input-row">
-        <div class="input-group">
+        <div class="input-group" style="flex:1.5;">
+          <label class="input-label" id="fareLabelMain">💴 料金（現金）</label>
+          <div class="fare-wrap">
+            <span class="yen">¥</span>
+            <input class="input-field" id="fareAmount" type="number" placeholder="0" inputmode="numeric">
+          </div>
+        </div>
+        <div class="input-group" style="flex:1;">
           <label class="input-label">🎁 チップ</label>
           <div class="fare-wrap">
             <span class="yen">¥</span>
             <input class="input-field" id="tipAmount" type="number" placeholder="0" inputmode="numeric">
           </div>
         </div>
-        <div class="input-group">
-          <label class="input-label">👥 人員</label>
-          <div style="display:flex;gap:4px;">
-            <button class="pay-btn active" id="pax-1" onclick="selectPax(1)" style="flex:1;padding:8px 2px;font-size:12px;">1名</button>
-            <button class="pay-btn" id="pax-2" onclick="selectPax(2)" style="flex:1;padding:8px 2px;font-size:12px;">2名</button>
-            <button class="pay-btn" id="pax-3" onclick="selectPax(3)" style="flex:1;padding:8px 2px;font-size:12px;">3名</button>
-            <button class="pay-btn" id="pax-4" onclick="selectPax(4)" style="flex:1;padding:8px 2px;font-size:12px;">4名</button>
-          </div>
-          <input type="hidden" id="passengerCount" value="1">
+      </div>
+
+      <div class="input-group">
+        <label class="input-label">👥 人員</label>
+        <div style="display:flex;gap:4px;">
+          <button class="pay-btn active" id="pax-1" onclick="selectPax(1)" style="flex:1;padding:6px 2px;font-size:12px;">1名</button>
+          <button class="pay-btn" id="pax-2" onclick="selectPax(2)" style="flex:1;padding:6px 2px;font-size:12px;">2名</button>
+          <button class="pay-btn" id="pax-3" onclick="selectPax(3)" style="flex:1;padding:6px 2px;font-size:12px;">3名</button>
+          <button class="pay-btn" id="pax-4" onclick="selectPax(4)" style="flex:1;padding:6px 2px;font-size:12px;">4名</button>
         </div>
+        <input type="hidden" id="passengerCount" value="1">
       </div>
 
       <div class="input-row">
