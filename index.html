@@ -1039,34 +1039,36 @@ function isNonPlaceName(name) {
 }
 
 async function reverseGeocode(lat, lon) {
-  // 国土地理院API（日本国内・無料・制限なし）
-  const gsiUrl = `https://mreversegeocoder.gsi.go.jp/reverse-geocoder/LonLatToStdAddress?lat=${lat}&lon=${lon}`;
+  // 1st: 国土地理院API（日本国内・無料・制限なし）
   try {
-    const res = await fetch(gsiUrl);
+    const res = await fetch(`https://mreversegeocoder.gsi.go.jp/reverse-geocoder/LonLatToStdAddress?lat=${lat}&lon=${lon}`);
     if (res.ok) {
       const data = await res.json();
       const r = data.results;
       if (r) {
-        // lv01Nm=市区町村, lv02Nm=町丁目, lv03Nm=字・番地
-        const parts = [r.lv01Nm, r.lv02Nm].filter(Boolean);
-        const place = parts.join('');
-        if (place) return formatPlace(place);
+        // lv02Nm=町丁目が最も具体的な地名
+        if (r.lv02Nm) return r.lv02Nm;
+        if (r.lv01Nm) return r.lv01Nm;
       }
     }
   } catch(e) {}
 
-  // フォールバック：Nominatim
-  const url = `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&accept-language=ja&zoom=16`;
-  const res = await fetch(url, { headers: { 'Accept-Language': 'ja' } });
-  if (!res.ok) throw new Error('API error');
-  const data = await res.json();
-  const a = data.address || {};
-  const sub = a.quarter || a.neighbourhood || a.suburb || a.hamlet;
-  if (sub && !isNonPlaceName(sub)) return formatPlace(sub);
-  if (a.road && !isNonPlaceName(a.road)) return formatPlace(a.road);
-  const fallback = a.city_district || a.district || a.county || a.municipality;
-  if (fallback && !isNonPlaceName(fallback)) return formatPlace(fallback);
-  return formatPlace(sub || a.road || data.display_name || `${lat},${lon}`);
+  // 2nd: Nominatim
+  try {
+    const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&accept-language=ja&zoom=16`, { headers: { 'Accept-Language': 'ja' } });
+    if (res.ok) {
+      const data = await res.json();
+      const a = data.address || {};
+      const name = a.quarter || a.neighbourhood || a.suburb || a.hamlet
+                || a.city_district || a.district || a.road
+                || a.city || a.town || a.village || a.county;
+      if (name) return formatPlace(name);
+      if (data.display_name) return data.display_name.split(',')[0].trim();
+    }
+  } catch(e) {}
+
+  // 最終フォールバック：座標をそのまま表示
+  return `${lat.toFixed(4)},${lon.toFixed(4)}`;
 }
 
 // 地名を整形（丁目除去 + 漢数字変換）
