@@ -33,8 +33,11 @@
 
   /* Header */
   .header { background: var(--primary); color: white; padding: 14px 18px 12px; padding-top: calc(14px + env(safe-area-inset-top, 0px)); position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
+  .header-row { display: flex; justify-content: space-between; align-items: center; }
   .header h1 { font-size: 18px; font-weight: 700; letter-spacing: -0.3px; }
   .header .date { font-size: 12px; opacity: 0.85; margin-top: 2px; }
+  .reload-btn { background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.4); border-radius: 8px; color: white; font-size: 12px; font-weight: 700; padding: 6px 10px; cursor: pointer; white-space: nowrap; }
+  .reload-btn:active { background: rgba(255,255,255,0.35); }
 
   /* Content area */
   .content { padding: 14px; padding-bottom: calc(var(--nav-h) + var(--safe-bottom) + 14px); }
@@ -258,7 +261,10 @@
 
 <!-- Header -->
 <div class="header">
-  <h1>🚖 タクシー業務管理</h1>
+  <div class="header-row">
+    <h1>🚖 タクシー業務管理</h1>
+    <button class="reload-btn" onclick="location.reload(true)">↻ 更新</button>
+  </div>
   <div class="date" id="headerDate"></div>
 </div>
 
