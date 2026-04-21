@@ -808,8 +808,11 @@ function triggerReload() {
 }
 
 function startTrip() {
-  // 業務終了フラグをクリア（乗車開始したら待機時間を再び加算）
-  // → 前回の乗降記録時点からの待機時間を即座に再表示する
+  // iOS PWA対応：ユーザー操作の直後に位置情報取得を呼ぶ
+  setPickupTimeNow();
+  autoGetLocation('pickupLoc');
+
+  // 業務終了フラグをクリア
   clearDayEndTime(todayStr());
   updateTodaySummary();
   // 待機中なら待機時間を保存して停止
@@ -824,11 +827,9 @@ function startTrip() {
     waitStart = null;
     clearInterval(waitInterval);
     waitInterval = null;
-    document.getElementById('waitStatusRow').style.display = 'none';
+    const wsRow = document.getElementById('waitStatusRow');
+    if (wsRow) wsRow.style.display = 'none';
   }
-  // 乗車時刻・GPS自動入力
-  setPickupTimeNow();
-  autoGetLocation('pickupLoc');
   // ボタン状態更新
   const btn = document.getElementById('btnStartTrip');
   btn.disabled = true;
