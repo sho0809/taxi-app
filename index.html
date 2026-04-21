@@ -392,6 +392,10 @@
           <div class="stat-value" id="todayJissha">0分</div>
           <div class="stat-label">実車時間計</div>
         </div>
+        <div class="stat-card accent" style="grid-column:1/-1;">
+          <div class="stat-value" id="todayHourly">---</div>
+          <div class="stat-label">現在の時給（営収÷実働時間）</div>
+        </div>
       </div>
 
       <!-- 営収額・回数内訳 -->
@@ -1324,9 +1328,13 @@ function updateTodaySummary() {
     return s + (diff > 0 ? diff : 0);
   }, 0);
 
+  const totalWorkMin = jisshaMin + waitMin;
+  const hourlyWage = totalWorkMin > 0 ? Math.round(totalExTax / (totalWorkMin / 60)) : null;
+
   document.getElementById('todaySales').textContent = `¥${totalExTax.toLocaleString()}`;
   document.getElementById('todayAvg').textContent = `¥${avgExTax.toLocaleString()}`;
   document.getElementById('todayJissha').textContent = fmtWait(jisshaMin);
+  document.getElementById('todayHourly').textContent = hourlyWage !== null ? `¥${hourlyWage.toLocaleString()}/h` : '---';
 
   // 待機時間は月・水・金のみ表示
   const waitCard = document.getElementById('todayWaitCard');
