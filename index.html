@@ -36,8 +36,10 @@
   .header-row { display: flex; justify-content: space-between; align-items: center; }
   .header h1 { font-size: 18px; font-weight: 700; letter-spacing: -0.3px; }
   .header .date { font-size: 12px; opacity: 0.85; margin-top: 2px; }
-  .reload-btn { background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.4); border-radius: 8px; color: white; font-size: 12px; font-weight: 700; padding: 6px 10px; cursor: pointer; white-space: nowrap; }
+  .reload-btn { background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.4); border-radius: 8px; color: white; font-size: 12px; font-weight: 700; padding: 6px 10px; cursor: pointer; white-space: nowrap; transition: all 0.15s; }
   .reload-btn:active { background: rgba(255,255,255,0.35); }
+  .reload-btn.loading { background: rgba(255,255,255,0.9); color: var(--primary); border-color: white; }
+  .reload-btn.loading span { display: inline-block; animation: spin 0.6s linear infinite; }
 
   /* Content area */
   .content { padding: 14px; padding-bottom: calc(var(--nav-h) + var(--safe-bottom) + 14px); }
@@ -263,7 +265,7 @@
 <div class="header">
   <div class="header-row">
     <h1>🚖 タクシー業務管理</h1>
-    <button class="reload-btn" onclick="location.reload(true)">↻ 更新</button>
+    <button class="reload-btn" id="reloadBtn" onclick="triggerReload()">↻ 更新</button>
   </div>
   <div class="date" id="headerDate"></div>
 </div>
@@ -796,6 +798,13 @@ let waitStart = null;
 let waitInterval = null;
 
 function pad(n) { return String(n).padStart(2,'0'); }
+
+function triggerReload() {
+  const btn = document.getElementById('reloadBtn');
+  btn.classList.add('loading');
+  btn.innerHTML = '<span>↻</span> 更新中...';
+  setTimeout(() => location.reload(true), 600);
+}
 
 function startTrip() {
   // 業務終了フラグをクリア（乗車開始したら待機時間を再び加算）
