@@ -1025,24 +1025,33 @@ function isNonPlaceName(name) {
 }
 
 async function reverseGeocode(lat, lon) {
+  // 国土地理院API（日本国内・無料・制限なし）
+  const gsiUrl = `https://mreversegeocoder.gsi.go.jp/reverse-geocoder/LonLatToStdAddress?lat=${lat}&lon=${lon}`;
+  try {
+    const res = await fetch(gsiUrl);
+    if (res.ok) {
+      const data = await res.json();
+      const r = data.results;
+      if (r) {
+        // lv01Nm=市区町村, lv02Nm=町丁目, lv03Nm=字・番地
+        const parts = [r.lv01Nm, r.lv02Nm].filter(Boolean);
+        const place = parts.join('');
+        if (place) return formatPlace(place);
+      }
+    }
+  } catch(e) {}
+
+  // フォールバック：Nominatim
   const url = `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&accept-language=ja&zoom=16`;
   const res = await fetch(url, { headers: { 'Accept-Language': 'ja' } });
   if (!res.ok) throw new Error('API error');
   const data = await res.json();
   const a = data.address || {};
-
-  // 町・丁目・字レベルを優先
   const sub = a.quarter || a.neighbourhood || a.suburb || a.hamlet;
   if (sub && !isNonPlaceName(sub)) return formatPlace(sub);
-
-  // 道路名が路線・幹線でなければ使用
   if (a.road && !isNonPlaceName(a.road)) return formatPlace(a.road);
-
-  // フォールバック：地区・郡レベル
   const fallback = a.city_district || a.district || a.county || a.municipality;
   if (fallback && !isNonPlaceName(fallback)) return formatPlace(fallback);
-
-  // 最終フォールバック
   return formatPlace(sub || a.road || data.display_name || `${lat},${lon}`);
 }
 
@@ -1060,18 +1069,29 @@ function formatPlace(str) {
 
 // タイマー開始・停止時に自動でGPS取得（常に上書き）
 async function autoGetLocation(fieldId) {
-  if (!navigator.geolocation) return;
+  if (!navigator.geolocation) {
+    showToast('この端末はGPSに対応していません');
+    return;
+  }
+  const el = document.getElementById(fieldId);
+  if (el) { el.placeholder = '📍 取得中...'; }
   navigator.geolocation.getCurrentPosition(
     async (pos) => {
       try {
         const addr = await reverseGeocode(pos.coords.latitude, pos.coords.longitude);
-        const el = document.getElementById(fieldId);
-        el.value = addr;
-        flashField(el);
-      } catch(e) {}
+        if (el) { el.value = addr; el.placeholder = ''; flashField(el); }
+        showToast('📍 現在地を取得しました');
+      } catch(e) {
+        if (el) el.placeholder = '';
+        showToast('現在地の取得に失敗しました');
+      }
     },
-    () => {},
-    { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
+    (err) => {
+      if (el) el.placeholder = '';
+      if (err.code === 1) showToast('位置情報の許可が必要です（設定→Safari→位置情報）');
+      else showToast('現在地を取得できませんでした');
+    },
+    { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
   );
 }
 
