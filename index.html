@@ -1399,7 +1399,7 @@ function renderHistory() {
       const dayTotal = dayTrips.reduce((s,t)=>s+(t.cashFare!==undefined?t.cashFare+(t.uncollectedFare||0):(t.fare||0)),0);
       return `
         <div class="section-label">${fmtDate(date)} <span style="float:right;color:var(--success);font-size:13px;">合計 ¥${dayTotal.toLocaleString()}</span></div>
-        ${dayTrips.sort((a,b)=>(b.pickupTime||'').localeCompare(a.pickupTime||'')).map(t => tripCard(t)).join('')}
+        ${dayTrips.sort((a,b)=>tripSortKey(b) - tripSortKey(a)).map(t => tripCard(t)).join('')}
       `;
     }).join('');
     return;
@@ -1423,7 +1423,7 @@ function renderHistory() {
   document.getElementById('histNavLabel').textContent = label + (isToday ? ' 🔵 今日' : '');
 
   const dayTrips = trips.filter(t => t.date === histCurrentDate)
-                        .sort((a,b)=>(b.pickupTime||'').localeCompare(a.pickupTime||''));
+                        .sort((a,b)=>tripSortKey(b) - tripSortKey(a));
   const dayTotal = dayTrips.reduce((s,t)=>s+(t.cashFare!==undefined?t.cashFare+(t.uncollectedFare||0):(t.fare||0)),0);
   document.getElementById('histNavSub').textContent = dayTrips.length > 0
     ? `${dayTrips.length}件 ／ ¥${dayTotal.toLocaleString()}`
@@ -1643,6 +1643,15 @@ function clearHistoryFilter() {
   histShowAll = false;
   histCurrentDate = todayStr();
   renderHistory();
+}
+
+// 深夜シフト対応ソート：0〜5時台は24時以降として扱う
+function tripSortKey(t) {
+  const time = t.pickupTime || '';
+  if (!time) return 0;
+  const [h, m] = time.split(':').map(Number);
+  const mins = h * 60 + m;
+  return mins < 360 ? mins + 1440 : mins; // 0〜5:59 → 1440〜1799分
 }
 
 function fmtDate(str) {
