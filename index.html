@@ -404,7 +404,7 @@
         </div>
         <div class="stat-card accent" style="grid-column:1/-1;">
           <div class="stat-value" id="todayHourly">---</div>
-          <div class="stat-label">現在の時給（営収÷実働時間）</div>
+          <div class="stat-label">現在の時給</div>
         </div>
         <div class="stat-card">
           <div class="stat-value" id="todayAvg">¥0</div>
@@ -1350,12 +1350,12 @@ function updateTodaySummary() {
   }, 0);
 
   const totalWorkMin = jisshaMin + waitMin;
-  const hourlyWage = totalWorkMin > 0 ? Math.round(totalExTax / (totalWorkMin / 60)) : null;
+  const hourlyWage = totalWorkMin > 0 ? Math.round(totalExTax * 0.5 / (totalWorkMin / 60)) : null;
 
   document.getElementById('todaySales').textContent = `¥${totalExTax.toLocaleString()}`;
   document.getElementById('todayAvg').textContent = `¥${avgExTax.toLocaleString()}`;
   document.getElementById('todayJissha').textContent = fmtWait(jisshaMin);
-  document.getElementById('todayHourly').textContent = hourlyWage !== null ? `¥${hourlyWage.toLocaleString()}/h` : '---';
+  document.getElementById('todayHourly').textContent = hourlyWage !== null ? `¥${hourlyWage.toLocaleString()}` : '---';
 
   // 待機時間は月・水・金のみ表示
   const waitCard = document.getElementById('todayWaitCard');
