@@ -242,6 +242,12 @@
   .analysis-tabs { display:flex; gap:6px; margin-bottom:12px; }
   .analysis-tab { flex:1; padding:8px 4px; border-radius:10px; border:1.5px solid var(--border); background:white; color:var(--muted); font-size:12px; font-weight:700; cursor:pointer; text-align:center; }
   .analysis-tab.active { border-color:var(--primary); background:#e3f2fd; color:var(--primary); }
+
+  /* GO乗客の過去履歴サジェスト */
+  .pax-history-item { background:var(--bg); border-radius:8px; padding:7px 10px; margin-top:5px; font-size:12px; color:var(--text); cursor:pointer; }
+  .pax-history-item:active { background:#e3f2fd; }
+  .pax-history-item .ph-date { font-weight:700; color:var(--primary); }
+  .pax-history-item .ph-route { color:var(--muted); }
 </style>
 </head>
 <body>
@@ -289,9 +295,9 @@
       <div class="input-group">
         <label class="input-label">🚖 種別</label>
         <div class="trip-type-row">
-          <button class="type-btn haisha active" id="type-配車" onclick="selectType('配車')">配　車</button>
+          <button class="type-btn go active" id="type-GO" onclick="selectType('GO')">GO</button>
           <button class="type-btn" id="type-流し" onclick="selectType('流し')">流　し</button>
-          <button class="type-btn go" id="type-GO" onclick="selectType('GO')">GO</button>
+          <button class="type-btn haisha" id="type-配車" onclick="selectType('配車')">配　車</button>
         </div>
       </div>
 
@@ -358,9 +364,31 @@
         </div>
       </div>
 
-      <div class="input-group">
-        <label class="input-label">📝 メモ</label>
-        <input class="input-field" id="tripMemo" type="text" placeholder="任意">
+      <div class="input-group" id="goMemoGroup" style="display:none;">
+        <label class="input-label">📝 メモ（GOアプリ乗客情報）</label>
+        <div class="input-row" style="margin-bottom:6px;">
+          <div class="input-group" style="flex:1.4;margin-bottom:0;">
+            <input class="input-field" id="goPaxName" type="text" placeholder="お名前（例：田中）" autocomplete="off" oninput="onGoPaxNameInput()">
+          </div>
+          <div class="input-group" style="flex:1;margin-bottom:0;">
+            <select class="input-field" id="goPaxAge">
+              <option value="">年代</option>
+              <option value="10代">10代</option>
+              <option value="20代">20代</option>
+              <option value="30代">30代</option>
+              <option value="40代">40代</option>
+              <option value="50代">50代</option>
+              <option value="60代">60代</option>
+              <option value="70代以上">70代以上</option>
+            </select>
+          </div>
+        </div>
+        <div style="display:flex;gap:6px;">
+          <button class="pay-btn active" id="goGender-男性" onclick="selectGoGender('男性')" style="flex:1;">男性</button>
+          <button class="pay-btn" id="goGender-女性" onclick="selectGoGender('女性')" style="flex:1;">女性</button>
+        </div>
+        <input type="hidden" id="goPaxGender" value="男性">
+        <div id="goPaxHistory" style="display:none;margin-top:8px;"></div>
       </div>
 
     </div>
@@ -552,9 +580,9 @@
     <div class="input-group">
       <label class="input-label">🚖 種別</label>
       <div class="trip-type-row">
-        <button class="type-btn haisha" id="edittype-配車" onclick="selectEditType('配車')">配　車</button>
-        <button class="type-btn active" id="edittype-流し" onclick="selectEditType('流し')">流　し</button>
         <button class="type-btn go" id="edittype-GO" onclick="selectEditType('GO')">GO</button>
+        <button class="type-btn active" id="edittype-流し" onclick="selectEditType('流し')">流　し</button>
+        <button class="type-btn haisha" id="edittype-配車" onclick="selectEditType('配車')">配　車</button>
       </div>
     </div>
     <div class="input-row">
@@ -604,9 +632,30 @@
       </div>
       <input type="hidden" id="editPayMethod" value="現金">
     </div>
-    <div class="input-group">
-      <label class="input-label">📝 メモ</label>
-      <input class="input-field" id="editTripMemo" type="text" placeholder="任意">
+    <div class="input-group" id="editGoMemoGroup" style="display:none;">
+      <label class="input-label">📝 メモ（GOアプリ乗客情報）</label>
+      <div class="input-row" style="margin-bottom:6px;">
+        <div class="input-group" style="flex:1.4;margin-bottom:0;">
+          <input class="input-field" id="editGoPaxName" type="text" placeholder="お名前（例：田中）" autocomplete="off">
+        </div>
+        <div class="input-group" style="flex:1;margin-bottom:0;">
+          <select class="input-field" id="editGoPaxAge">
+            <option value="">年代</option>
+            <option value="10代">10代</option>
+            <option value="20代">20代</option>
+            <option value="30代">30代</option>
+            <option value="40代">40代</option>
+            <option value="50代">50代</option>
+            <option value="60代">60代</option>
+            <option value="70代以上">70代以上</option>
+          </select>
+        </div>
+      </div>
+      <div style="display:flex;gap:6px;">
+        <button class="pay-btn active" id="editGoGender-男性" onclick="selectEditGoGender('男性')" style="flex:1;">男性</button>
+        <button class="pay-btn" id="editGoGender-女性" onclick="selectEditGoGender('女性')" style="flex:1;">女性</button>
+      </div>
+      <input type="hidden" id="editGoPaxGender" value="男性">
     </div>
     <div class="btn-row">
       <button class="btn btn-gray" onclick="closeTripEditModal()">キャンセル</button>
@@ -962,10 +1011,7 @@ async function autoGetLocation(fieldId) {
 // 時間帯によるデフォルト種別
 // 7:30〜12:00 → 配車、12:00〜17:00 → GO、17:00〜20:00 → 配車、20:00〜 → GO
 function getDefaultType() {
-  const h = new Date().getHours();
-  if (h >= 12 && h < 17) return 'GO';
-  if (h >= 20) return 'GO';
-  return '配車';
+  return 'GO';
 }
 
 let currentTripType = getDefaultType();
@@ -980,6 +1026,67 @@ function selectType(type) {
   // 種別に応じて支払方法を自動設定
   if (type === 'GO') selectPay('GO');
   if (type === '配車' || type === '流し') selectPay('現金');
+  // GOの場合のみ乗客情報メモを表示
+  document.getElementById('goMemoGroup').style.display = (type === 'GO') ? 'block' : 'none';
+}
+
+// GOアプリ乗客情報（メモ）
+function selectGoGender(g) {
+  document.getElementById('goPaxGender').value = g;
+  ['男性','女性'].forEach(x => {
+    document.getElementById(`goGender-${x}`).className = 'pay-btn' + (x === g ? ' active' : '');
+  });
+}
+function buildGoMemo() {
+  const name = document.getElementById('goPaxName').value.trim();
+  if (!name) return '';
+  const gender = document.getElementById('goPaxGender').value;
+  const age = document.getElementById('goPaxAge').value;
+  const parts = [`${name}様`, gender];
+  if (age) parts.push(age);
+  return parts.join(' / ');
+}
+function resetGoMemo() {
+  document.getElementById('goPaxName').value = '';
+  document.getElementById('goPaxAge').value = '';
+  selectGoGender('男性');
+  const hist = document.getElementById('goPaxHistory');
+  hist.style.display = 'none';
+  hist.innerHTML = '';
+}
+
+// 名前入力中に過去のGO乗車履歴（日付・乗降場所）を候補表示
+function onGoPaxNameInput() {
+  const q = document.getElementById('goPaxName').value.trim();
+  const hist = document.getElementById('goPaxHistory');
+  if (!q) { hist.style.display = 'none'; hist.innerHTML = ''; return; }
+
+  const matches = getTrips()
+    .filter(t => t.tripType === 'GO' && t.paxName && t.paxName.includes(q))
+    .sort((a,b) => (b.date + (b.pickupTime||'')).localeCompare(a.date + (a.pickupTime||'')))
+    .slice(0, 5);
+
+  if (matches.length === 0) { hist.style.display = 'none'; hist.innerHTML = ''; return; }
+
+  hist.innerHTML = matches.map(t => {
+    const [,mm,dd] = t.date.split('-');
+    return `
+      <div class="pax-history-item" onclick="applyGoPaxHistory(${t.id})">
+        <span class="ph-date">${parseInt(mm)}/${parseInt(dd)}</span> ${t.paxName}様 ${t.paxGender||''}${t.paxAge||''}
+        <div class="ph-route">${t.pickup||'?'} → ${t.dropoff||'?'}</div>
+      </div>
+    `;
+  }).join('');
+  hist.style.display = 'block';
+}
+function applyGoPaxHistory(id) {
+  const t = getTrips().find(x => x.id === id);
+  if (!t) return;
+  document.getElementById('goPaxName').value = t.paxName || '';
+  if (t.paxGender) selectGoGender(t.paxGender);
+  if (t.paxAge) document.getElementById('goPaxAge').value = t.paxAge;
+  document.getElementById('goPaxHistory').style.display = 'none';
+  showToast(`前回: ${t.date.split('-').slice(1).map(n=>parseInt(n)).join('/')} ${t.pickup||''} → ${t.dropoff||''}`);
 }
 
 // 支払方法選択
@@ -1061,9 +1168,12 @@ function saveTrip() {
   const tip = parseInt(document.getElementById('tipAmount').value) || 0;
   const pickupTime = document.getElementById('pickupTime').value;
   const dropoffTime = document.getElementById('dropoffTime').value;
-  const memo = document.getElementById('tripMemo').value.trim();
   const passengers = parseInt(document.getElementById('passengerCount').value) || 1;
   const tripType = currentTripType;
+  const memo = tripType === 'GO' ? buildGoMemo() : '';
+  const paxName = tripType === 'GO' ? document.getElementById('goPaxName').value.trim() : '';
+  const paxGender = tripType === 'GO' ? document.getElementById('goPaxGender').value : '';
+  const paxAge = tripType === 'GO' ? document.getElementById('goPaxAge').value : '';
 
   if (!pickup && !dropoff && cashFare === 0 && uncollectedFare === 0) {
     showToast('乗降場所または料金を入力してください');
@@ -1079,18 +1189,20 @@ function saveTrip() {
     fare: cashFare + uncollectedFare, // 後方互換
     pickupTime, dropoffTime,
     payMethod, passengers, tripType, memo,
+    paxName, paxGender, paxAge,
     createdAt: new Date().toISOString()
   });
   saveTrips(trips);
 
   // フォームリセット
-  ['pickupLoc','dropoffLoc','fareAmount','tipAmount','tripMemo'].forEach(id => {
+  ['pickupLoc','dropoffLoc','fareAmount','tipAmount'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.value = '';
   });
   document.getElementById('pickupTime').value = '';
   document.getElementById('dropoffTime').value = '';
   resetPax();
+  resetGoMemo();
   selectPay('現金');
   selectType(getDefaultType());
 
@@ -1140,10 +1252,6 @@ function fmtWait(min) {
 function updateTodaySummary() {
   const today = todayStr();
   const trips = getTrips().filter(t => t.date === today);
-
-  const haisha = trips.filter(t => (t.tripType||'流し') === '配車');
-  const nashi  = trips.filter(t => (t.tripType||'流し') === '流し');
-  const goT    = trips.filter(t => (t.tripType||'流し') === 'GO');
   const sumF   = arr => arr.reduce((s,t) => s + getTripFare(t), 0);
 
   const totalSales = sumF(trips);
@@ -1177,14 +1285,6 @@ function updateTodaySummary() {
   } else {
     if (waitCard) waitCard.style.display = 'none';
   }
-
-  // 内訳
-  document.getElementById('todayHaishaFare').textContent  = `¥${exTax(sumF(haisha)).toLocaleString()}`;
-  document.getElementById('todayNashiFare').textContent   = `¥${exTax(sumF(nashi)).toLocaleString()}`;
-  document.getElementById('todayGoFare').textContent      = `¥${exTax(sumF(goT)).toLocaleString()}`;
-  document.getElementById('todayHaishaCount').textContent = `${haisha.length}件`;
-  document.getElementById('todayNashiCount').textContent  = `${nashi.length}件`;
-  document.getElementById('todayGoCount').textContent     = `${goT.length}件`;
 }
 
 // ==================== HISTORY ====================
@@ -1377,6 +1477,24 @@ function selectEditType(type) {
   });
   document.getElementById('tripEditModal').dataset.tripType = type;
   if (type === 'GO') selectEditPay('GO');
+  document.getElementById('editGoMemoGroup').style.display = (type === 'GO') ? 'block' : 'none';
+}
+
+// GOアプリ乗客情報（メモ・修正画面）
+function selectEditGoGender(g) {
+  document.getElementById('editGoPaxGender').value = g;
+  ['男性','女性'].forEach(x => {
+    document.getElementById(`editGoGender-${x}`).className = 'pay-btn' + (x === g ? ' active' : '');
+  });
+}
+function buildEditGoMemo() {
+  const name = document.getElementById('editGoPaxName').value.trim();
+  if (!name) return '';
+  const gender = document.getElementById('editGoPaxGender').value;
+  const age = document.getElementById('editGoPaxAge').value;
+  const parts = [`${name}様`, gender];
+  if (age) parts.push(age);
+  return parts.join(' / ');
 }
 
 function selectEditPay(method) {
@@ -1406,7 +1524,9 @@ function openTripEditModal(id) {
   document.getElementById('editUncollectedFare').value = trip.uncollectedFare || '';
   document.getElementById('editTipAmount').value = trip.tip || '';
   setEditPax(trip.passengers || 1);
-  document.getElementById('editTripMemo').value = trip.memo || '';
+  document.getElementById('editGoPaxName').value = (trip.tripType === 'GO') ? (trip.paxName || trip.memo || '') : '';
+  document.getElementById('editGoPaxAge').value = (trip.tripType === 'GO') ? (trip.paxAge || '') : '';
+  selectEditGoGender((trip.tripType === 'GO' && trip.paxGender) ? trip.paxGender : '男性');
   selectEditPay(trip.payMethod || '現金');
   selectEditType(trip.tripType || '流し');
   document.getElementById('tripEditModal').classList.add('open');
@@ -1437,7 +1557,10 @@ function saveTripEdit() {
     passengers: parseInt(document.getElementById('editPassengerCount').value) || 1,
     payMethod: document.getElementById('editPayMethod').value || '現金',
     tripType,
-    memo: document.getElementById('editTripMemo').value.trim(),
+    memo: tripType === 'GO' ? buildEditGoMemo() : '',
+    paxName: tripType === 'GO' ? document.getElementById('editGoPaxName').value.trim() : '',
+    paxGender: tripType === 'GO' ? document.getElementById('editGoPaxGender').value : '',
+    paxAge: tripType === 'GO' ? document.getElementById('editGoPaxAge').value : '',
     updatedAt: new Date().toISOString()
   };
   saveTrips(trips);
