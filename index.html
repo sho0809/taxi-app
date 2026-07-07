@@ -335,11 +335,11 @@
       <div class="input-group">
         <label class="input-label">👥 人員</label>
         <div style="display:flex;gap:6px;">
-          <button class="pay-btn active" id="pax-male" onclick="incrementPax('male')" style="flex:1;padding:8px 2px;font-size:13px;">🚹 男性 <b id="paxMaleCount">1</b></button>
+          <button class="pay-btn" id="pax-male" onclick="incrementPax('male')" style="flex:1;padding:8px 2px;font-size:13px;">🚹 男性 <b id="paxMaleCount">0</b></button>
           <button class="pay-btn" id="pax-female" onclick="incrementPax('female')" style="flex:1;padding:8px 2px;font-size:13px;">🚺 女性 <b id="paxFemaleCount">0</b></button>
         </div>
-        <div style="text-align:right;font-size:11px;color:var(--muted);margin-top:3px;">合計 <span id="paxTotalCount">1</span>名</div>
-        <input type="hidden" id="passengerCount" value="1">
+        <div style="text-align:right;font-size:11px;color:var(--muted);margin-top:3px;">合計 <span id="paxTotalCount">0</span>名</div>
+        <input type="hidden" id="passengerCount" value="0">
       </div>
 
       <div class="input-row">
@@ -416,6 +416,22 @@
         <div class="stat-card" id="todayWaitCard">
           <div class="stat-value" id="todayWait">0分</div>
           <div class="stat-label">待機時間計</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="todayUncollected">¥0</div>
+          <div class="stat-label">未収額</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="todayTip">¥0</div>
+          <div class="stat-label">チップ</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="todayGoCount">0件</div>
+          <div class="stat-label">GO回数</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="todayPax">0名</div>
+          <div class="stat-label">人員</div>
         </div>
       </div>
     </div>
@@ -1093,7 +1109,7 @@ function applyGoPaxHistory(id) {
 let currentPayMethod = '現金';
 
 // 人員（男性・女性ボタンをタップするたびに人数が増える。5でリセットして0に戻る）
-let paxMale = 1, paxFemale = 0;
+let paxMale = 0, paxFemale = 0;
 function incrementPax(gender) {
   if (gender === 'male') paxMale = (paxMale + 1) % 5;
   else paxFemale = (paxFemale + 1) % 5;
@@ -1108,7 +1124,7 @@ function updatePaxDisplay() {
   document.getElementById('pax-female').className = 'pay-btn' + (paxFemale > 0 ? ' active' : '');
 }
 function resetPax() {
-  paxMale = 1; paxFemale = 0;
+  paxMale = 0; paxFemale = 0;
   updatePaxDisplay();
 }
 
@@ -1272,10 +1288,19 @@ function updateTodaySummary() {
   const totalWorkMin = jisshaMin + waitMin;
   const hourlyWage = totalWorkMin > 0 ? Math.round(totalExTax * 0.5 / (totalWorkMin / 60)) : null;
 
+  const totalUncollected = trips.reduce((s,t) => s + (t.uncollectedFare||0), 0);
+  const totalTip = trips.reduce((s,t) => s + (t.tip||0), 0);
+  const goCount = trips.filter(t => (t.tripType||'流し') === 'GO').length;
+  const totalPax = trips.reduce((s,t) => s + (t.passengers||1), 0);
+
   document.getElementById('todaySales').textContent = `¥${totalExTax.toLocaleString()}`;
   document.getElementById('todayAvg').textContent = `¥${avgExTax.toLocaleString()}`;
   document.getElementById('todayJissha').textContent = fmtWait(jisshaMin);
   document.getElementById('todayHourly').textContent = hourlyWage !== null ? `¥${hourlyWage.toLocaleString()}` : '---';
+  document.getElementById('todayUncollected').textContent = `¥${totalUncollected.toLocaleString()}`;
+  document.getElementById('todayTip').textContent = `¥${totalTip.toLocaleString()}`;
+  document.getElementById('todayGoCount').textContent = `${goCount}件`;
+  document.getElementById('todayPax').textContent = `${totalPax}名`;
 
   // 待機時間は月・水・金のみ表示
   const waitCard = document.getElementById('todayWaitCard');
