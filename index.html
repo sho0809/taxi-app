@@ -1092,22 +1092,34 @@ function onGoPaxNameInput() {
   const hist = document.getElementById('goPaxHistory');
   if (!q) { hist.style.display = 'none'; hist.innerHTML = ''; return; }
 
-  const matches = getTrips()
+  const allMatches = getTrips()
     .filter(t => t.tripType === 'GO' && t.paxName && t.paxName.includes(q))
-    .sort((a,b) => (b.date + (b.pickupTime||'')).localeCompare(a.date + (a.pickupTime||'')))
-    .slice(0, 5);
+    .sort((a,b) => (b.date + (b.pickupTime||'')).localeCompare(a.date + (a.pickupTime||'')));
 
-  if (matches.length === 0) { hist.style.display = 'none'; hist.innerHTML = ''; return; }
+  if (allMatches.length === 0) { hist.style.display = 'none'; hist.innerHTML = ''; return; }
 
-  hist.innerHTML = matches.map(t => {
+  const totalFare = allMatches.reduce((s,t) => s + getTripFare(t), 0);
+  const shown = allMatches.slice(0, 5);
+  const restCount = allMatches.length - shown.length;
+
+  const summary = `<div style="font-size:12px;font-weight:700;color:var(--primary);margin-bottom:4px;">過去${allMatches.length}回のご利用（合計¥${totalFare.toLocaleString()}）</div>`;
+
+  const rows = shown.map(t => {
     const [,mm,dd] = t.date.split('-');
+    const fare = getTripFare(t);
     return `
       <div class="pax-history-item" onclick="applyGoPaxHistory(${t.id})">
-        <span class="ph-date">${parseInt(mm)}/${parseInt(dd)}</span> ${t.paxName}様 ${t.paxGender||''}${t.paxAge||''}
+        <span class="ph-date">${parseInt(mm)}/${parseInt(dd)}</span> ${t.paxName}様 ${t.paxGender||''}${t.paxAge||''}　<b>¥${fare.toLocaleString()}</b>
         <div class="ph-route">${t.pickup||'?'} → ${t.dropoff||'?'}</div>
       </div>
     `;
   }).join('');
+
+  const more = restCount > 0
+    ? `<div style="text-align:center;font-size:11px;color:var(--muted);margin-top:4px;">ほか${restCount}件</div>`
+    : '';
+
+  hist.innerHTML = summary + rows + more;
   hist.style.display = 'block';
 }
 function applyGoPaxHistory(id) {
@@ -1877,7 +1889,9 @@ function renderRecommend() {
   // 現在時刻を中心に前後1時間（3時間分）のデータから集計
   const curHour = now.getHours();
   const hours = [(curHour + 23) % 24, curHour, (curHour + 1) % 24];
-  document.getElementById('recommendRange').textContent = `${hours[0]}時〜${(hours[2] + 1) % 24}時台の過去データから算出`;
+  const rangeStart = hours[0];
+  const rangeEnd = (hours[2] + 1) % 24;
+  document.getElementById('recommendRange').textContent = `${pad(rangeStart)}:00〜${pad(rangeEnd)}:00の過去データから算出`;
 
   const trips = getTrips().filter(t => t.pickup && t.pickup.trim() !== '' && t.pickupTime);
   const matched = trips.filter(t => hours.includes(parseInt(t.pickupTime.split(':')[0])));
@@ -1891,18 +1905,21 @@ function renderRecommend() {
   const map = {};
   matched.forEach(t => {
     const loc = t.pickup.trim();
-    if (!map[loc]) map[loc] = { count: 0, total: 0, fares: [] };
+    if (!map[loc]) map[loc] = { count: 0, total: 0, fares: [], names: new Set() };
     const f = getTripFare(t);
     map[loc].count++;
     map[loc].total += f;
     if (f > 0) map[loc].fares.push(f);
+    const name = t.paxName ? `${t.paxName}様` : (t.memo || '');
+    if (name) map[loc].names.add(name);
   });
 
   const items = Object.entries(map).map(([loc, d]) => ({
     loc,
     count: d.count,
     total: d.total,
-    avg: d.fares.length ? Math.round(d.fares.reduce((s,v) => s+v, 0) / d.fares.length) : 0
+    avg: d.fares.length ? Math.round(d.fares.reduce((s,v) => s+v, 0) / d.fares.length) : 0,
+    names: Array.from(d.names)
   })).sort((a,b) => b.count - a.count);
 
   const medals = ['gold','silver','bronze'];
@@ -1912,6 +1929,7 @@ function renderRecommend() {
       <div class="loc-rank-body">
         <div class="loc-rank-name">${item.loc}</div>
         <div class="loc-rank-meta">${item.count}回 ／ 平均 ¥${item.avg.toLocaleString()}</div>
+        ${item.names.length ? `<div class="loc-rank-meta">👤 ${item.names.join('、')}</div>` : ''}
       </div>
       <div class="loc-rank-fare">¥${item.total.toLocaleString()}</div>
     </div>
