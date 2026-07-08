@@ -538,6 +538,17 @@
     </div>
   </div>
 
+  <!-- ===== PAGE: エリア（現在時刻のおすすめ） ===== -->
+  <div class="page" id="page-recommend">
+    <div class="card" style="text-align:center;">
+      <div style="font-size:13px;color:var(--muted);">現在時刻</div>
+      <div style="font-size:28px;font-weight:800;color:var(--primary);margin-top:2px;" id="recommendNow">--:--</div>
+      <div style="font-size:12px;color:var(--muted);margin-top:4px;" id="recommendRange"></div>
+    </div>
+    <div class="section-label">この時間帯にお客さんが多いエリア</div>
+    <div id="recommendList"></div>
+  </div>
+
 </div><!-- end content -->
 
 <!-- Bottom Navigation -->
@@ -553,6 +564,10 @@
   <button class="nav-btn" id="nav-stats" onclick="switchPage('stats')">
     <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 3c1.93 0 3.5 1.57 3.5 3.5S13.93 13 12 13s-3.5-1.57-3.5-3.5S10.07 6 12 6zm7 13H5v-.23c0-.62.28-1.2.76-1.58C7.47 15.82 9.64 15 12 15s4.53.82 6.24 2.19c.48.38.76.97.76 1.58V19z"/></svg>
     統計
+  </button>
+  <button class="nav-btn" id="nav-recommend" onclick="switchPage('recommend')">
+    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z"/></svg>
+    エリア
   </button>
 
 </nav>
@@ -1147,6 +1162,11 @@ function setEditPax(total) {
   editPaxFemale = 0;
   updateEditPaxDisplay();
 }
+function setEditPaxCounts(male, female) {
+  editPaxMale = male || 0;
+  editPaxFemale = female || 0;
+  updateEditPaxDisplay();
+}
 
 function selectPay(method) {
   currentPayMethod = method;
@@ -1206,6 +1226,7 @@ function saveTrip() {
     pickupTime, dropoffTime,
     payMethod, passengers, tripType, memo,
     paxName, paxGender, paxAge,
+    paxMaleCount: paxMale, paxFemaleCount: paxFemale,
     createdAt: new Date().toISOString()
   });
   saveTrips(trips);
@@ -1431,6 +1452,9 @@ function tripCard(t) {
   const pay = t.payMethod || '現金';
   const payColor = payColors[pay] || '#888';
   const pax = t.passengers || 1;
+  const paxLabel = (t.paxMaleCount !== undefined || t.paxFemaleCount !== undefined)
+    ? `${pax}名（男${t.paxMaleCount||0}・女${t.paxFemaleCount||0}）`
+    : `${pax}名`;
   const type = t.tripType || '流し';
   const typeColor = type === '配車' ? '#ff6b00' : '#1a73e8';
   const cashF = t.cashFare !== undefined ? t.cashFare : (t.fare||0);
@@ -1459,7 +1483,7 @@ function tripCard(t) {
         <div class="route-item"><span class="route-dot route-dot-end"></span>${t.dropoff||'（降車場所未設定）'}</div>
       </div>
       <div class="trip-meta">
-        <span class="meta-chip">👥 ${pax}名</span>
+        <span class="meta-chip">👥 ${paxLabel}</span>
         ${fareDetail}
         ${t.memo ? `<span class="meta-chip">📝 ${t.memo}</span>` : ''}
       </div>
@@ -1548,7 +1572,11 @@ function openTripEditModal(id) {
   document.getElementById('editCashFare').value = cf || '';
   document.getElementById('editUncollectedFare').value = trip.uncollectedFare || '';
   document.getElementById('editTipAmount').value = trip.tip || '';
-  setEditPax(trip.passengers || 1);
+  if (trip.paxMaleCount !== undefined || trip.paxFemaleCount !== undefined) {
+    setEditPaxCounts(trip.paxMaleCount || 0, trip.paxFemaleCount || 0);
+  } else {
+    setEditPax(trip.passengers || 1);
+  }
   document.getElementById('editGoPaxName').value = (trip.tripType === 'GO') ? (trip.paxName || trip.memo || '') : '';
   document.getElementById('editGoPaxAge').value = (trip.tripType === 'GO') ? (trip.paxAge || '') : '';
   selectEditGoGender((trip.tripType === 'GO' && trip.paxGender) ? trip.paxGender : '男性');
@@ -1580,6 +1608,7 @@ function saveTripEdit() {
     cashFare, uncollectedFare, tip,
     fare: cashFare + uncollectedFare, // 後方互換
     passengers: parseInt(document.getElementById('editPassengerCount').value) || 1,
+    paxMaleCount: editPaxMale, paxFemaleCount: editPaxFemale,
     payMethod: document.getElementById('editPayMethod').value || '現金',
     tripType,
     memo: tripType === 'GO' ? buildEditGoMemo() : '',
@@ -1840,6 +1869,55 @@ function renderLocationRanking() {
   `).join('');
 }
 
+// ==================== エリア（現在時刻のおすすめ） ====================
+function renderRecommend() {
+  const now = new Date();
+  document.getElementById('recommendNow').textContent = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
+
+  // 現在時刻を中心に前後1時間（3時間分）のデータから集計
+  const curHour = now.getHours();
+  const hours = [(curHour + 23) % 24, curHour, (curHour + 1) % 24];
+  document.getElementById('recommendRange').textContent = `${hours[0]}時〜${(hours[2] + 1) % 24}時台の過去データから算出`;
+
+  const trips = getTrips().filter(t => t.pickup && t.pickup.trim() !== '' && t.pickupTime);
+  const matched = trips.filter(t => hours.includes(parseInt(t.pickupTime.split(':')[0])));
+
+  if (matched.length === 0) {
+    document.getElementById('recommendList').innerHTML =
+      `<div style="text-align:center;padding:40px;color:var(--muted);">この時間帯のデータがまだありません<br><small>記録を重ねると表示されます</small></div>`;
+    return;
+  }
+
+  const map = {};
+  matched.forEach(t => {
+    const loc = t.pickup.trim();
+    if (!map[loc]) map[loc] = { count: 0, total: 0, fares: [] };
+    const f = getTripFare(t);
+    map[loc].count++;
+    map[loc].total += f;
+    if (f > 0) map[loc].fares.push(f);
+  });
+
+  const items = Object.entries(map).map(([loc, d]) => ({
+    loc,
+    count: d.count,
+    total: d.total,
+    avg: d.fares.length ? Math.round(d.fares.reduce((s,v) => s+v, 0) / d.fares.length) : 0
+  })).sort((a,b) => b.count - a.count);
+
+  const medals = ['gold','silver','bronze'];
+  document.getElementById('recommendList').innerHTML = items.slice(0,10).map((item, i) => `
+    <div class="loc-rank-item">
+      <div class="loc-rank-num ${medals[i]||''}">${i+1}</div>
+      <div class="loc-rank-body">
+        <div class="loc-rank-name">${item.loc}</div>
+        <div class="loc-rank-meta">${item.count}回 ／ 平均 ¥${item.avg.toLocaleString()}</div>
+      </div>
+      <div class="loc-rank-fare">¥${item.total.toLocaleString()}</div>
+    </div>
+  `).join('');
+}
+
 // カスタム締め日（指定期間）
 // カスタム締め日（2026年度）
 const CUSTOM_PERIODS = [
@@ -1981,12 +2059,13 @@ function getWeekStart() {
 
 // ==================== NAVIGATION ====================
 function switchPage(page) {
-  ['record','history','stats'].forEach(p => {
+  ['record','history','stats','recommend'].forEach(p => {
     document.getElementById(`page-${p}`).className = 'page' + (p === page ? ' active' : '');
     document.getElementById(`nav-${p}`).className = 'nav-btn' + (p === page ? ' active' : '');
   });
   if (page === 'history') renderHistory();
   if (page === 'stats') renderStats();
+  if (page === 'recommend') renderRecommend();
 }
 
 // ==================== HELPERS ====================
@@ -2041,7 +2120,11 @@ function updateHeader() {
 
 updateHeader();
 updateTodaySummary();
-setInterval(() => { updateHeader(); updateTodaySummary(); }, 60000);
+setInterval(() => {
+  updateHeader();
+  updateTodaySummary();
+  if (document.getElementById('page-recommend').classList.contains('active')) renderRecommend();
+}, 60000);
 selectType(getDefaultType()); // 起動時の種別を時間帯で設定
 
 // PWA Service Worker registration
