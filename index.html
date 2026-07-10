@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+  <!DOCTYPE html>
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
@@ -1365,11 +1365,11 @@ function renderHistory() {
     const grouped = {};
     trips.forEach(t => { if (!grouped[t.date]) grouped[t.date] = []; grouped[t.date].push(t); });
     el.innerHTML = Object.keys(grouped).sort((a,b)=>b.localeCompare(a)).map(date => {
-      const dayTrips = grouped[date];
+      const dayTrips = grouped[date].sort((a,b)=>tripSortKey(b) - tripSortKey(a));
       const dayTotal = dayTrips.reduce((s,t)=>s+(t.cashFare!==undefined?t.cashFare+(t.uncollectedFare||0):(t.fare||0)),0);
       return `
         <div class="section-label">${fmtDate(date)} <span style="float:right;color:var(--success);font-size:13px;">合計 ¥${dayTotal.toLocaleString()}</span></div>
-        ${dayTrips.sort((a,b)=>tripSortKey(b) - tripSortKey(a)).map(t => tripCard(t)).join('')}
+        ${dayTrips.map((t,i) => tripCard(t, dayTrips[i+1])).join('')}
       `;
     }).join('');
     return;
@@ -1406,7 +1406,7 @@ function renderHistory() {
     el.innerHTML = `<div class="empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 8v4m0 4h.01"/></svg><p>この日の記録はありません</p></div>`;
     return;
   }
-  el.innerHTML = dayTrips.map(t => tripCard(t)).join('');
+  el.innerHTML = dayTrips.map((t,i) => tripCard(t, dayTrips[i+1])).join('');
 }
 
 function histNavPrev() {
@@ -1458,8 +1458,11 @@ function histPickDate(val) {
   renderHistory();
 }
 
-function tripCard(t) {
+function tripCard(t, prevTrip) {
   const duration = t.pickupTime && t.dropoffTime ? calcDuration(t.pickupTime, t.dropoffTime) : '';
+  const gapLabel = (prevTrip && prevTrip.date === t.date && prevTrip.dropoffTime && t.pickupTime)
+    ? calcDuration(prevTrip.dropoffTime, t.pickupTime)
+    : '';
   const payColors = {GO:'#ff6b00', PayPay:'#e00', クレジット:'#34a853', 現金:'#1a73e8', 'd払い':'#b00068', その他:'#888'};
   const pay = t.payMethod || '現金';
   const payColor = payColors[pay] || '#888';
@@ -1497,6 +1500,7 @@ function tripCard(t) {
       <div class="trip-meta">
         <span class="meta-chip">👥 ${paxLabel}</span>
         ${fareDetail}
+        ${gapLabel ? `<span class="meta-chip">⏳ 前回降車から${gapLabel}</span>` : ''}
         ${t.memo ? `<span class="meta-chip">📝 ${t.memo}</span>` : ''}
       </div>
       <div class="trip-actions">
@@ -1902,38 +1906,31 @@ function renderRecommend() {
     return;
   }
 
-  const map = {};
-  matched.forEach(t => {
-    const loc = t.pickup.trim();
-    if (!map[loc]) map[loc] = { count: 0, total: 0, fares: [], names: new Set() };
-    const f = getTripFare(t);
-    map[loc].count++;
-    map[loc].total += f;
-    if (f > 0) map[loc].fares.push(f);
-    const name = t.paxName ? `${t.paxName}様` : (t.memo || '');
-    if (name) map[loc].names.add(name);
+  // 窓をまたぐ場合（例: 23時〜1時）も正しい時系列で並ぶよう、hoursの並び順を基準にする
+  const hourOrder = {};
+  hours.forEach((h, idx) => { hourOrder[h] = idx; });
+  const sorted = matched.slice().sort((a,b) => {
+    const [ah, am] = a.pickupTime.split(':').map(Number);
+    const [bh, bm] = b.pickupTime.split(':').map(Number);
+    return (hourOrder[ah]*60 + am) - (hourOrder[bh]*60 + bm);
   });
 
-  const items = Object.entries(map).map(([loc, d]) => ({
-    loc,
-    count: d.count,
-    total: d.total,
-    avg: d.fares.length ? Math.round(d.fares.reduce((s,v) => s+v, 0) / d.fares.length) : 0,
-    names: Array.from(d.names)
-  })).sort((a,b) => b.count - a.count);
-
-  const medals = ['gold','silver','bronze'];
-  document.getElementById('recommendList').innerHTML = items.slice(0,10).map((item, i) => `
-    <div class="loc-rank-item">
-      <div class="loc-rank-num ${medals[i]||''}">${i+1}</div>
-      <div class="loc-rank-body">
-        <div class="loc-rank-name">${item.loc}</div>
-        <div class="loc-rank-meta">${item.count}回 ／ 平均 ¥${item.avg.toLocaleString()}</div>
-        ${item.names.length ? `<div class="loc-rank-meta">👤 ${item.names.join('、')}</div>` : ''}
+  document.getElementById('recommendList').innerHTML = sorted.map(t => {
+    const [,mm,dd] = t.date.split('-');
+    const name = t.paxName ? `${t.paxName}様` : '';
+    const fare = getTripFare(t);
+    const metaParts = [`${parseInt(mm)}/${parseInt(dd)}`];
+    if (name) metaParts.push(`👤 ${name}`);
+    return `
+      <div class="loc-rank-item">
+        <div class="loc-rank-body">
+          <div class="loc-rank-name">${t.pickupTime}　${t.pickup.trim()}</div>
+          <div class="loc-rank-meta">${metaParts.join('　／　')}</div>
+        </div>
+        <div class="loc-rank-fare">¥${fare.toLocaleString()}</div>
       </div>
-      <div class="loc-rank-fare">¥${item.total.toLocaleString()}</div>
-    </div>
-  `).join('');
+    `;
+  }).join('');
 }
 
 // カスタム締め日（指定期間）
