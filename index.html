@@ -211,6 +211,7 @@
   .type-btn { flex: 1; padding: 11px 4px; border-radius: 12px; border: 1.5px solid var(--border); background: white; color: var(--muted); font-size: 14px; font-weight: 700; cursor: pointer; text-align: center; transition: all 0.15s; }
   .type-btn.active { border-color: var(--primary); background: #e3f2fd; color: var(--primary); }
   .type-btn.active.haisha { border-color: #ff6b00; background: #fff3e0; color: #ff6b00; }
+  .type-btn.active.go { border-color: #00a152; background: #e3f9ec; color: #00a152; }
   .type-btn:active { transform: scale(0.97); }
 
   /* GPS button */
@@ -248,6 +249,15 @@
   .pax-history-item:active { background:#e3f2fd; }
   .pax-history-item .ph-date { font-weight:700; color:var(--primary); }
   .pax-history-item .ph-route { color:var(--muted); }
+
+  /* 予定タイムライン */
+  .sched-item { background:white; border-radius:12px; padding:12px 14px; margin-bottom:8px; box-shadow:0 1px 4px rgba(0,0,0,0.07); border-left:4px solid var(--border); }
+  .sched-item.vacant { background:var(--bg); box-shadow:none; border-left-color:#bbb; }
+  .sched-time { font-size:13px; font-weight:700; color:var(--text); }
+  .sched-time .sched-dur { font-weight:600; color:var(--muted); font-size:12px; }
+  .sched-body { font-size:13px; color:var(--text); margin-top:4px; }
+  .sched-item.vacant .sched-body { color:var(--muted); }
+  .sched-type-badge { display:inline-block; padding:2px 8px; border-radius:6px; font-weight:700; font-size:12px; margin-right:6px; }
 </style>
 </head>
 <body>
@@ -539,6 +549,22 @@
     <div id="recommendList"></div>
   </div>
 
+  <!-- ===== PAGE: 予定（本日の実車・空車タイムライン） ===== -->
+  <div class="page" id="page-schedule">
+    <div class="stat-grid">
+      <div class="stat-card">
+        <div class="stat-value" id="schedJisshaTotal">0分</div>
+        <div class="stat-label">実車時間（乗客あり）</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="schedWaitTotal">0分</div>
+        <div class="stat-label">空車時間</div>
+      </div>
+    </div>
+    <div class="section-label">本日のタイムライン</div>
+    <div id="scheduleList"></div>
+  </div>
+
 </div><!-- end content -->
 
 <!-- Bottom Navigation -->
@@ -558,6 +584,10 @@
   <button class="nav-btn" id="nav-recommend" onclick="switchPage('recommend')">
     <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z"/></svg>
     エリア
+  </button>
+  <button class="nav-btn" id="nav-schedule" onclick="switchPage('schedule')">
+    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></svg>
+    予定
   </button>
 
 </nav>
@@ -1461,7 +1491,8 @@ function tripCard(t, prevTrip) {
     ? `${pax}名（男${t.paxMaleCount||0}・女${t.paxFemaleCount||0}）`
     : `${pax}名`;
   const type = t.tripType || '流し';
-  const typeColor = type === '配車' ? '#ff6b00' : '#1a73e8';
+  const typeColors = { '配車': '#ff6b00', 'GO': '#00a152', '流し': '#1a73e8' };
+  const typeColor = typeColors[type] || '#1a73e8';
   const cashF = t.cashFare !== undefined ? t.cashFare : (t.fare||0);
   const uncollF = t.uncollectedFare || 0;
   const tip = t.tip || 0;
@@ -1835,21 +1866,108 @@ function renderRecommend() {
   });
 
   const weekdays = ['日','月','火','水','木','金','土'];
+  const typeColors = { '配車': '#ff6b00', 'GO': '#00a152', '流し': '#1a73e8' };
   document.getElementById('recommendList').innerHTML = sorted.map(t => {
     const [,mm,dd] = t.date.split('-');
     const dow = weekdays[new Date(t.date + 'T00:00:00').getDay()];
     const name = t.paxName ? `${t.paxName}様` : '';
     const type = t.tripType || '流し';
+    const typeColor = typeColors[type] || '#1a73e8';
     const fare = getTripFare(t);
-    const metaParts = [`${parseInt(mm)}/${parseInt(dd)}(${dow})`, type];
-    if (name) metaParts.push(`👤 ${name}`);
     return `
       <div class="loc-rank-item">
         <div class="loc-rank-body">
           <div class="loc-rank-name">${t.pickupTime}　${t.pickup.trim()}</div>
-          <div class="loc-rank-meta">${metaParts.join('　／　')}</div>
+          <div class="loc-rank-meta">
+            <span style="display:inline-block;padding:2px 8px;border-radius:6px;font-weight:700;background:${typeColor}22;color:${typeColor};margin-right:6px;">${type}</span>
+            ${parseInt(mm)}/${parseInt(dd)}(${dow})${name ? `　👤 ${name}` : ''}
+          </div>
         </div>
         <div class="loc-rank-fare">¥${fare.toLocaleString()}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+// ==================== 予定（本日の実車・空車タイムライン） ====================
+function renderSchedule() {
+  const date = todayStr();
+  const trips = getTrips()
+    .filter(t => t.date === date && t.pickupTime && t.dropoffTime)
+    .sort((a,b) => tripSortKey(a) - tripSortKey(b));
+
+  const shiftStart = new Date(date + 'T07:30:00');
+  const savedEnd = getDayEndTime(date);
+  const now = new Date();
+  const endTime = savedEnd || now;
+  const isOngoing = !savedEnd;
+
+  const jisshaMin = trips.reduce((s,t) => {
+    const [ph,pm] = t.pickupTime.split(':').map(Number);
+    const [dh,dm] = t.dropoffTime.split(':').map(Number);
+    let diff = (dh*60+dm) - (ph*60+pm);
+    if (diff < 0) diff += 24*60;
+    return s + (diff > 0 ? diff : 0);
+  }, 0);
+  document.getElementById('schedJisshaTotal').textContent = fmtWait(jisshaMin);
+  document.getElementById('schedWaitTotal').textContent = fmtWait(calcWaitMinutes(date));
+
+  if (now < shiftStart && trips.length === 0) {
+    document.getElementById('scheduleList').innerHTML = emptyState('まだ業務開始前です');
+    return;
+  }
+
+  // HH:MM文字列をDateに変換。深夜をまたぐ場合はcursorを基準に日をずらす
+  let cursor = shiftStart;
+  function toDate(timeStr) {
+    const d = new Date(date + 'T' + timeStr + ':00');
+    while (d < cursor) d.setDate(d.getDate() + 1);
+    return d;
+  }
+
+  const segments = [];
+  trips.forEach(t => {
+    const p = toDate(t.pickupTime);
+    let d = toDate(t.dropoffTime);
+    if (d < p) d.setDate(d.getDate() + 1);
+    if (p > cursor) segments.push({ type: 'vacant', start: cursor, end: p });
+    segments.push({ type: 'occupied', start: p, end: d, trip: t });
+    if (d > cursor) cursor = d;
+  });
+  if (endTime > cursor) {
+    segments.push({ type: 'vacant', start: cursor, end: endTime, ongoing: isOngoing });
+  }
+
+  if (segments.length === 0) {
+    document.getElementById('scheduleList').innerHTML = emptyState('本日の記録がありません');
+    return;
+  }
+
+  const typeColors = { '配車': '#ff6b00', 'GO': '#00a152', '流し': '#1a73e8' };
+  const fmtHM = d => `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  const diffMin = (a,b) => Math.max(0, Math.round((b-a)/60000));
+
+  document.getElementById('scheduleList').innerHTML = segments.map(seg => {
+    const durMin = diffMin(seg.start, seg.end);
+    if (seg.type === 'occupied') {
+      const t = seg.trip;
+      const type = t.tripType || '流し';
+      const typeColor = typeColors[type] || '#1a73e8';
+      const fare = getTripFare(t);
+      return `
+        <div class="sched-item" style="border-left-color:${typeColor};">
+          <div class="sched-time">🚕 ${fmtHM(seg.start)}〜${fmtHM(seg.end)} <span class="sched-dur">（${fmtWait(durMin)}）</span></div>
+          <div class="sched-body">
+            <span class="sched-type-badge" style="background:${typeColor}22;color:${typeColor};">${type}</span>
+            ${t.pickup||'（乗車場所未設定）'} → ${t.dropoff||'（降車場所未設定）'}　¥${fare.toLocaleString()}
+          </div>
+        </div>
+      `;
+    }
+    return `
+      <div class="sched-item vacant">
+        <div class="sched-time">🅿️ ${fmtHM(seg.start)}〜${seg.ongoing ? '現在' : fmtHM(seg.end)} <span class="sched-dur">（${fmtWait(durMin)}${seg.ongoing ? '経過' : ''}）</span></div>
+        <div class="sched-body">空車</div>
       </div>
     `;
   }).join('');
@@ -1996,13 +2114,14 @@ function getWeekStart() {
 
 // ==================== NAVIGATION ====================
 function switchPage(page) {
-  ['record','history','stats','recommend'].forEach(p => {
+  ['record','history','stats','recommend','schedule'].forEach(p => {
     document.getElementById(`page-${p}`).className = 'page' + (p === page ? ' active' : '');
     document.getElementById(`nav-${p}`).className = 'nav-btn' + (p === page ? ' active' : '');
   });
   if (page === 'history') renderHistory();
   if (page === 'stats') renderStats();
   if (page === 'recommend') renderRecommend();
+  if (page === 'schedule') renderSchedule();
 }
 
 // ==================== HELPERS ====================
@@ -2061,6 +2180,7 @@ setInterval(() => {
   updateHeader();
   updateTodaySummary();
   if (document.getElementById('page-recommend').classList.contains('active')) renderRecommend();
+  if (document.getElementById('page-schedule').classList.contains('active')) renderSchedule();
 }, 60000);
 selectType(getDefaultType()); // 起動時の種別を時間帯で設定
 
