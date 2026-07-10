@@ -1,4 +1,4 @@
-  <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
@@ -461,16 +461,6 @@
       </div>
     </div>
 
-    <button class="export-btn" onclick="exportDailyReport()" style="margin-bottom:8px;border-color:#34a853;color:#34a853;">
-      <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
-      日報用エクスポート（Excel貼付用）
-    </button>
-    <button class="export-btn" onclick="exportCSV()">
-      <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
-      CSVでエクスポート（全データ）
-    </button>
-
-    <div style="height:10px;"></div>
     <div id="historyList"></div>
   </div>
 
@@ -1665,85 +1655,6 @@ function fmtDate(str) {
   return `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日（${days[d.getDay()]}）`;
 }
 
-// ==================== CSV EXPORT ====================
-function exportCSV() {
-  const trips = getTrips();
-  if (trips.length === 0) { showToast('データがありません'); return; }
-  const header = ['日付','乗車時刻','降車時刻','乗車場所','降車場所','料金','メモ'];
-  const rows = trips.map(t => [t.date, t.pickupTime||'', t.dropoffTime||'', t.pickup||'', t.dropoff||'', t.fare||0, t.memo||'']);
-  const csv = [header, ...rows].map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
-  downloadCSV(csv, `taxi_log_${todayStr()}.csv`);
-}
-
-// スプレッドシート「タクシー営収 年間管理表」の青セル対応エクスポート
-function exportDailyReport() {
-  const filterDate = (histShowAll ? todayStr() : histCurrentDate) || todayStr();
-  const trips = getTrips().filter(t => t.date === filterDate);
-  if (trips.length === 0) { showToast(`${filterDate} のデータがありません`); return; }
-
-  const sorted = trips.slice().reverse();
-
-  // 支払方法別集計
-  const byPay = (method) => sorted.filter(t => (t.payMethod||'現金') === method);
-  const sumFare = (arr) => arr.reduce((s,t) => s+(t.fare||0), 0);
-  const totalFare   = sumFare(sorted);
-  const cashTrips   = byPay('現金');
-  const goTrips     = byPay('GO');
-  const paypayTrips = byPay('PayPay');
-  const creditTrips = byPay('クレジット');
-  const otherTrips  = byPay('その他');
-  const totalPax    = sorted.reduce((s,t) => s+(t.passengers||1), 0);
-  const avgFare     = sorted.length ? Math.round(totalFare / sorted.length) : 0;
-
-  // ── Section 1: 日別サマリー（スプレッドシートの青セル転記用）──
-  const summary = [
-    ['■ スプレッドシート転記用サマリー', `対象日: ${filterDate}`],
-    ['項目','値','スプレッドシート対応列'],
-    ['営収（合計）', totalFare, '営収 列'],
-    ['件数', sorted.length, '件数 列'],
-    ['1日平均', avgFare, '1日平均 列'],
-    ['乗客数', totalPax, '乗客数 列'],
-    ['現金 件数', cashTrips.length, '現金(回数)列'],
-    ['現金 金額', sumFare(cashTrips), '現金(売り)列'],
-    ['GO 件数', goTrips.length, 'GO(回数)列'],
-    ['GO 金額', sumFare(goTrips), 'GO(売り)列'],
-    ['PayPay 件数', paypayTrips.length, 'PayPay列'],
-    ['PayPay 金額', sumFare(paypayTrips), 'PayPay(売り)列'],
-    ['クレジット 件数', creditTrips.length, 'クレジット列'],
-    ['クレジット 金額', sumFare(creditTrips), 'クレジット(売り)列'],
-    ['その他 金額', sumFare(otherTrips), 'その他列'],
-    [],
-    // ── Section 2: 個別乗降記録 ──
-    ['■ 個別乗降記録'],
-    ['回数','乗車場所','降車場所','乗車時刻','降車時刻','人員','料金','支払方法','メモ'],
-    ...sorted.map((t,i) => [
-      i+1, t.pickup||'', t.dropoff||'',
-      t.pickupTime||'', t.dropoffTime||'',
-      t.passengers||1, t.fare||0,
-      t.payMethod||'現金', t.memo||''
-    ]),
-    [],
-    ['合計','','','','', totalPax, totalFare,'','']
-  ];
-
-  const csv = summary.map(r =>
-    r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')
-  ).join('\n');
-  downloadCSV(csv, `日報_${filterDate}.csv`);
-  showToast(`${filterDate} の日報データをエクスポートしました ✓`);
-}
-
-function downloadCSV(csv, filename) {
-  const bom = '\uFEFF';
-  const blob = new Blob([bom+csv], {type:'text/csv;charset=utf-8;'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  a.click();
-  URL.revokeObjectURL(url);
-}
-
 // ==================== STATS ====================
 let currentStatTab = 'day';
 
@@ -1890,15 +1801,26 @@ function renderRecommend() {
   const now = new Date();
   document.getElementById('recommendNow').textContent = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
 
-  // 現在時刻を中心に前後1時間（3時間分）のデータから集計
+  // 現在時刻から先2時間（3時間分）のデータから集計
   const curHour = now.getHours();
-  const hours = [(curHour + 23) % 24, curHour, (curHour + 1) % 24];
+  const nowMin = now.getMinutes();
+  const hours = [curHour, (curHour + 1) % 24, (curHour + 2) % 24];
   const rangeStart = hours[0];
   const rangeEnd = (hours[2] + 1) % 24;
   document.getElementById('recommendRange').textContent = `${pad(rangeStart)}:00〜${pad(rangeEnd)}:00の過去データから算出`;
 
+  // 窓をまたぐ場合（例: 23時〜1時）も正しい時系列で並ぶよう、hoursの並び順を基準にする
+  const hourOrder = {};
+  hours.forEach((h, idx) => { hourOrder[h] = idx; });
+  const nowKey = nowMin; // curHourのhourOrderは0なので現在時刻のキーはそのまま分
+
   const trips = getTrips().filter(t => t.pickup && t.pickup.trim() !== '' && t.pickupTime);
-  const matched = trips.filter(t => hours.includes(parseInt(t.pickupTime.split(':')[0])));
+  const matched = trips.filter(t => {
+    const h = parseInt(t.pickupTime.split(':')[0]);
+    if (!hours.includes(h)) return false;
+    const m = parseInt(t.pickupTime.split(':')[1]);
+    return (hourOrder[h]*60 + m) >= nowKey; // 現在時刻以降のみ
+  });
 
   if (matched.length === 0) {
     document.getElementById('recommendList').innerHTML =
@@ -1906,20 +1828,20 @@ function renderRecommend() {
     return;
   }
 
-  // 窓をまたぐ場合（例: 23時〜1時）も正しい時系列で並ぶよう、hoursの並び順を基準にする
-  const hourOrder = {};
-  hours.forEach((h, idx) => { hourOrder[h] = idx; });
   const sorted = matched.slice().sort((a,b) => {
     const [ah, am] = a.pickupTime.split(':').map(Number);
     const [bh, bm] = b.pickupTime.split(':').map(Number);
     return (hourOrder[ah]*60 + am) - (hourOrder[bh]*60 + bm);
   });
 
+  const weekdays = ['日','月','火','水','木','金','土'];
   document.getElementById('recommendList').innerHTML = sorted.map(t => {
     const [,mm,dd] = t.date.split('-');
+    const dow = weekdays[new Date(t.date + 'T00:00:00').getDay()];
     const name = t.paxName ? `${t.paxName}様` : '';
+    const type = t.tripType || '流し';
     const fare = getTripFare(t);
-    const metaParts = [`${parseInt(mm)}/${parseInt(dd)}`];
+    const metaParts = [`${parseInt(mm)}/${parseInt(dd)}(${dow})`, type];
     if (name) metaParts.push(`👤 ${name}`);
     return `
       <div class="loc-rank-item">
