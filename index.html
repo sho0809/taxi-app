@@ -403,49 +403,6 @@
 
     </div>
 
-    <!-- Today Summary -->
-    <div class="card">
-      <div class="card-title">本日サマリー</div>
-      <div class="stat-grid">
-        <div class="stat-card accent" style="grid-column:1/-1;">
-          <div class="stat-value" id="todaySales">¥0</div>
-          <div class="stat-label">本日営収額</div>
-        </div>
-        <div class="stat-card accent" style="grid-column:1/-1;">
-          <div class="stat-value" id="todayHourly">---</div>
-          <div class="stat-label">現在の時給</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-value" id="todayAvg">¥0</div>
-          <div class="stat-label">平均料金</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-value" id="todayJissha">0分</div>
-          <div class="stat-label">実車時間計</div>
-        </div>
-        <div class="stat-card" id="todayWaitCard">
-          <div class="stat-value" id="todayWait">0分</div>
-          <div class="stat-label">待機時間計</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-value" id="todayUncollected">¥0</div>
-          <div class="stat-label">未収額</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-value" id="todayTip">¥0</div>
-          <div class="stat-label">チップ</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-value" id="todayGoCount">0件</div>
-          <div class="stat-label">GO回数</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-value" id="todayPax">0名</div>
-          <div class="stat-label">人員</div>
-        </div>
-      </div>
-    </div>
-
     <!-- 業務終了ボタン -->
     <button class="btn" id="btnEndDay" onclick="endDay()" style="background:#4a4a4a;color:white;font-size:15px;margin-bottom:8px;">
       🏁 本日の業務を終了する
@@ -565,6 +522,51 @@
     <div id="scheduleList"></div>
   </div>
 
+  <!-- ===== PAGE: サマリー（本日サマリー） ===== -->
+  <div class="page" id="page-summary">
+    <div class="card">
+      <div class="card-title">本日サマリー</div>
+      <div class="stat-grid">
+        <div class="stat-card accent" style="grid-column:1/-1;">
+          <div class="stat-value" id="todaySales">¥0</div>
+          <div class="stat-label">本日営収額</div>
+        </div>
+        <div class="stat-card accent" style="grid-column:1/-1;">
+          <div class="stat-value" id="todayHourly">---</div>
+          <div class="stat-label">現在の時給</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="todayAvg">¥0</div>
+          <div class="stat-label">平均料金</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="todayJissha">0分</div>
+          <div class="stat-label">実車時間計</div>
+        </div>
+        <div class="stat-card" id="todayWaitCard">
+          <div class="stat-value" id="todayWait">0分</div>
+          <div class="stat-label">待機時間計</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="todayUncollected">¥0</div>
+          <div class="stat-label">未収額</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="todayTip">¥0</div>
+          <div class="stat-label">チップ</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="todayGoCount">0件</div>
+          <div class="stat-label">GO回数</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="todayPax">0名</div>
+          <div class="stat-label">人員</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
 </div><!-- end content -->
 
 <!-- Bottom Navigation -->
@@ -588,6 +590,10 @@
   <button class="nav-btn" id="nav-schedule" onclick="switchPage('schedule')">
     <svg viewBox="0 0 24 24" fill="currentColor"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></svg>
     予定
+  </button>
+  <button class="nav-btn" id="nav-summary" onclick="switchPage('summary')">
+    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-9 14H7v-7h3v7zm5 0h-3V7h3v10zm5 0h-3v-4h3v4z"/></svg>
+    サマリー
   </button>
 
 </nav>
@@ -1870,7 +1876,7 @@ function renderRecommend() {
   document.getElementById('recommendList').innerHTML = sorted.map(t => {
     const [,mm,dd] = t.date.split('-');
     const dow = weekdays[new Date(t.date + 'T00:00:00').getDay()];
-    const name = t.paxName ? `${t.paxName}様` : '';
+    const name = t.paxName ? `${t.paxName}様` : (t.memo ? t.memo.split(' / ')[0] : '');
     const type = t.tripType || '流し';
     const typeColor = typeColors[type] || '#1a73e8';
     const fare = getTripFare(t);
@@ -2114,7 +2120,7 @@ function getWeekStart() {
 
 // ==================== NAVIGATION ====================
 function switchPage(page) {
-  ['record','history','stats','recommend','schedule'].forEach(p => {
+  ['record','history','stats','recommend','schedule','summary'].forEach(p => {
     document.getElementById(`page-${p}`).className = 'page' + (p === page ? ' active' : '');
     document.getElementById(`nav-${p}`).className = 'nav-btn' + (p === page ? ' active' : '');
   });
