@@ -1883,7 +1883,7 @@ function renderRecommend() {
     return `
       <div class="loc-rank-item">
         <div class="loc-rank-body">
-          <div class="loc-rank-name">${t.pickupTime}　${t.pickup.trim()}</div>
+          <div class="loc-rank-name">${t.pickupTime}　${t.pickup.trim()}${t.dropoff && t.dropoff.trim() ? ` → ${t.dropoff.trim()}` : ''}</div>
           <div class="loc-rank-meta">
             <span style="display:inline-block;padding:2px 8px;border-radius:6px;font-weight:700;background:${typeColor}22;color:${typeColor};margin-right:6px;">${type}</span>
             ${parseInt(mm)}/${parseInt(dd)}(${dow})${name ? `　👤 ${name}` : ''}
