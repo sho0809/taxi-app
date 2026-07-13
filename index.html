@@ -211,7 +211,7 @@
   .type-btn { flex: 1; padding: 11px 4px; border-radius: 12px; border: 1.5px solid var(--border); background: white; color: var(--muted); font-size: 14px; font-weight: 700; cursor: pointer; text-align: center; transition: all 0.15s; }
   .type-btn.active { border-color: var(--primary); background: #e3f2fd; color: var(--primary); }
   .type-btn.active.haisha { border-color: #ff6b00; background: #fff3e0; color: #ff6b00; }
-  .type-btn.active.go { border-color: #00a152; background: #e3f9ec; color: #00a152; }
+  .type-btn.active.nashi { border-color: #00a152; background: #e3f9ec; color: #00a152; }
   .type-btn:active { transform: scale(0.97); }
 
   /* GPS button */
@@ -402,11 +402,6 @@
       </div>
 
     </div>
-
-    <!-- 業務終了ボタン -->
-    <button class="btn" id="btnEndDay" onclick="endDay()" style="background:#4a4a4a;color:white;font-size:15px;margin-bottom:8px;">
-      🏁 本日の業務を終了する
-    </button>
   </div>
 
   <!-- ===== PAGE: 履歴 ===== -->
@@ -457,10 +452,6 @@
           <div class="stat-value" id="statAvg">¥0</div>
           <div class="stat-label">平均料金</div>
         </div>
-        <div class="stat-card" id="statWaitCard">
-          <div class="stat-value" id="statWait">0分</div>
-          <div class="stat-label">待機時間計</div>
-        </div>
         <div class="stat-card">
           <div class="stat-value" id="statDrive">0分</div>
           <div class="stat-label">実車時間計</div>
@@ -502,7 +493,6 @@
       <div style="font-size:28px;font-weight:800;color:var(--primary);margin-top:2px;" id="recommendNow">--:--</div>
       <div style="font-size:12px;color:var(--muted);margin-top:4px;" id="recommendRange"></div>
     </div>
-    <div class="section-label">この時間帯にお客さんが多いエリア</div>
     <div id="recommendList"></div>
   </div>
 
@@ -597,18 +587,6 @@
   </button>
 
 </nav>
-
-<!-- 業務終了モーダル -->
-<div class="modal-overlay" id="endDayModal">
-  <div class="modal">
-    <div class="modal-handle"></div>
-    <div class="modal-title" style="text-align:center;">🏁 本日の業務終了</div>
-    <div id="endDayContent"></div>
-    <div style="margin-top:16px;">
-      <button class="btn btn-primary" onclick="closeEndDayModal()">閉じる</button>
-    </div>
-  </div>
-</div>
 
 <!-- Trip Edit Modal -->
 <div class="modal-overlay" id="tripEditModal">
@@ -739,13 +717,6 @@ function getDayEndTime(date) {
     return data[date] ? new Date(data[date]) : null;
   } catch(e) { return null; }
 }
-function saveDayEndTime(date, time) {
-  try {
-    const data = JSON.parse(localStorage.getItem(DAY_END_KEY) || '{}');
-    data[date] = time.toISOString();
-    localStorage.setItem(DAY_END_KEY, JSON.stringify(data));
-  } catch(e) {}
-}
 function clearDayEndTime(date) {
   try {
     const data = JSON.parse(localStorage.getItem(DAY_END_KEY) || '{}');
@@ -816,101 +787,9 @@ function stopAndRecord() {
   waitInterval = setInterval(() => {}, 1000); // ダミー（内部管理用）
 }
 
-// ==================== 業務終了 ====================
-function endDay() {
-  const endTime = new Date();
-  // 待機タイマー停止・保存
-  if (waitStart) {
-    const duration = Math.floor((Date.now() - waitStart) / 1000);
-    if (duration >= 10) {
-      const waits = getWaits();
-      waits.push({ date: todayStr(), start: waitStart, duration });
-      saveWaits(waits);
-    }
-    waitStart = null;
-    clearInterval(waitInterval);
-    waitInterval = null;
-  }
-  // 業務終了時刻を保存（待機時間の加算をここで止める）
-  saveDayEndTime(todayStr(), endTime);
-
-  // 乗車開始ボタンをリセット
-  const btn = document.getElementById('btnStartTrip');
-  btn.disabled = false;
-  btn.style.opacity = '1';
-
-  // 振り返り表示
-  showEndDaySummary(endTime);
-  updateTodaySummary();
-}
-
 // 消費税抜き（10円単位切り捨て）
 function exTax(amount) {
   return Math.floor(amount / 1.1 / 10) * 10;
-}
-function yenExTax(amount) {
-  return `¥${exTax(amount).toLocaleString()}`;
-}
-
-function showEndDaySummary(endTime) {
-  const date = todayStr();
-  const trips = getTrips().filter(t => t.date === date);
-  const waits = getWaits().filter(w => w.date === date);
-  const [,mm,dd] = date.split('-');
-  const youbi = ['日','月','火','水','木','金','土'][new Date(date).getDay()];
-
-  const goT    = trips.filter(t => (t.tripType||'流し') === 'GO');
-  const haisha = trips.filter(t => (t.tripType||'流し') === '配車');
-  const nashi  = trips.filter(t => (t.tripType||'流し') === '流し');
-  const sumF   = arr => arr.reduce((s,t) => s+getTripFare(t), 0);
-  const sumUncol = trips.reduce((s,t) => s+(t.uncollectedFare||0), 0);
-  const sumTip   = trips.reduce((s,t) => s+(t.tip||0), 0);
-  const totalPax = trips.reduce((s,t) => s+(t.passengers||1), 0);
-  const totalWait = calcWaitMinutes(date, endTime);
-  const totalSale = sumF(trips);
-
-  function row(label, value, indent=false, bold=false) {
-    return `<div style="display:flex;justify-content:space-between;padding:5px 0;font-size:14px;${indent?'padding-left:16px;':''}">
-      <span style="color:${indent?'var(--text)':'var(--muted)'};">${indent?'・':''  }${label}</span>
-      <span style="font-weight:${bold?'800':'700'};color:${bold?'var(--primary)':'var(--text)'};">${value}</span>
-    </div>`;
-  }
-  function divider() {
-    return `<div style="border-top:1px solid var(--border);margin:6px 0;"></div>`;
-  }
-
-  const html = `
-    <div style="text-align:center;margin-bottom:16px;">
-      <div style="font-size:16px;font-weight:700;color:var(--muted);">${parseInt(mm)}月${parseInt(dd)}日（${youbi}）</div>
-      <div style="font-size:36px;font-weight:800;color:var(--primary);margin-top:6px;">${yenExTax(totalSale)}</div>
-      <div style="font-size:13px;color:var(--muted);">本日の総売上</div>
-    </div>
-    <div style="background:var(--bg);border-radius:12px;padding:12px 14px;">
-      ${row('営収', '')}
-      ${row('配車', yenExTax(sumF(haisha)), true)}
-      ${row('流し', yenExTax(sumF(nashi)), true)}
-      ${row('GO', yenExTax(sumF(goT)), true)}
-      ${divider()}
-      ${row('回数', '')}
-      ${row('配車', `${haisha.length}件`, true)}
-      ${row('流し', `${nashi.length}件`, true)}
-      ${row('GO', `${goT.length}件`, true)}
-      ${divider()}
-      ${row('チップ', `¥${sumTip.toLocaleString()}`)}
-      ${row('未収合計', `¥${sumUncol.toLocaleString()}`)}
-      ${row('人数', `${totalPax}名`)}
-      ${row('待機時間', `${totalWait}分`)}
-      ${divider()}
-      ${row('総売上', yenExTax(totalSale), false, true)}
-    </div>
-  `;
-
-  document.getElementById('endDayContent').innerHTML = html;
-  document.getElementById('endDayModal').classList.add('open');
-}
-
-function closeEndDayModal() {
-  document.getElementById('endDayModal').classList.remove('open');
 }
 
 function setPickupTimeNow() {
@@ -1074,7 +953,7 @@ function getDefaultType() {
 let currentTripType = getDefaultType();
 function selectType(type) {
   currentTripType = type;
-  const styles = { '流し': '', '配車': ' haisha', 'GO': ' go' };
+  const styles = { '流し': ' nashi', '配車': ' haisha', 'GO': '' };
   ['流し','配車','GO'].forEach(t => {
     const btn = document.getElementById(`type-${t}`);
     if (!btn) return;
@@ -1235,24 +1114,33 @@ function getTripFare(t) {
 function saveTrip() {
   const pickup = document.getElementById('pickupLoc').value.trim();
   const dropoff = document.getElementById('dropoffLoc').value.trim();
-  const fareAmount = parseInt(document.getElementById('fareAmount').value) || 0;
+  const fareRaw = document.getElementById('fareAmount').value.trim();
   const payMethod = document.getElementById('payMethod').value || '現金';
-  const cashFare = payMethod === '現金' ? fareAmount : 0;
-  const uncollectedFare = payMethod !== '現金' ? fareAmount : 0;
   const tip = parseInt(document.getElementById('tipAmount').value) || 0;
   const pickupTime = document.getElementById('pickupTime').value;
   const dropoffTime = document.getElementById('dropoffTime').value;
-  const passengers = parseInt(document.getElementById('passengerCount').value) || 1;
+  const passengers = paxMale + paxFemale;
   const tripType = currentTripType;
   const memo = tripType === 'GO' ? buildGoMemo() : '';
   const paxName = tripType === 'GO' ? document.getElementById('goPaxName').value.trim() : '';
   const paxGender = tripType === 'GO' ? document.getElementById('goPaxGender').value : '';
   const paxAge = tripType === 'GO' ? document.getElementById('goPaxAge').value : '';
 
-  if (!pickup && !dropoff && cashFare === 0 && uncollectedFare === 0) {
-    showToast('乗降場所または料金を入力してください');
+  const missing = [];
+  if (!fareRaw) missing.push('料金');
+  if (passengers === 0) missing.push('人員');
+  if (!pickup) missing.push('乗車場所');
+  if (!dropoff) missing.push('降車場所');
+  if (!pickupTime) missing.push('乗車時刻');
+  if (!dropoffTime) missing.push('降車時刻');
+  if (missing.length > 0) {
+    showToast(`⚠️ 未入力の項目があります: ${missing.join('・')}`);
     return;
   }
+
+  const fareAmount = parseInt(fareRaw) || 0;
+  const cashFare = payMethod === '現金' ? fareAmount : 0;
+  const uncollectedFare = payMethod !== '現金' ? fareAmount : 0;
 
   const trips = getTrips();
   trips.unshift({
@@ -1497,7 +1385,7 @@ function tripCard(t, prevTrip) {
     ? `${pax}名（男${t.paxMaleCount||0}・女${t.paxFemaleCount||0}）`
     : `${pax}名`;
   const type = t.tripType || '流し';
-  const typeColors = { '配車': '#ff6b00', 'GO': '#00a152', '流し': '#1a73e8' };
+  const typeColors = { '配車': '#ff6b00', 'GO': '#1a73e8', '流し': '#00a152' };
   const typeColor = typeColors[type] || '#1a73e8';
   const cashF = t.cashFare !== undefined ? t.cashFare : (t.fare||0);
   const uncollF = t.uncollectedFare || 0;
@@ -1561,7 +1449,7 @@ function deleteTrip(id) {
 let editTripId = null;
 
 function selectEditType(type) {
-  const styles = { '流し': '', '配車': ' haisha', 'GO': ' go' };
+  const styles = { '流し': ' nashi', '配車': ' haisha', 'GO': '' };
   ['流し','配車','GO'].forEach(t => {
     const btn = document.getElementById(`edittype-${t}`);
     if (!btn) return;
@@ -1851,7 +1739,7 @@ function renderRecommend() {
   hours.forEach((h, idx) => { hourOrder[h] = idx; });
   const nowKey = nowMin; // curHourのhourOrderは0なので現在時刻のキーはそのまま分
 
-  const trips = getTrips().filter(t => t.pickup && t.pickup.trim() !== '' && t.pickupTime);
+  const trips = getTrips().filter(t => t.pickup && t.pickup.trim() !== '' && t.pickupTime && t.tripType !== '配車');
   const matched = trips.filter(t => {
     const h = parseInt(t.pickupTime.split(':')[0]);
     if (!hours.includes(h)) return false;
@@ -1872,7 +1760,7 @@ function renderRecommend() {
   });
 
   const weekdays = ['日','月','火','水','木','金','土'];
-  const typeColors = { '配車': '#ff6b00', 'GO': '#00a152', '流し': '#1a73e8' };
+  const typeColors = { '配車': '#ff6b00', 'GO': '#1a73e8', '流し': '#00a152' };
   document.getElementById('recommendList').innerHTML = sorted.map(t => {
     const [,mm,dd] = t.date.split('-');
     const dow = weekdays[new Date(t.date + 'T00:00:00').getDay()];
@@ -1949,7 +1837,7 @@ function renderSchedule() {
     return;
   }
 
-  const typeColors = { '配車': '#ff6b00', 'GO': '#00a152', '流し': '#1a73e8' };
+  const typeColors = { '配車': '#ff6b00', 'GO': '#1a73e8', '流し': '#00a152' };
   const fmtHM = d => `${pad(d.getHours())}:${pad(d.getMinutes())}`;
   const diffMin = (a,b) => Math.max(0, Math.round((b-a)/60000));
 
@@ -1972,7 +1860,7 @@ function renderSchedule() {
     }
     return `
       <div class="sched-item vacant">
-        <div class="sched-time">🅿️ ${fmtHM(seg.start)}〜${seg.ongoing ? '現在' : fmtHM(seg.end)} <span class="sched-dur">（${fmtWait(durMin)}${seg.ongoing ? '経過' : ''}）</span></div>
+        <div class="sched-time">${fmtHM(seg.start)}〜${seg.ongoing ? '現在' : fmtHM(seg.end)} <span class="sched-dur">（${fmtWait(durMin)}${seg.ongoing ? '経過' : ''}）</span></div>
         <div class="sched-body">空車</div>
       </div>
     `;
@@ -2060,27 +1948,10 @@ function renderStats() {
     return s;
   },0);
 
-  // 待機時間：月・水・金のみ集計・表示
-  const dates = [...new Set(trips.map(t=>t.date))];
-  let waitMin = 0;
-  let showWait = false;
-  if (currentStatTab === 'day') {
-    showWait = isWaitDay(today);
-    if (showWait) waitMin = calcWaitMinutes(today);
-  } else {
-    // 月・水・金の日付のみ合算
-    const waitDates = dates.filter(d => isWaitDay(d));
-    showWait = waitDates.length > 0;
-    waitDates.forEach(d => { waitMin += calcWaitMinutes(d); });
-  }
-  const statWaitCard = document.getElementById('statWaitCard');
-  if (statWaitCard) statWaitCard.style.display = showWait ? '' : 'none';
-
   document.getElementById('statSales').textContent = `¥${exTax(totalSales).toLocaleString()}`;
   document.getElementById('statSalesLabel').textContent = label;
   document.getElementById('statTrips').textContent = trips.length;
   document.getElementById('statAvg').textContent = `¥${avgFare.toLocaleString()}`;
-  document.getElementById('statWait').textContent = fmtWait(waitMin);
   document.getElementById('statDrive').textContent = fmtWait(jisshaMin);
 
   // Ranking — 1日の合計売上ランキング
@@ -2164,7 +2035,7 @@ function showToast(msg) {
   if (!t) {
     t = document.createElement('div');
     t.id = 'toast';
-    t.style.cssText = 'position:fixed;bottom:calc(80px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%) translateY(20px);background:#333;color:white;padding:10px 20px;border-radius:20px;font-size:14px;font-weight:600;z-index:500;opacity:0;transition:all 0.25s;white-space:nowrap;box-shadow:0 4px 12px rgba(0,0,0,0.3);';
+    t.style.cssText = 'position:fixed;bottom:calc(80px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%) translateY(20px);background:#333;color:white;padding:10px 20px;border-radius:20px;font-size:14px;font-weight:600;z-index:500;opacity:0;transition:all 0.25s;white-space:normal;max-width:85vw;text-align:center;box-shadow:0 4px 12px rgba(0,0,0,0.3);';
     document.body.appendChild(t);
   }
   t.textContent = msg;
