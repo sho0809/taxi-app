@@ -101,7 +101,7 @@
   #tripFormCard .input-label { font-size: 11px; margin-bottom: 3px; }
   #tripFormCard .input-field { padding: 8px 12px; font-size: 15px; }
   #tripFormCard .fare-wrap .input-field { padding-left: 26px; }
-  #tripFormCard input[type="time"] { font-size: 20px; }
+  #tripFormCard input[type="time"] { font-size: 15px; padding: 16px 12px; }
   #tripFormCard .pay-btn { padding: 6px 4px; font-size: 11px; }
   #tripFormCard .type-btn { padding: 8px 4px; font-size: 13px; }
 
@@ -1945,13 +1945,27 @@ function renderSchedule() {
       const fare = getTripFare(t);
       const visitInfo = getGoPaxHistory(t);
       const showVisit = visitInfo && visitInfo.visitNumber >= 2;
+
+      // 乗客情報：GOは氏名・性別・年代（＋来店回数）、流しはメモをそのまま表示
+      let paxLine = '';
+      let paxClickable = false;
+      if (type === 'GO' && t.paxName) {
+        const parts = [`${t.paxName}様`];
+        if (t.paxGender) parts.push(t.paxGender);
+        if (t.paxAge) parts.push(t.paxAge);
+        paxLine = parts.join(' / ');
+        if (showVisit) { paxLine += `（${visitInfo.visitNumber}回目）`; paxClickable = true; }
+      } else if (t.memo) {
+        paxLine = t.memo;
+      }
+
       return `
         <div class="sched-item" style="border-left-color:${typeColor};">
           <div class="sched-time">${fmtHM(seg.start)}〜${fmtHM(seg.end)} <span class="sched-dur">（${fmtWait(durMin)}）</span></div>
           <div class="sched-body">
             <span class="sched-type-badge" style="background:${typeColor}22;color:${typeColor};">${type}</span>
             ${t.pickup||'（乗車場所未設定）'} → ${t.dropoff||'（降車場所未設定）'}　<span style="color:var(--success);font-weight:700;">¥${fare.toLocaleString()}</span>
-            ${showVisit ? `<div style="margin-top:4px;cursor:pointer;color:var(--primary);font-size:12px;font-weight:700;" onclick="showCustomerHistory(${t.id})">👤 ${t.paxName}様（${visitInfo.visitNumber}回目） ›</div>` : ''}
+            ${paxLine ? `<div style="margin-top:4px;font-size:12px;font-weight:700;color:var(--primary);${paxClickable ? 'cursor:pointer;' : ''}"${paxClickable ? ` onclick="showCustomerHistory(${t.id})"` : ''}>👤 ${paxLine}${paxClickable ? ' ›' : ''}</div>` : ''}
           </div>
         </div>
       `;
