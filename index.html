@@ -1173,6 +1173,32 @@ function calcWaitMinutes(date, endTime) {
   return Math.max(0, totalShiftMin - tripMin);
 }
 
+// タイムラインと同じ考え方で、この日の空車時間計算に使う終端時刻を求める
+// （業務終了時刻が未記録の過去日は最後の降車時刻まで、今日は現在時刻まで）
+function getScheduleEndTime(date) {
+  const trips = getTrips()
+    .filter(t => t.date === date && t.pickupTime && t.dropoffTime)
+    .sort((a,b) => tripSortKey(a) - tripSortKey(b));
+  if (trips.length === 0) return null;
+
+  const isToday = date === todayStr();
+  const savedEnd = getDayEndTime(date);
+  let cursor = new Date(date + 'T07:30:00');
+  function toDate(timeStr) {
+    const d = new Date(date + 'T' + timeStr + ':00');
+    while (d < cursor) d.setDate(d.getDate() + 1);
+    return d;
+  }
+  trips.forEach(t => {
+    const p = toDate(t.pickupTime);
+    let d = toDate(t.dropoffTime);
+    if (d < p) d.setDate(d.getDate() + 1);
+    if (d > cursor) cursor = d;
+  });
+
+  return savedEnd || (isToday ? new Date() : cursor);
+}
+
 function fmtWait(min) {
   if (min < 60) return `${min}分`;
   return `${Math.floor(min/60)}時間${min%60 > 0 ? min%60+'分' : ''}`;
@@ -1225,7 +1251,7 @@ function updateTodaySummary() {
   const totalSales = sumF(trips);
   const totalExTax = exTax(totalSales);
   const avgExTax = trips.length ? Math.floor(totalExTax / trips.length / 10) * 10 : 0;
-  const waitMin = calcWaitMinutes(today);
+  const waitMin = trips.length === 0 ? 0 : calcWaitMinutes(today, getScheduleEndTime(today));
 
   // 実車時間（乗車〜降車の合計）
   const jisshaMin = trips.reduce((s,t) => {
@@ -1650,14 +1676,16 @@ function renderHourlyChart() {
   // 全時間帯ランキング（0件除く）
   const ranked = SHIFT_HOURS.map((h,i) => ({h, c: shiftCounts[i]}))
     .filter(r => r.c > 0).sort((a,b) => b.c - a.c);
+  const currentHour = new Date().getHours();
   document.getElementById('hourlyTop').innerHTML = ranked.length === 0
     ? `<div style="color:var(--muted);text-align:center;padding:16px;">まだデータがありません</div>`
     : ranked.map((r,i) => {
       const medalClasses = ['gold','silver','bronze'];
-      return `<div class="loc-rank-item" style="cursor:pointer;" onclick="showHourLocations(${r.h})">
+      const isCurrent = r.h === currentHour;
+      return `<div class="loc-rank-item" style="cursor:pointer;${isCurrent ? 'background:#e3f2fd;border:1.5px solid var(--primary);' : ''}" onclick="showHourLocations(${r.h})">
         <div class="loc-rank-num ${medalClasses[i]||''}">${i+1}</div>
         <div class="loc-rank-body">
-          <div class="loc-rank-name">${r.h}時台</div>
+          <div class="loc-rank-name">${r.h}時台${isCurrent ? ' <span style="color:var(--primary);font-size:11px;font-weight:700;">● 現在</span>' : ''}</div>
         </div>
         <span style="font-weight:700;color:var(--primary);">${r.c}件</span>
         <span style="color:var(--muted);">›</span>
@@ -2216,16 +2244,22 @@ function renderStats() {
       byGroup[t.date].count++;
     });
   }
-  const ranked = Object.values(byGroup).sort((a,b)=>b.total-a.total);
+  // 現在（今日／今週／今月）に該当するキーをハイライト表示するために求める
+  const currentKey = currentStatTab === 'week' ? getWeekKeyOf(today)
+    : currentStatTab === 'month' ? getBillingPeriod(today).startStr
+    : today;
+
+  const ranked = Object.entries(byGroup).sort((a,b)=>b[1].total-a[1].total);
   const medalClasses = ['gold','silver','bronze'];
-  document.getElementById('rankingList').innerHTML = ranked.length ? ranked.map((r,i)=>{
+  document.getElementById('rankingList').innerHTML = ranked.length ? ranked.map(([key,r],i)=>{
     const vEx = exTax(r.total);
     const avgEx = Math.floor(vEx / r.count / 10) * 10;
+    const isCurrent = key === currentKey;
     return `
-    <div class="loc-rank-item">
+    <div class="loc-rank-item"${isCurrent ? ' style="background:#e3f2fd;border:1.5px solid var(--primary);"' : ''}>
       <div class="loc-rank-num ${medalClasses[i]||''}">${i+1}</div>
       <div class="loc-rank-body">
-        <div class="loc-rank-name">${r.label}</div>
+        <div class="loc-rank-name">${r.label}${isCurrent ? ' <span style="color:var(--primary);font-size:11px;font-weight:700;">● 現在</span>' : ''}</div>
         <div class="loc-rank-meta">${r.count}件 ／ 平均 ¥${avgEx.toLocaleString()}</div>
       </div>
       <div class="loc-rank-fare">¥${vEx.toLocaleString()}</div>
