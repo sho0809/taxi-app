@@ -101,6 +101,7 @@
   #tripFormCard .input-label { font-size: 11px; margin-bottom: 3px; }
   #tripFormCard .input-field { padding: 8px 12px; font-size: 15px; }
   #tripFormCard .fare-wrap .input-field { padding-left: 26px; }
+  #tripFormCard input[type="time"] { font-size: 20px; }
   #tripFormCard .pay-btn { padding: 6px 4px; font-size: 11px; }
   #tripFormCard .type-btn { padding: 8px 4px; font-size: 13px; }
 
@@ -334,11 +335,11 @@
       <div class="input-row">
         <div class="input-group">
           <label class="input-label">🟢 乗車場所</label>
-          <input class="input-field" id="pickupLoc" type="text" placeholder="例：紅葉町" autocomplete="off">
+          <input class="input-field" id="pickupLoc" type="text" placeholder="" autocomplete="off">
         </div>
         <div class="input-group">
           <label class="input-label">🔴 降車場所</label>
-          <input class="input-field" id="dropoffLoc" type="text" placeholder="例：道後温泉" autocomplete="off">
+          <input class="input-field" id="dropoffLoc" type="text" placeholder="" autocomplete="off">
         </div>
       </div>
 
@@ -357,7 +358,7 @@
         <label class="input-label">📝 メモ（GOアプリ乗客情報）</label>
         <div class="input-row" style="margin-bottom:6px;">
           <div class="input-group" style="flex:1.4;margin-bottom:0;">
-            <input class="input-field" id="goPaxName" type="text" placeholder="お名前（例：田中）" autocomplete="off" oninput="onGoPaxNameInput()">
+            <input class="input-field" id="goPaxName" type="text" placeholder="" autocomplete="off" oninput="onGoPaxNameInput()">
           </div>
           <div class="input-group" style="flex:1;margin-bottom:0;">
             <select class="input-field" id="goPaxAge">
@@ -441,10 +442,8 @@
           <div class="stat-label">実車時間計</div>
         </div>
       </div>
-      <div class="section-label">売上ランキング（上位日）</div>
+      <div class="section-label" id="rankingLabel">売上ランキング</div>
       <div id="rankingList"></div>
-      <div class="section-label">最近の記録</div>
-      <div id="recentList"></div>
     </div>
 
     <!-- 時間帯タブ -->
@@ -496,16 +495,14 @@
   <div class="page" id="page-schedule">
     <!-- Day navigation -->
     <div class="card" style="padding:10px 12px;">
-      <div style="display:flex;gap:6px;align-items:center;margin-bottom:8px;">
+      <div style="display:flex;gap:6px;align-items:center;">
         <button class="btn btn-gray btn-sm" id="schedNavPrevBtn" onclick="schedNavPrev()" style="padding:10px 16px;font-size:20px;line-height:1;">‹</button>
-        <div style="flex:1;text-align:center;">
-          <div id="schedNavLabel" style="font-size:16px;font-weight:700;color:var(--text);"></div>
-        </div>
+        <select id="scheduleFilter" onchange="schedPickDate(this.value)" style="flex:1;text-align:center;font-size:16px;font-weight:700;color:var(--text);padding:10px 4px;border:1.5px solid var(--border);border-radius:10px;background:white;"></select>
         <button class="btn btn-gray btn-sm" onclick="schedNavNext()" id="schedNavNextBtn" style="padding:10px 16px;font-size:20px;line-height:1;">›</button>
       </div>
-      <div style="display:flex;gap:6px;">
-        <button class="btn btn-gray btn-sm" onclick="schedGoToday()" style="flex:1;">今日</button>
-        <select class="input-field" id="scheduleFilter" onchange="schedPickDate(this.value)" style="flex:1.5;padding:9px 10px;font-size:14px;"></select>
+      <div style="text-align:center;margin-top:10px;">
+        <div style="font-size:26px;font-weight:800;color:var(--success);" id="schedDaySales">¥0</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:2px;">この日の営収額</div>
       </div>
     </div>
     <div class="stat-grid">
@@ -1814,10 +1811,6 @@ function schedNavNext() {
   schedCurrentDate = allDates.length > 0 ? allDates[0] : todayStr();
   renderSchedule();
 }
-function schedGoToday() {
-  schedCurrentDate = todayStr();
-  renderSchedule();
-}
 function schedPickDate(v) {
   if (!v) return;
   schedCurrentDate = v;
@@ -1869,11 +1862,6 @@ function renderSchedule() {
   const now = new Date();
   const shiftStart = new Date(date + 'T07:30:00');
 
-  // ナビラベル更新
-  const d = new Date(date + 'T00:00:00');
-  const dow = ['日','月','火','水','木','金','土'][d.getDay()];
-  document.getElementById('schedNavLabel').textContent = `${d.getMonth()+1}月${d.getDate()}日（${dow}）` + (isToday ? ' 🔵 今日' : '');
-
   // 過去の勤務日一覧（記録がある日＋今日）をプルダウンに表示
   const workDates = [...new Set(getTrips().map(t=>t.date))];
   if (!workDates.includes(todayStr())) workDates.push(todayStr());
@@ -1888,6 +1876,10 @@ function renderSchedule() {
   const allDates = [...new Set(getTrips().map(t=>t.date))].sort();
   document.getElementById('schedNavPrevBtn').disabled = !allDates.some(dt => dt < date);
   document.getElementById('schedNavNextBtn').disabled = date >= todayStr();
+
+  // この日の営収額
+  const daySales = getTrips().filter(t => t.date === date).reduce((s,t) => s + getTripFare(t), 0);
+  document.getElementById('schedDaySales').textContent = `¥${exTax(daySales).toLocaleString()}`;
 
   const trips = getTrips()
     .filter(t => t.date === date && t.pickupTime && t.dropoffTime)
@@ -2060,32 +2052,62 @@ function renderStats() {
   document.getElementById('statAvg').textContent = `¥${avgFare.toLocaleString()}`;
   document.getElementById('statDrive').textContent = fmtWait(jisshaMin);
 
-  // Ranking — 1日の合計売上ランキング
-  const byDate = {};
-  const byDateCount = {};
-  allTrips.forEach(t => {
-    byDate[t.date] = (byDate[t.date]||0) + (t.fare||0);
-    byDateCount[t.date] = (byDateCount[t.date]||0) + 1;
-  });
-  const ranked = Object.entries(byDate).sort((a,b)=>b[1]-a[1]).slice(0,5);
-  document.getElementById('rankingList').innerHTML = ranked.length ? ranked.map(([d,v],i)=>{
-    const vEx = exTax(v);
-    const avgEx = Math.floor(vEx / byDateCount[d] / 10) * 10;
+  // Ranking — タブに応じて日別・週別・月別の全期間ランキングを表示
+  const byGroup = {};
+  if (currentStatTab === 'week') {
+    document.getElementById('rankingLabel').textContent = '売上ランキング（週別）';
+    allTrips.forEach(t => {
+      const key = getWeekKeyOf(t.date);
+      if (!byGroup[key]) byGroup[key] = { total: 0, count: 0, label: fmtWeekLabel(key) };
+      byGroup[key].total += (t.fare||0);
+      byGroup[key].count++;
+    });
+  } else if (currentStatTab === 'month') {
+    document.getElementById('rankingLabel').textContent = '売上ランキング（月別）';
+    allTrips.forEach(t => {
+      const period = getBillingPeriod(t.date);
+      const key = period.startStr;
+      if (!byGroup[key]) byGroup[key] = { total: 0, count: 0, label: period.label };
+      byGroup[key].total += (t.fare||0);
+      byGroup[key].count++;
+    });
+  } else {
+    document.getElementById('rankingLabel').textContent = '売上ランキング（日別）';
+    allTrips.forEach(t => {
+      if (!byGroup[t.date]) byGroup[t.date] = { total: 0, count: 0, label: fmtDate(t.date) };
+      byGroup[t.date].total += (t.fare||0);
+      byGroup[t.date].count++;
+    });
+  }
+  const ranked = Object.values(byGroup).sort((a,b)=>b.total-a.total);
+  document.getElementById('rankingList').innerHTML = ranked.length ? ranked.map((r,i)=>{
+    const vEx = exTax(r.total);
+    const avgEx = Math.floor(vEx / r.count / 10) * 10;
+    const rankLabel = i < 3 ? ['🥇','🥈','🥉'][i] : `${i+1}位`;
     return `
     <div class="trip-item" style="padding:12px 14px;">
       <div style="display:flex;justify-content:space-between;align-items:center;">
         <div>
-          <div style="font-size:14px;font-weight:600;">${['🥇','🥈','🥉','4️⃣','5️⃣'][i]} ${fmtDate(d)}</div>
-          <div style="font-size:11px;color:var(--muted);margin-top:2px;">${byDateCount[d]}件 · 平均 ¥${avgEx.toLocaleString()}</div>
+          <div style="font-size:14px;font-weight:600;">${rankLabel} ${r.label}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px;">${r.count}件 · 平均 ¥${avgEx.toLocaleString()}</div>
         </div>
         <span style="font-size:20px;font-weight:700;color:var(--success);">¥${vEx.toLocaleString()}</span>
       </div>
     </div>`;
   }).join('') : emptyState('まだデータがありません');
+}
 
-  // Recent
-  const recent = allTrips.slice(0,5);
-  document.getElementById('recentList').innerHTML = recent.length ? recent.map(t => tripCard(t)).join('') : emptyState('まだ記録がありません');
+// 任意の日付が属する週の開始日（日曜始まり）をキーとして返す
+function getWeekKeyOf(dateStr) {
+  const d = new Date(dateStr + 'T00:00:00');
+  d.setDate(d.getDate() - d.getDay());
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+}
+function fmtWeekLabel(weekStartStr) {
+  const s = new Date(weekStartStr + 'T00:00:00');
+  const e = new Date(s);
+  e.setDate(e.getDate() + 6);
+  return `${s.getMonth()+1}/${s.getDate()}〜${e.getMonth()+1}/${e.getDate()}`;
 }
 
 function getWeekStart() {
