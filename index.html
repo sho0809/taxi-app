@@ -384,6 +384,11 @@
       <div class="input-group" id="plainMemoGroup">
         <label class="input-label">📝 メモ</label>
         <textarea class="input-field" id="plainMemo" rows="2" placeholder="自由記入" style="resize:vertical;"></textarea>
+        <div style="display:flex;gap:6px;margin-top:6px;">
+          <button class="pay-btn" id="plainGender-男性" onclick="selectPlainGender('男性')" style="flex:1;">男性</button>
+          <button class="pay-btn" id="plainGender-女性" onclick="selectPlainGender('女性')" style="flex:1;">女性</button>
+        </div>
+        <input type="hidden" id="plainPaxGender" value="">
       </div>
 
     </div>
@@ -520,16 +525,24 @@
 
   <!-- ===== PAGE: サマリー（本日サマリー） ===== -->
   <div class="page" id="page-summary">
+    <!-- Day navigation -->
+    <div class="card" style="padding:10px 12px;">
+      <div style="display:flex;gap:6px;align-items:center;">
+        <button class="btn btn-gray btn-sm" id="summaryNavPrevBtn" onclick="summaryNavPrev()" style="padding:10px 16px;font-size:20px;line-height:1;">‹</button>
+        <select id="summaryFilter" onchange="summaryPickDate(this.value)" style="flex:1;text-align:center;font-size:16px;font-weight:700;color:var(--text);padding:10px 4px;border:1.5px solid var(--border);border-radius:10px;background:white;"></select>
+        <button class="btn btn-gray btn-sm" onclick="summaryNavNext()" id="summaryNavNextBtn" style="padding:10px 16px;font-size:20px;line-height:1;">›</button>
+      </div>
+    </div>
     <div class="card">
-      <div class="card-title">本日サマリー</div>
+      <div class="card-title" id="summaryTitle">本日サマリー</div>
       <div class="stat-grid">
         <div class="stat-card accent" style="grid-column:1/-1;">
           <div class="stat-value" id="todaySales">¥0</div>
-          <div class="stat-label">本日営収額</div>
+          <div class="stat-label" id="todaySalesLabel">本日営収額</div>
         </div>
         <div class="stat-card accent" style="grid-column:1/-1;">
           <div class="stat-value" id="todayHourly">---</div>
-          <div class="stat-label">現在の時給</div>
+          <div class="stat-label" id="todayHourlyLabel">現在の時給</div>
         </div>
         <div class="stat-card">
           <div class="stat-value" id="todayAvg">¥0</div>
@@ -595,7 +608,7 @@
 </nav>
 
 <!-- Hour Location Modal -->
-<div class="modal-overlay" id="hourLocationModal">
+<div class="modal-overlay" id="hourLocationModal" onclick="if(event.target===this) closeHourLocationModal()">
   <div class="modal">
     <div class="modal-handle"></div>
     <div class="modal-title" style="text-align:center;" id="hourLocationTitle"></div>
@@ -607,7 +620,7 @@
 </div>
 
 <!-- Customer History Modal -->
-<div class="modal-overlay" id="custHistoryModal">
+<div class="modal-overlay" id="custHistoryModal" onclick="if(event.target===this) closeCustHistoryModal()">
   <div class="modal">
     <div class="modal-handle"></div>
     <div class="modal-title" style="text-align:center;" id="custHistoryTitle"></div>
@@ -619,7 +632,7 @@
 </div>
 
 <!-- Trip Edit Modal -->
-<div class="modal-overlay" id="tripEditModal">
+<div class="modal-overlay" id="tripEditModal" onclick="if(event.target===this) closeTripEditModal()">
   <div class="modal">
     <div class="modal-handle"></div>
     <div class="modal-title">乗降記録を修正</div>
@@ -725,6 +738,11 @@
     <div class="input-group" id="editPlainMemoGroup">
       <label class="input-label">📝 メモ</label>
       <textarea class="input-field" id="editPlainMemo" rows="2" placeholder="自由記入" style="resize:vertical;"></textarea>
+      <div style="display:flex;gap:6px;margin-top:6px;">
+        <button class="pay-btn" id="editPlainGender-男性" onclick="selectEditPlainGender('男性')" style="flex:1;">男性</button>
+        <button class="pay-btn" id="editPlainGender-女性" onclick="selectEditPlainGender('女性')" style="flex:1;">女性</button>
+      </div>
+      <input type="hidden" id="editPlainPaxGender" value="">
     </div>
     <div class="btn-row">
       <button class="btn btn-gray" onclick="closeTripEditModal()">キャンセル</button>
@@ -922,6 +940,22 @@ function resetGoMemo() {
   hist.innerHTML = '';
 }
 
+// 流し・配車の乗客の性別（メモの下）
+function selectPlainGender(g) {
+  const cur = document.getElementById('plainPaxGender').value;
+  const next = cur === g ? '' : g; // 同じボタンをもう一度押すと選択解除
+  document.getElementById('plainPaxGender').value = next;
+  ['男性','女性'].forEach(x => {
+    document.getElementById(`plainGender-${x}`).className = 'pay-btn' + (x === next ? ' active' : '');
+  });
+}
+function resetPlainGender() {
+  document.getElementById('plainPaxGender').value = '';
+  ['男性','女性'].forEach(x => {
+    document.getElementById(`plainGender-${x}`).className = 'pay-btn';
+  });
+}
+
 // 名前入力中に過去のGO乗車履歴（日付・乗降場所）を候補表示
 function onGoPaxNameInput() {
   const q = document.getElementById('goPaxName').value.trim();
@@ -1054,7 +1088,7 @@ function saveTrip() {
   const tripType = currentTripType;
   const memo = tripType === 'GO' ? buildGoMemo() : document.getElementById('plainMemo').value.trim();
   const paxName = tripType === 'GO' ? document.getElementById('goPaxName').value.trim() : '';
-  const paxGender = tripType === 'GO' ? document.getElementById('goPaxGender').value : '';
+  const paxGender = tripType === 'GO' ? document.getElementById('goPaxGender').value : document.getElementById('plainPaxGender').value;
   const paxAge = tripType === 'GO' ? document.getElementById('goPaxAge').value : '';
 
   const missing = [];
@@ -1097,6 +1131,7 @@ function saveTrip() {
   document.getElementById('dropoffTime').value = '';
   resetPax();
   resetGoMemo();
+  resetPlainGender();
   selectPay('現金');
   selectType(getDefaultType());
 
@@ -1143,8 +1178,47 @@ function fmtWait(min) {
   return `${Math.floor(min/60)}時間${min%60 > 0 ? min%60+'分' : ''}`;
 }
 
+let summaryCurrentDate = todayStr();
+
+function summaryNavPrev() {
+  const allDates = [...new Set(getTrips().map(t=>t.date))].filter(d => d < summaryCurrentDate).sort();
+  if (allDates.length === 0) return;
+  summaryCurrentDate = allDates[allDates.length - 1];
+  updateTodaySummary();
+}
+function summaryNavNext() {
+  if (summaryCurrentDate >= todayStr()) return;
+  const allDates = [...new Set(getTrips().map(t=>t.date))].filter(d => d > summaryCurrentDate && d < todayStr()).sort();
+  summaryCurrentDate = allDates.length > 0 ? allDates[0] : todayStr();
+  updateTodaySummary();
+}
+function summaryPickDate(v) {
+  if (!v) return;
+  summaryCurrentDate = v;
+  updateTodaySummary();
+}
+
 function updateTodaySummary() {
-  const today = todayStr();
+  const today = summaryCurrentDate;
+  const isToday = today === todayStr();
+
+  // 日付ナビ（記録がある日＋今日）をプルダウンに表示
+  const workDates = [...new Set(getTrips().map(t=>t.date))];
+  if (!workDates.includes(todayStr())) workDates.push(todayStr());
+  workDates.sort().reverse();
+  document.getElementById('summaryFilter').innerHTML = workDates.map(wd => {
+    const wdd = new Date(wd + 'T00:00:00');
+    const wDow = ['日','月','火','水','木','金','土'][wdd.getDay()];
+    const label = `${wdd.getMonth()+1}月${wdd.getDate()}日（${wDow}）` + (wd === todayStr() ? ' 今日' : '');
+    return `<option value="${wd}"${wd === today ? ' selected' : ''}>${label}</option>`;
+  }).join('');
+  const allDates = [...new Set(getTrips().map(t=>t.date))].sort();
+  document.getElementById('summaryNavPrevBtn').disabled = !allDates.some(dt => dt < today);
+  document.getElementById('summaryNavNextBtn').disabled = today >= todayStr();
+  document.getElementById('summaryTitle').textContent = isToday ? '本日サマリー' : 'サマリー';
+  document.getElementById('todaySalesLabel').textContent = isToday ? '本日営収額' : '営収額';
+  document.getElementById('todayHourlyLabel').textContent = isToday ? '現在の時給' : '時給';
+
   const trips = getTrips().filter(t => t.date === today);
   const sumF   = arr => arr.reduce((s,t) => s + getTripFare(t), 0);
 
@@ -1395,6 +1469,16 @@ function selectEditGoGender(g) {
     document.getElementById(`editGoGender-${x}`).className = 'pay-btn' + (x === g ? ' active' : '');
   });
 }
+function setEditPlainGender(g) {
+  document.getElementById('editPlainPaxGender').value = g;
+  ['男性','女性'].forEach(x => {
+    document.getElementById(`editPlainGender-${x}`).className = 'pay-btn' + (x === g ? ' active' : '');
+  });
+}
+function selectEditPlainGender(g) {
+  const cur = document.getElementById('editPlainPaxGender').value;
+  setEditPlainGender(cur === g ? '' : g); // 同じボタンをもう一度押すと選択解除
+}
 function buildEditGoMemo() {
   const name = document.getElementById('editGoPaxName').value.trim();
   if (!name) return '';
@@ -1440,6 +1524,7 @@ function openTripEditModal(id) {
   document.getElementById('editGoPaxAge').value = (trip.tripType === 'GO') ? (trip.paxAge || '') : '';
   document.getElementById('editPlainMemo').value = (trip.tripType !== 'GO') ? (trip.memo || '') : '';
   selectEditGoGender((trip.tripType === 'GO' && trip.paxGender) ? trip.paxGender : '男性');
+  setEditPlainGender((trip.tripType !== 'GO' && trip.paxGender) ? trip.paxGender : '');
   selectEditPay(trip.payMethod || '現金');
   selectEditType(trip.tripType || '流し');
   document.getElementById('tripEditModal').classList.add('open');
@@ -1473,7 +1558,7 @@ function saveTripEdit() {
     tripType,
     memo: tripType === 'GO' ? buildEditGoMemo() : document.getElementById('editPlainMemo').value.trim(),
     paxName: tripType === 'GO' ? document.getElementById('editGoPaxName').value.trim() : '',
-    paxGender: tripType === 'GO' ? document.getElementById('editGoPaxGender').value : '',
+    paxGender: tripType === 'GO' ? document.getElementById('editGoPaxGender').value : document.getElementById('editPlainPaxGender').value,
     paxAge: tripType === 'GO' ? document.getElementById('editGoPaxAge').value : '',
     updatedAt: new Date().toISOString()
   };
@@ -1568,11 +1653,12 @@ function renderHourlyChart() {
   document.getElementById('hourlyTop').innerHTML = ranked.length === 0
     ? `<div style="color:var(--muted);text-align:center;padding:16px;">まだデータがありません</div>`
     : ranked.map((r,i) => {
-      const medals = ['🥇','🥈','🥉'];
-      const rankLabel = i < 3 ? medals[i] : `${i+1}位`;
-      return `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);cursor:pointer;" onclick="showHourLocations(${r.h})">
-        <span style="font-size:${i<3?'22px':'14px'};font-weight:700;color:${i<3?'inherit':'var(--muted)'};min-width:30px;text-align:center;">${rankLabel}</span>
-        <div style="flex:1;font-size:15px;font-weight:700;">${r.h}時台</div>
+      const medalClasses = ['gold','silver','bronze'];
+      return `<div class="loc-rank-item" style="cursor:pointer;" onclick="showHourLocations(${r.h})">
+        <div class="loc-rank-num ${medalClasses[i]||''}">${i+1}</div>
+        <div class="loc-rank-body">
+          <div class="loc-rank-name">${r.h}時台</div>
+        </div>
         <span style="font-weight:700;color:var(--primary);">${r.c}件</span>
         <span style="color:var(--muted);">›</span>
       </div>`;
@@ -1690,7 +1776,7 @@ function renderLocationRanking() {
 
   const medals = ['gold','silver','bronze'];
   document.getElementById('locationRanking').innerHTML = items.slice(0,20).map((item, i) => `
-    <div class="loc-rank-item">
+    <div class="loc-rank-item" style="cursor:pointer;" onclick="showLocationHistory('${encodeURIComponent(item.loc)}')">
       <div class="loc-rank-num ${medals[i]||''}">${i+1}</div>
       <div class="loc-rank-body">
         <div class="loc-rank-name">${item.loc}</div>
@@ -1703,6 +1789,32 @@ function renderLocationRanking() {
       </div>
     </div>
   `).join('');
+}
+
+// 場所ランキングをタップしたときの過去記録一覧
+function showLocationHistory(encodedLoc) {
+  const loc = decodeURIComponent(encodedLoc);
+  const trips = getTrips().filter(t => t.pickup && t.pickup.trim() === loc)
+    .sort((a,b) => (b.date + (b.pickupTime||'')).localeCompare(a.date + (a.pickupTime||'')));
+  const totalFare = trips.reduce((s,t) => s + getTripFare(t), 0);
+  document.getElementById('hourLocationTitle').textContent = `${loc}の過去の記録（${trips.length}件）`;
+  document.getElementById('hourLocationContent').innerHTML =
+    `<div style="text-align:center;font-size:13px;color:var(--muted);margin-bottom:10px;">合計¥${totalFare.toLocaleString()}</div>` +
+    trips.map(t => {
+      const [,mm,dd] = t.date.split('-');
+      const dow = ['日','月','火','水','木','金','土'][new Date(t.date + 'T00:00:00').getDay()];
+      const fare = getTripFare(t);
+      return `
+        <div style="padding:8px;border-bottom:1px solid var(--border);">
+          <div style="display:flex;justify-content:space-between;">
+            <span style="font-size:13px;font-weight:700;">${parseInt(mm)}/${parseInt(dd)}(${dow}) ${t.pickupTime||''}</span>
+            <span style="font-weight:700;color:var(--success);">¥${fare.toLocaleString()}</span>
+          </div>
+          <div style="font-size:12px;color:var(--muted);margin-top:2px;">→ ${t.dropoff||'?'}</div>
+        </div>
+      `;
+    }).join('');
+  document.getElementById('hourLocationModal').classList.add('open');
 }
 
 // ==================== エリア（現在時刻のおすすめ） ====================
@@ -1838,12 +1950,13 @@ function showCustomerHistory(tripId) {
     `<div style="text-align:center;font-size:13px;color:var(--muted);margin-bottom:10px;">合計¥${totalFare.toLocaleString()}</div>` +
     sorted.map(t => {
       const [,mm,dd] = t.date.split('-');
+      const dow = ['日','月','火','水','木','金','土'][new Date(t.date + 'T00:00:00').getDay()];
       const fare = getTripFare(t);
       const isCurrent = t.id === trip.id;
       return `
         <div style="padding:8px;border-radius:8px;margin-bottom:4px;${isCurrent ? 'background:#e3f2fd;' : ''}border-bottom:${isCurrent ? 'none' : '1px solid var(--border)'};">
           <div style="display:flex;justify-content:space-between;">
-            <span style="font-size:13px;font-weight:700;">${parseInt(mm)}/${parseInt(dd)} ${t.pickupTime||''}</span>
+            <span style="font-size:13px;font-weight:700;">${parseInt(mm)}/${parseInt(dd)}(${dow}) ${t.pickupTime||''}</span>
             <span style="font-weight:700;color:var(--success);">¥${fare.toLocaleString()}</span>
           </div>
           <div style="font-size:12px;color:var(--muted);margin-top:2px;">${t.pickup||'?'} → ${t.dropoff||'?'}</div>
@@ -1857,6 +1970,13 @@ function closeCustHistoryModal() {
 }
 
 function renderSchedule() {
+  // 本日の記録がまだない場合は、直近の記録がある日にフォールバックする
+  const todayForFallback = todayStr();
+  if (schedCurrentDate === todayForFallback && !getTrips().some(t => t.date === todayForFallback)) {
+    const pastDates = [...new Set(getTrips().map(t => t.date))].filter(d => d < todayForFallback).sort();
+    if (pastDates.length > 0) schedCurrentDate = pastDates[pastDates.length - 1];
+  }
+
   const date = schedCurrentDate;
   const isToday = date === todayStr();
   const now = new Date();
@@ -1946,17 +2066,20 @@ function renderSchedule() {
       const visitInfo = getGoPaxHistory(t);
       const showVisit = visitInfo && visitInfo.visitNumber >= 2;
 
-      // 乗客情報：GOは氏名・性別・年代（＋来店回数）、流しはメモをそのまま表示
+      // 乗客情報：GOは氏名・性別・年代（＋来店回数）、流し・配車はメモと性別を表示
       let paxLine = '';
       let paxClickable = false;
       if (type === 'GO' && t.paxName) {
-        const parts = [`${t.paxName}様`];
+        const parts = [t.paxName];
         if (t.paxGender) parts.push(t.paxGender);
         if (t.paxAge) parts.push(t.paxAge);
         paxLine = parts.join(' / ');
         if (showVisit) { paxLine += `（${visitInfo.visitNumber}回目）`; paxClickable = true; }
-      } else if (t.memo) {
-        paxLine = t.memo;
+      } else {
+        const parts = [];
+        if (t.memo) parts.push(t.memo);
+        if (t.paxGender) parts.push(t.paxGender);
+        paxLine = parts.join(' / ');
       }
 
       return `
@@ -2094,19 +2217,18 @@ function renderStats() {
     });
   }
   const ranked = Object.values(byGroup).sort((a,b)=>b.total-a.total);
+  const medalClasses = ['gold','silver','bronze'];
   document.getElementById('rankingList').innerHTML = ranked.length ? ranked.map((r,i)=>{
     const vEx = exTax(r.total);
     const avgEx = Math.floor(vEx / r.count / 10) * 10;
-    const rankLabel = i < 3 ? ['🥇','🥈','🥉'][i] : `${i+1}位`;
     return `
-    <div class="trip-item" style="padding:12px 14px;">
-      <div style="display:flex;justify-content:space-between;align-items:center;">
-        <div>
-          <div style="font-size:14px;font-weight:600;">${rankLabel} ${r.label}</div>
-          <div style="font-size:11px;color:var(--muted);margin-top:2px;">${r.count}件 · 平均 ¥${avgEx.toLocaleString()}</div>
-        </div>
-        <span style="font-size:20px;font-weight:700;color:var(--success);">¥${vEx.toLocaleString()}</span>
+    <div class="loc-rank-item">
+      <div class="loc-rank-num ${medalClasses[i]||''}">${i+1}</div>
+      <div class="loc-rank-body">
+        <div class="loc-rank-name">${r.label}</div>
+        <div class="loc-rank-meta">${r.count}件 ／ 平均 ¥${avgEx.toLocaleString()}</div>
       </div>
+      <div class="loc-rank-fare">¥${vEx.toLocaleString()}</div>
     </div>`;
   }).join('') : emptyState('まだデータがありません');
 }
