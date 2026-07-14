@@ -253,7 +253,7 @@
   .pax-history-item .ph-date { font-weight:700; color:var(--primary); }
   .pax-history-item .ph-route { color:var(--muted); }
 
-  /* 予定タイムライン */
+  /* タイムライン */
   .sched-item { background:white; border-radius:12px; padding:12px 14px; margin-bottom:8px; box-shadow:0 1px 4px rgba(0,0,0,0.07); border-left:4px solid var(--border); }
   .sched-item.vacant { background:var(--bg); box-shadow:none; border-left-color:#bbb; }
   .sched-time { font-size:13px; font-weight:700; color:var(--text); }
@@ -268,7 +268,7 @@
 <!-- Header -->
 <div class="header">
   <div class="header-row">
-    <h1>🚖 タクシー業務管理</h1>
+    <h1>タクシー業務管理</h1>
     <button class="reload-btn" id="reloadBtn" onclick="triggerReload()">↻ 更新</button>
   </div>
   <div class="date" id="headerDate"></div>
@@ -509,11 +509,29 @@
       <div style="font-size:28px;font-weight:800;color:var(--primary);margin-top:2px;" id="recommendNow">--:--</div>
       <div style="font-size:12px;color:var(--muted);margin-top:4px;" id="recommendRange"></div>
     </div>
+    <div class="card" style="margin-top:8px;">
+      <div class="card-title">🎯 この時間帯のおすすめエリア</div>
+      <div id="recommendAreaRanking"></div>
+    </div>
     <div id="recommendList"></div>
   </div>
 
-  <!-- ===== PAGE: 予定（本日の実車・空車タイムライン） ===== -->
+  <!-- ===== PAGE: タイムライン（実車・空車タイムライン） ===== -->
   <div class="page" id="page-schedule">
+    <!-- Day navigation -->
+    <div class="card" style="padding:10px 12px;">
+      <div style="display:flex;gap:6px;align-items:center;margin-bottom:8px;">
+        <button class="btn btn-gray btn-sm" onclick="schedNavPrev()" style="padding:10px 16px;font-size:20px;line-height:1;">‹</button>
+        <div style="flex:1;text-align:center;">
+          <div id="schedNavLabel" style="font-size:16px;font-weight:700;color:var(--text);"></div>
+        </div>
+        <button class="btn btn-gray btn-sm" onclick="schedNavNext()" id="schedNavNextBtn" style="padding:10px 16px;font-size:20px;line-height:1;">›</button>
+      </div>
+      <div style="display:flex;gap:6px;">
+        <button class="btn btn-gray btn-sm" onclick="schedGoToday()" style="flex:1;">今日</button>
+        <input class="input-field" id="scheduleFilter" type="date" onchange="schedPickDate(this.value)" style="flex:1.5;padding:9px 10px;font-size:14px;">
+      </div>
+    </div>
     <div class="stat-grid">
       <div class="stat-card">
         <div class="stat-value" id="schedJisshaTotal">0分</div>
@@ -524,7 +542,6 @@
         <div class="stat-label">空車時間</div>
       </div>
     </div>
-    <div class="section-label">本日のタイムライン</div>
     <div id="scheduleList"></div>
   </div>
 
@@ -581,25 +598,25 @@
     <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z"/></svg>
     運行記録
   </button>
-  <button class="nav-btn" id="nav-history" onclick="switchPage('history')">
-    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/></svg>
-    履歴
+  <button class="nav-btn" id="nav-schedule" onclick="switchPage('schedule')">
+    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></svg>
+    タイムライン
   </button>
-  <button class="nav-btn" id="nav-stats" onclick="switchPage('stats')">
-    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 3c1.93 0 3.5 1.57 3.5 3.5S13.93 13 12 13s-3.5-1.57-3.5-3.5S10.07 6 12 6zm7 13H5v-.23c0-.62.28-1.2.76-1.58C7.47 15.82 9.64 15 12 15s4.53.82 6.24 2.19c.48.38.76.97.76 1.58V19z"/></svg>
-    統計
+  <button class="nav-btn" id="nav-summary" onclick="switchPage('summary')">
+    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-9 14H7v-7h3v7zm5 0h-3V7h3v10zm5 0h-3v-4h3v4z"/></svg>
+    サマリー
   </button>
   <button class="nav-btn" id="nav-recommend" onclick="switchPage('recommend')">
     <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z"/></svg>
     エリア
   </button>
-  <button class="nav-btn" id="nav-schedule" onclick="switchPage('schedule')">
-    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></svg>
-    予定
+  <button class="nav-btn" id="nav-stats" onclick="switchPage('stats')">
+    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 3c1.93 0 3.5 1.57 3.5 3.5S13.93 13 12 13s-3.5-1.57-3.5-3.5S10.07 6 12 6zm7 13H5v-.23c0-.62.28-1.2.76-1.58C7.47 15.82 9.64 15 12 15s4.53.82 6.24 2.19c.48.38.76.97.76 1.58V19z"/></svg>
+    統計
   </button>
-  <button class="nav-btn" id="nav-summary" onclick="switchPage('summary')">
-    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-9 14H7v-7h3v7zm5 0h-3V7h3v10zm5 0h-3v-4h3v4z"/></svg>
-    サマリー
+  <button class="nav-btn" id="nav-history" onclick="switchPage('history')">
+    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/></svg>
+    履歴
   </button>
 
 </nav>
@@ -612,6 +629,18 @@
     <div id="hourLocationContent"></div>
     <div style="margin-top:16px;">
       <button class="btn btn-primary" onclick="closeHourLocationModal()">閉じる</button>
+    </div>
+  </div>
+</div>
+
+<!-- Customer History Modal -->
+<div class="modal-overlay" id="custHistoryModal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title" style="text-align:center;" id="custHistoryTitle"></div>
+    <div id="custHistoryContent"></div>
+    <div style="margin-top:16px;">
+      <button class="btn btn-primary" onclick="closeCustHistoryModal()">閉じる</button>
     </div>
   </div>
 </div>
@@ -1826,12 +1855,39 @@ function renderRecommend() {
   const nowKey = nowMin; // curHourのhourOrderは0なので現在時刻のキーはそのまま分
 
   const trips = getTrips().filter(t => t.pickup && t.pickup.trim() !== '' && t.pickupTime && t.tripType !== '配車');
-  const matched = trips.filter(t => {
+  // この時間帯（3時間分）に該当する過去データ全体からエリアを集計
+  const windowTrips = trips.filter(t => hours.includes(parseInt(t.pickupTime.split(':')[0])));
+  const matched = windowTrips.filter(t => {
     const h = parseInt(t.pickupTime.split(':')[0]);
-    if (!hours.includes(h)) return false;
     const m = parseInt(t.pickupTime.split(':')[1]);
     return (hourOrder[h]*60 + m) >= nowKey; // 現在時刻以降のみ
   });
+
+  // おすすめエリアランキング（乗車回数順、上位3件）
+  const areaMap = {};
+  windowTrips.forEach(t => {
+    const loc = t.pickup.trim();
+    if (!areaMap[loc]) areaMap[loc] = { count: 0, total: 0 };
+    areaMap[loc].count++;
+    areaMap[loc].total += getTripFare(t);
+  });
+  const areaRanking = Object.entries(areaMap)
+    .map(([loc, d]) => ({ loc, count: d.count, total: d.total }))
+    .sort((a,b) => b.count - a.count || b.total - a.total)
+    .slice(0, 3);
+  const medals = ['🥇','🥈','🥉'];
+  document.getElementById('recommendAreaRanking').innerHTML = areaRanking.length === 0
+    ? `<div style="color:var(--muted);text-align:center;padding:12px;">まだデータがありません</div>`
+    : areaRanking.map((r,i) => `
+      <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);">
+        <span style="font-size:22px;">${medals[i]}</span>
+        <div style="flex:1;font-size:15px;font-weight:700;">${r.loc}</div>
+        <div style="text-align:right;">
+          <div style="font-weight:700;color:var(--primary);">${r.count}回</div>
+          <div style="font-size:11px;color:var(--muted);">合計¥${r.total.toLocaleString()}</div>
+        </div>
+      </div>
+    `).join('');
 
   if (matched.length === 0) {
     document.getElementById('recommendList').innerHTML =
@@ -1869,18 +1925,99 @@ function renderRecommend() {
   }).join('');
 }
 
-// ==================== 予定（本日の実車・空車タイムライン） ====================
+// ==================== タイムライン（実車・空車） ====================
+let schedCurrentDate = todayStr();
+
+function schedNavPrev() {
+  const d = new Date(schedCurrentDate + 'T00:00:00');
+  d.setDate(d.getDate() - 1);
+  schedCurrentDate = d.toISOString().slice(0,10);
+  renderSchedule();
+}
+function schedNavNext() {
+  if (schedCurrentDate >= todayStr()) return;
+  const d = new Date(schedCurrentDate + 'T00:00:00');
+  d.setDate(d.getDate() + 1);
+  schedCurrentDate = d.toISOString().slice(0,10);
+  renderSchedule();
+}
+function schedGoToday() {
+  schedCurrentDate = todayStr();
+  renderSchedule();
+}
+function schedPickDate(v) {
+  if (!v) return;
+  schedCurrentDate = v;
+  renderSchedule();
+}
+
+// 同じGO乗客の過去の乗車回数・履歴を取得（名前が完全一致するもの）
+function getGoPaxHistory(trip) {
+  if (!trip || trip.tripType !== 'GO' || !trip.paxName) return null;
+  const all = getTrips()
+    .filter(t => t.tripType === 'GO' && t.paxName === trip.paxName)
+    .sort((a,b) => (a.date + (a.pickupTime||'')).localeCompare(b.date + (b.pickupTime||'')));
+  const visitNumber = all.findIndex(t => t.id === trip.id) + 1;
+  return { visitNumber, total: all.length, all };
+}
+
+function showCustomerHistory(tripId) {
+  const trip = getTrips().find(t => t.id === tripId);
+  const info = getGoPaxHistory(trip);
+  if (!info) return;
+  const sorted = info.all.slice().reverse(); // 新しい順
+  const totalFare = info.all.reduce((s,t) => s + getTripFare(t), 0);
+  document.getElementById('custHistoryTitle').textContent = `${trip.paxName}様のご利用履歴（${info.total}回）`;
+  document.getElementById('custHistoryContent').innerHTML =
+    `<div style="text-align:center;font-size:13px;color:var(--muted);margin-bottom:10px;">合計¥${totalFare.toLocaleString()}</div>` +
+    sorted.map(t => {
+      const [,mm,dd] = t.date.split('-');
+      const fare = getTripFare(t);
+      const isCurrent = t.id === trip.id;
+      return `
+        <div style="padding:8px;border-radius:8px;margin-bottom:4px;${isCurrent ? 'background:#e3f2fd;' : ''}border-bottom:${isCurrent ? 'none' : '1px solid var(--border)'};">
+          <div style="display:flex;justify-content:space-between;">
+            <span style="font-size:13px;font-weight:700;">${parseInt(mm)}/${parseInt(dd)} ${t.pickupTime||''}</span>
+            <span style="font-weight:700;color:var(--success);">¥${fare.toLocaleString()}</span>
+          </div>
+          <div style="font-size:12px;color:var(--muted);margin-top:2px;">${t.pickup||'?'} → ${t.dropoff||'?'}</div>
+        </div>
+      `;
+    }).join('');
+  document.getElementById('custHistoryModal').classList.add('open');
+}
+function closeCustHistoryModal() {
+  document.getElementById('custHistoryModal').classList.remove('open');
+}
+
 function renderSchedule() {
-  const date = todayStr();
+  const date = schedCurrentDate;
+  const isToday = date === todayStr();
+  const now = new Date();
+  const shiftStart = new Date(date + 'T07:30:00');
+
+  // ナビラベル更新
+  const d = new Date(date + 'T00:00:00');
+  const dow = ['日','月','火','水','木','金','土'][d.getDay()];
+  document.getElementById('schedNavLabel').textContent = `${d.getMonth()+1}月${d.getDate()}日（${dow}）` + (isToday ? ' 🔵 今日' : '');
+  document.getElementById('scheduleFilter').value = date;
+  document.getElementById('schedNavNextBtn').disabled = date >= todayStr();
+
   const trips = getTrips()
     .filter(t => t.date === date && t.pickupTime && t.dropoffTime)
     .sort((a,b) => tripSortKey(a) - tripSortKey(b));
 
-  const shiftStart = new Date(date + 'T07:30:00');
+  // 最初の記録がない場合は空車時間を0にする
+  if (trips.length === 0) {
+    document.getElementById('schedJisshaTotal').textContent = '0分';
+    document.getElementById('schedWaitTotal').textContent = '0分';
+    const msg = (isToday && now < shiftStart) ? 'まだ業務開始前です' : 'この日の記録はありません';
+    document.getElementById('scheduleList').innerHTML = emptyState(msg);
+    return;
+  }
+
   const savedEnd = getDayEndTime(date);
-  const now = new Date();
-  const endTime = savedEnd || now;
-  const isOngoing = !savedEnd;
+  const isOngoing = isToday && !savedEnd;
 
   const jisshaMin = trips.reduce((s,t) => {
     const [ph,pm] = t.pickupTime.split(':').map(Number);
@@ -1889,13 +2026,6 @@ function renderSchedule() {
     if (diff < 0) diff += 24*60;
     return s + (diff > 0 ? diff : 0);
   }, 0);
-  document.getElementById('schedJisshaTotal').textContent = fmtWait(jisshaMin);
-  document.getElementById('schedWaitTotal').textContent = fmtWait(calcWaitMinutes(date));
-
-  if (now < shiftStart && trips.length === 0) {
-    document.getElementById('scheduleList').innerHTML = emptyState('まだ業務開始前です');
-    return;
-  }
 
   // HH:MM文字列をDateに変換。深夜をまたぐ場合はcursorを基準に日をずらす
   let cursor = shiftStart;
@@ -1914,14 +2044,15 @@ function renderSchedule() {
     segments.push({ type: 'occupied', start: p, end: d, trip: t });
     if (d > cursor) cursor = d;
   });
+
+  // 業務終了時刻が未記録の過去日は、最後の降車時刻より先の「空車」は表示しない
+  const endTime = savedEnd || (isToday ? now : cursor);
   if (endTime > cursor) {
     segments.push({ type: 'vacant', start: cursor, end: endTime, ongoing: isOngoing });
   }
 
-  if (segments.length === 0) {
-    document.getElementById('scheduleList').innerHTML = emptyState('本日の記録がありません');
-    return;
-  }
+  document.getElementById('schedJisshaTotal').textContent = fmtWait(jisshaMin);
+  document.getElementById('schedWaitTotal').textContent = fmtWait(calcWaitMinutes(date, endTime));
 
   const typeColors = { '配車': '#ff6b00', 'GO': '#1a73e8', '流し': '#00a152' };
   const fmtHM = d => `${pad(d.getHours())}:${pad(d.getMinutes())}`;
@@ -1934,12 +2065,14 @@ function renderSchedule() {
       const type = t.tripType || '流し';
       const typeColor = typeColors[type] || '#1a73e8';
       const fare = getTripFare(t);
+      const visitInfo = getGoPaxHistory(t);
       return `
         <div class="sched-item" style="border-left-color:${typeColor};">
           <div class="sched-time">${fmtHM(seg.start)}〜${fmtHM(seg.end)} <span class="sched-dur">（${fmtWait(durMin)}）</span></div>
           <div class="sched-body">
             <span class="sched-type-badge" style="background:${typeColor}22;color:${typeColor};">${type}</span>
             ${t.pickup||'（乗車場所未設定）'} → ${t.dropoff||'（降車場所未設定）'}　<span style="color:var(--success);font-weight:700;">¥${fare.toLocaleString()}</span>
+            ${visitInfo ? `<div style="margin-top:4px;cursor:pointer;color:var(--primary);font-size:12px;font-weight:700;" onclick="showCustomerHistory(${t.id})">👤 ${t.paxName}様（${visitInfo.visitNumber}回目のご利用） ›</div>` : ''}
           </div>
         </div>
       `;
@@ -2077,7 +2210,7 @@ function getWeekStart() {
 
 // ==================== NAVIGATION ====================
 function switchPage(page) {
-  ['record','history','stats','recommend','schedule','summary'].forEach(p => {
+  ['record','schedule','summary','recommend','stats','history'].forEach(p => {
     document.getElementById(`page-${p}`).className = 'page' + (p === page ? ' active' : '');
     document.getElementById(`nav-${p}`).className = 'nav-btn' + (p === page ? ' active' : '');
   });
