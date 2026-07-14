@@ -429,6 +429,11 @@
 
     <!-- 日別・週・月タブ共通 -->
     <div id="statMain">
+      <div style="display:flex;gap:6px;align-items:center;margin-bottom:8px;">
+        <button class="btn btn-gray btn-sm" id="statPeriodPrevBtn" onclick="statPeriodPrev()" style="padding:10px 16px;font-size:20px;line-height:1;">‹</button>
+        <div style="flex:1;text-align:center;font-size:15px;font-weight:700;color:var(--text);" id="statPeriodLabel"></div>
+        <button class="btn btn-gray btn-sm" id="statPeriodNextBtn" onclick="statPeriodNext()" style="padding:10px 16px;font-size:20px;line-height:1;">›</button>
+      </div>
       <div class="stat-grid">
         <div class="stat-card accent" style="grid-column:1/-1;">
           <div class="stat-value" id="statSales">¥0</div>
@@ -502,7 +507,10 @@
     <div class="card" style="padding:10px 12px;">
       <div style="display:flex;gap:6px;align-items:center;">
         <button class="btn btn-gray btn-sm" id="schedNavPrevBtn" onclick="schedNavPrev()" style="padding:10px 16px;font-size:20px;line-height:1;">‹</button>
-        <select id="scheduleFilter" onchange="schedPickDate(this.value)" style="flex:1;text-align:center;font-size:16px;font-weight:700;color:var(--text);padding:10px 4px;border:1.5px solid var(--border);border-radius:10px;background:white;"></select>
+        <div style="flex:1;position:relative;">
+          <select id="scheduleFilter" onchange="schedPickDate(this.value)" style="width:100%;text-align:center;text-align-last:center;font-size:16px;font-weight:700;color:var(--text);padding:10px 22px;border:1.5px solid var(--border);border-radius:10px;background:white;-webkit-appearance:none;appearance:none;"></select>
+          <span style="position:absolute;right:10px;top:50%;transform:translateY(-50%);pointer-events:none;color:var(--muted);font-size:11px;">▾</span>
+        </div>
         <button class="btn btn-gray btn-sm" onclick="schedNavNext()" id="schedNavNextBtn" style="padding:10px 16px;font-size:20px;line-height:1;">›</button>
       </div>
       <div style="text-align:center;margin-top:10px;">
@@ -529,7 +537,10 @@
     <div class="card" style="padding:10px 12px;">
       <div style="display:flex;gap:6px;align-items:center;">
         <button class="btn btn-gray btn-sm" id="summaryNavPrevBtn" onclick="summaryNavPrev()" style="padding:10px 16px;font-size:20px;line-height:1;">‹</button>
-        <select id="summaryFilter" onchange="summaryPickDate(this.value)" style="flex:1;text-align:center;font-size:16px;font-weight:700;color:var(--text);padding:10px 4px;border:1.5px solid var(--border);border-radius:10px;background:white;"></select>
+        <div style="flex:1;position:relative;">
+          <select id="summaryFilter" onchange="summaryPickDate(this.value)" style="width:100%;text-align:center;text-align-last:center;font-size:16px;font-weight:700;color:var(--text);padding:10px 22px;border:1.5px solid var(--border);border-radius:10px;background:white;-webkit-appearance:none;appearance:none;"></select>
+          <span style="position:absolute;right:10px;top:50%;transform:translateY(-50%);pointer-events:none;color:var(--muted);font-size:11px;">▾</span>
+        </div>
         <button class="btn btn-gray btn-sm" onclick="summaryNavNext()" id="summaryNavNextBtn" style="padding:10px 16px;font-size:20px;line-height:1;">›</button>
       </div>
     </div>
@@ -1622,9 +1633,11 @@ function fmtDate(str) {
 
 // ==================== STATS ====================
 let currentStatTab = 'day';
+let statPeriodOffset = 0; // 0=現在の期間、1つ戻るごとに+1
 
 function switchStatTab(tab) {
   currentStatTab = tab;
+  statPeriodOffset = 0;
   ['day','week','month','hourly','location'].forEach(t => {
     document.getElementById(`statTab-${t}`).className = 'tab-item' + (t === tab ? ' active' : '');
   });
@@ -1634,6 +1647,27 @@ function switchStatTab(tab) {
   if (tab === 'hourly') renderHourlyChart();
   else if (tab === 'location') renderLocationRanking();
   else renderStats();
+}
+
+function statPeriodPrev() {
+  statPeriodOffset++;
+  renderStats();
+}
+function statPeriodNext() {
+  if (statPeriodOffset <= 0) return;
+  statPeriodOffset--;
+  renderStats();
+}
+
+// 締め日ベースの月を offset 回分さかのぼった期間を返す
+function getShiftedBillingPeriod(offset) {
+  let period = getBillingPeriod(todayStr());
+  for (let i = 0; i < offset; i++) {
+    const prevDate = new Date(period.startStr + 'T00:00:00');
+    prevDate.setDate(prevDate.getDate() - 1);
+    period = getBillingPeriod(`${prevDate.getFullYear()}-${pad(prevDate.getMonth()+1)}-${pad(prevDate.getDate())}`);
+  }
+  return period;
 }
 
 // ==================== 時間帯分析 ====================
@@ -1682,7 +1716,7 @@ function renderHourlyChart() {
     : ranked.map((r,i) => {
       const medalClasses = ['gold','silver','bronze'];
       const isCurrent = r.h === currentHour;
-      return `<div class="loc-rank-item" style="cursor:pointer;${isCurrent ? 'background:#e3f2fd;border:1.5px solid var(--primary);' : ''}" onclick="showHourLocations(${r.h})">
+      return `<div class="loc-rank-item" style="cursor:pointer;${isCurrent ? 'background:#e3f2fd;' : ''}" onclick="showHourLocations(${r.h})">
         <div class="loc-rank-num ${medalClasses[i]||''}">${i+1}</div>
         <div class="loc-rank-body">
           <div class="loc-rank-name">${r.h}時台${isCurrent ? ' <span style="color:var(--primary);font-size:11px;font-weight:700;">● 現在</span>' : ''}</div>
@@ -2180,20 +2214,33 @@ function renderStats() {
   const allWaits = getWaits();
   let trips, waits, label;
 
+  document.getElementById('statPeriodNextBtn').disabled = statPeriodOffset <= 0;
+
   if (currentStatTab === 'day') {
-    trips = allTrips.filter(t => t.date === today);
-    waits = allWaits.filter(w => w.date === today);
-    label = '本日の営収額';
+    const d = new Date(today + 'T00:00:00');
+    d.setDate(d.getDate() - statPeriodOffset);
+    const viewedDate = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+    trips = allTrips.filter(t => t.date === viewedDate);
+    waits = allWaits.filter(w => w.date === viewedDate);
+    label = statPeriodOffset === 0 ? '本日の営収額' : fmtDate(viewedDate);
+    document.getElementById('statPeriodLabel').textContent = fmtDate(viewedDate);
   } else if (currentStatTab === 'week') {
-    const wStart = getWeekStart();
-    trips = allTrips.filter(t => t.date >= wStart && t.date <= today);
-    waits = allWaits.filter(w => w.date >= wStart && w.date <= today);
-    label = '今週の売上';
+    const wStartDate = new Date(getWeekStart() + 'T00:00:00');
+    wStartDate.setDate(wStartDate.getDate() - statPeriodOffset * 7);
+    const wEndDate = new Date(wStartDate);
+    wEndDate.setDate(wEndDate.getDate() + 6);
+    const wStart = `${wStartDate.getFullYear()}-${pad(wStartDate.getMonth()+1)}-${pad(wStartDate.getDate())}`;
+    const wEnd = `${wEndDate.getFullYear()}-${pad(wEndDate.getMonth()+1)}-${pad(wEndDate.getDate())}`;
+    trips = allTrips.filter(t => t.date >= wStart && t.date <= wEnd);
+    waits = allWaits.filter(w => w.date >= wStart && w.date <= wEnd);
+    label = statPeriodOffset === 0 ? '今週の売上' : `${wStartDate.getMonth()+1}/${wStartDate.getDate()}〜${wEndDate.getMonth()+1}/${wEndDate.getDate()} の売上`;
+    document.getElementById('statPeriodLabel').textContent = `${wStartDate.getMonth()+1}/${wStartDate.getDate()}〜${wEndDate.getMonth()+1}/${wEndDate.getDate()}`;
   } else {
-    const period = getBillingPeriod(today);
+    const period = getShiftedBillingPeriod(statPeriodOffset);
     trips = allTrips.filter(t => t.date >= period.startStr && t.date <= period.endStr);
     waits = allWaits.filter(w => w.date >= period.startStr && w.date <= period.endStr);
     label = `${period.label} 売上`;
+    document.getElementById('statPeriodLabel').textContent = period.label;
   }
 
   const totalSales = trips.reduce((s,t)=>s+(t.fare||0),0);
@@ -2245,9 +2292,16 @@ function renderStats() {
     });
   }
   // 現在（今日／今週／今月）に該当するキーをハイライト表示するために求める
-  const currentKey = currentStatTab === 'week' ? getWeekKeyOf(today)
+  let currentKey = currentStatTab === 'week' ? getWeekKeyOf(today)
     : currentStatTab === 'month' ? getBillingPeriod(today).startStr
     : today;
+
+  // 日別タブで本日の記録がまだない場合は、直近の記録がある日を代わりにハイライトする
+  let isFallback = false;
+  if (currentStatTab === 'day' && !byGroup[currentKey]) {
+    const pastKeys = Object.keys(byGroup).filter(k => k < currentKey).sort();
+    if (pastKeys.length > 0) { currentKey = pastKeys[pastKeys.length - 1]; isFallback = true; }
+  }
 
   const ranked = Object.entries(byGroup).sort((a,b)=>b[1].total-a[1].total);
   const medalClasses = ['gold','silver','bronze'];
@@ -2255,11 +2309,12 @@ function renderStats() {
     const vEx = exTax(r.total);
     const avgEx = Math.floor(vEx / r.count / 10) * 10;
     const isCurrent = key === currentKey;
+    const currentLabel = currentStatTab === 'day' ? (isFallback ? '前回' : '現在') : '';
     return `
-    <div class="loc-rank-item"${isCurrent ? ' style="background:#e3f2fd;border:1.5px solid var(--primary);"' : ''}>
+    <div class="loc-rank-item"${isCurrent ? ' style="background:#e3f2fd;"' : ''}>
       <div class="loc-rank-num ${medalClasses[i]||''}">${i+1}</div>
       <div class="loc-rank-body">
-        <div class="loc-rank-name">${r.label}${isCurrent ? ' <span style="color:var(--primary);font-size:11px;font-weight:700;">● 現在</span>' : ''}</div>
+        <div class="loc-rank-name">${r.label}${isCurrent && currentLabel ? ` <span style="color:var(--primary);font-size:11px;font-weight:700;">● ${currentLabel}</span>` : ''}</div>
         <div class="loc-rank-meta">${r.count}件 ／ 平均 ¥${avgEx.toLocaleString()}</div>
       </div>
       <div class="loc-rank-fare">¥${vEx.toLocaleString()}</div>
