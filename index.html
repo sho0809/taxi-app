@@ -517,6 +517,10 @@
         <div style="font-size:26px;font-weight:800;color:var(--success);" id="schedDaySales">¥0</div>
         <div style="font-size:12px;color:var(--muted);margin-top:2px;">この日の営収額</div>
       </div>
+      <div style="display:flex;gap:6px;align-items:center;margin-top:10px;">
+        <input type="time" id="schedEndTimeInput" class="input-field" style="flex:1;padding:6px 8px;font-size:13px;">
+        <button class="btn btn-gray btn-sm" onclick="saveSchedEndTime()" style="padding:6px 10px;font-size:12px;white-space:nowrap;">🏁 業務終了</button>
+      </div>
     </div>
     <div class="stat-grid">
       <div class="stat-card">
@@ -578,6 +582,10 @@
         <div class="stat-card">
           <div class="stat-value" id="todayGoCount">0件</div>
           <div class="stat-label">GO回数</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="todayNashiTotal">¥0</div>
+          <div class="stat-label">流し合計金額</div>
         </div>
         <div class="stat-card">
           <div class="stat-value" id="todayPax">0名</div>
@@ -778,6 +786,13 @@ function getDayEndTime(date) {
     const data = JSON.parse(localStorage.getItem(DAY_END_KEY) || '{}');
     return data[date] ? new Date(data[date]) : null;
   } catch(e) { return null; }
+}
+function saveDayEndTime(date, time) {
+  try {
+    const data = JSON.parse(localStorage.getItem(DAY_END_KEY) || '{}');
+    data[date] = time.toISOString();
+    localStorage.setItem(DAY_END_KEY, JSON.stringify(data));
+  } catch(e) {}
 }
 
 // 月・水・金かどうか（待機時間表示対象日）
@@ -1281,6 +1296,7 @@ function updateTodaySummary() {
   const totalTip = trips.reduce((s,t) => s + (t.tip||0), 0);
   const goCount = trips.filter(t => (t.tripType||'流し') === 'GO').length;
   const totalPax = trips.reduce((s,t) => s + (t.passengers||1), 0);
+  const nashiTotal = sumF(trips.filter(t => (t.tripType||'流し') === '流し'));
 
   document.getElementById('todaySales').textContent = `¥${totalExTax.toLocaleString()}`;
   document.getElementById('todayAvg').textContent = `¥${avgExTax.toLocaleString()}`;
@@ -1289,6 +1305,7 @@ function updateTodaySummary() {
   document.getElementById('todayUncollected').textContent = `¥${totalUncollected.toLocaleString()}`;
   document.getElementById('todayTip').textContent = `¥${totalTip.toLocaleString()}`;
   document.getElementById('todayGoCount').textContent = `${goCount}件`;
+  document.getElementById('todayNashiTotal').textContent = `¥${exTax(nashiTotal).toLocaleString()}`;
   document.getElementById('todayPax').textContent = `${totalPax}名`;
 
   // 待機時間は月・水・金のみ表示
@@ -1884,12 +1901,12 @@ function renderRecommend() {
   const now = new Date();
   document.getElementById('recommendNow').textContent = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
 
-  // 現在時刻から先2時間（3時間分）のデータから集計
+  // 現在時刻からの1時間分のデータから集計
   const curHour = now.getHours();
   const nowMin = now.getMinutes();
-  const hours = [curHour, (curHour + 1) % 24, (curHour + 2) % 24];
+  const hours = [curHour];
   const rangeStart = hours[0];
-  const rangeEnd = (hours[2] + 1) % 24;
+  const rangeEnd = (hours[0] + 1) % 24;
   document.getElementById('recommendRange').textContent = `${pad(rangeStart)}:00〜${pad(rangeEnd)}:00の過去データから算出`;
 
   // 窓をまたぐ場合（例: 23時〜1時）も正しい時系列で並ぶよう、hoursの並び順を基準にする
@@ -1991,6 +2008,19 @@ function schedPickDate(v) {
   renderSchedule();
 }
 
+// 業務終了時刻を手動で入力・保存
+function saveSchedEndTime() {
+  const date = schedCurrentDate;
+  const val = document.getElementById('schedEndTimeInput').value;
+  if (!val) { showToast('終了時刻を入力してください'); return; }
+  const shiftStart = new Date(date + 'T07:30:00');
+  const d = new Date(date + 'T' + val + ':00');
+  if (d < shiftStart) d.setDate(d.getDate() + 1); // 深夜をまたぐ場合は翌日扱い
+  saveDayEndTime(date, d);
+  showToast('業務終了時刻を保存しました ✓');
+  renderSchedule();
+}
+
 // 同じGO乗客の過去の乗車回数・履歴を取得（名前が完全一致するもの）
 function getGoPaxHistory(trip) {
   if (!trip || trip.tripType !== 'GO' || !trip.paxName) return null;
@@ -2044,6 +2074,12 @@ function renderSchedule() {
   const now = new Date();
   const shiftStart = new Date(date + 'T07:30:00');
 
+  // 業務終了時刻の入力欄に保存済みの値を反映
+  const savedEndForInput = getDayEndTime(date);
+  document.getElementById('schedEndTimeInput').value = savedEndForInput
+    ? `${pad(savedEndForInput.getHours())}:${pad(savedEndForInput.getMinutes())}`
+    : '';
+
   // 過去の勤務日一覧（記録がある日＋今日）をプルダウンに表示
   const workDates = [...new Set(getTrips().map(t=>t.date))];
   if (!workDates.includes(todayStr())) workDates.push(todayStr());
@@ -2066,6 +2102,10 @@ function renderSchedule() {
   const trips = getTrips()
     .filter(t => t.date === date && t.pickupTime && t.dropoffTime)
     .sort((a,b) => tripSortKey(a) - tripSortKey(b));
+
+  // その日の何回目の乗車かを求める
+  const rideNumberMap = {};
+  trips.forEach((t, i) => { rideNumberMap[t.id] = i + 1; });
 
   // 最初の記録がない場合は空車時間を0にする
   if (trips.length === 0) {
@@ -2144,8 +2184,10 @@ function renderSchedule() {
         paxLine = parts.join(' / ');
       }
 
+      const rideNumber = rideNumberMap[t.id];
       return `
-        <div class="sched-item" style="border-left-color:${typeColor};">
+        <div class="sched-item" style="border-left-color:${typeColor};position:relative;">
+          <span style="position:absolute;top:10px;right:12px;font-size:12px;font-weight:800;color:var(--muted);">${rideNumber}</span>
           <div class="sched-time">${fmtHM(seg.start)}〜${fmtHM(seg.end)} <span class="sched-dur">（${fmtWait(durMin)}）</span></div>
           <div class="sched-body">
             <span class="sched-type-badge" style="background:${typeColor}22;color:${typeColor};">${type}</span>
@@ -2297,10 +2339,9 @@ function renderStats() {
     : today;
 
   // 日別タブで本日の記録がまだない場合は、直近の記録がある日を代わりにハイライトする
-  let isFallback = false;
   if (currentStatTab === 'day' && !byGroup[currentKey]) {
     const pastKeys = Object.keys(byGroup).filter(k => k < currentKey).sort();
-    if (pastKeys.length > 0) { currentKey = pastKeys[pastKeys.length - 1]; isFallback = true; }
+    if (pastKeys.length > 0) currentKey = pastKeys[pastKeys.length - 1];
   }
 
   const ranked = Object.entries(byGroup).sort((a,b)=>b[1].total-a[1].total);
@@ -2309,12 +2350,11 @@ function renderStats() {
     const vEx = exTax(r.total);
     const avgEx = Math.floor(vEx / r.count / 10) * 10;
     const isCurrent = key === currentKey;
-    const currentLabel = currentStatTab === 'day' ? (isFallback ? '前回' : '現在') : '';
     return `
     <div class="loc-rank-item"${isCurrent ? ' style="background:#e3f2fd;"' : ''}>
       <div class="loc-rank-num ${medalClasses[i]||''}">${i+1}</div>
       <div class="loc-rank-body">
-        <div class="loc-rank-name">${r.label}${isCurrent && currentLabel ? ` <span style="color:var(--primary);font-size:11px;font-weight:700;">● ${currentLabel}</span>` : ''}</div>
+        <div class="loc-rank-name">${r.label}</div>
         <div class="loc-rank-meta">${r.count}件 ／ 平均 ¥${avgEx.toLocaleString()}</div>
       </div>
       <div class="loc-rank-fare">¥${vEx.toLocaleString()}</div>
