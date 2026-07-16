@@ -521,13 +521,13 @@
       </div>
       <div style="display:flex;gap:6px;align-items:center;margin-top:10px;">
         <input type="time" id="schedEndTimeInput" class="input-field" style="flex:1;padding:6px 8px;font-size:13px;">
-        <button class="btn btn-gray btn-sm" onclick="saveSchedEndTime()" style="padding:6px 10px;font-size:12px;white-space:nowrap;">🏁 業務終了</button>
+        <button class="btn btn-gray btn-sm" onclick="saveSchedEndTime()" style="padding:6px 10px;font-size:12px;white-space:nowrap;">業務終了</button>
       </div>
       <div style="display:flex;gap:6px;align-items:center;margin-top:6px;">
         <input type="time" id="breakStartInput" class="input-field" style="flex:1;padding:6px 8px;font-size:13px;">
         <span style="color:var(--muted);font-size:12px;">〜</span>
         <input type="time" id="breakEndInput" class="input-field" style="flex:1;padding:6px 8px;font-size:13px;">
-        <button class="btn btn-gray btn-sm" onclick="addScheduleBreak()" style="padding:6px 10px;font-size:12px;white-space:nowrap;">☕ 休憩追加</button>
+        <button class="btn btn-gray btn-sm" onclick="addScheduleBreak()" style="padding:6px 10px;font-size:12px;white-space:nowrap;">休憩追加</button>
       </div>
     </div>
     <div class="stat-grid">
@@ -2305,7 +2305,7 @@ function renderSchedule() {
       return `
         <div class="sched-item break">
           <div class="sched-time">${fmtHM(seg.start)}〜${fmtHM(seg.end)} <span class="sched-dur">（${fmtWait(durMin)}）</span></div>
-          <div class="sched-body">☕ 休憩 <span style="cursor:pointer;color:var(--primary);font-weight:700;" onclick="deleteScheduleBreak(${seg.breakIndex})">✕ 削除</span></div>
+          <div class="sched-body">休憩 <span style="cursor:pointer;color:var(--primary);font-weight:700;" onclick="deleteScheduleBreak(${seg.breakIndex})">✕ 削除</span></div>
         </div>
       `;
     }
