@@ -247,11 +247,13 @@
   .sched-item { background:white; border-radius:12px; padding:12px 14px; margin-bottom:8px; box-shadow:0 1px 4px rgba(0,0,0,0.07); border-left:4px solid var(--border); }
   .sched-item.vacant { background:var(--bg); box-shadow:none; border-left-color:#bbb; }
   .sched-item.break { background:#fff8e1; box-shadow:none; border-left-color:#f5a623; }
+  .sched-item.fuel { background:#e8f5e9; box-shadow:none; border-left-color:#43a047; }
   .sched-time { font-size:13px; font-weight:700; color:var(--text); }
   .sched-time .sched-dur { font-weight:600; color:var(--muted); font-size:12px; }
   .sched-body { font-size:13px; color:var(--text); margin-top:4px; }
   .sched-item.vacant .sched-body { color:var(--muted); }
   .sched-item.break .sched-body { color:#8a6100; }
+  .sched-item.fuel .sched-body { color:#1b5e20; }
   .sched-type-badge { display:inline-block; padding:2px 8px; border-radius:6px; font-weight:700; font-size:12px; margin-right:6px; }
 </style>
 </head>
@@ -494,12 +496,13 @@
     <div class="card" style="text-align:center;">
       <div style="font-size:13px;color:var(--muted);">現在時刻</div>
       <div style="font-size:28px;font-weight:800;color:var(--primary);margin-top:2px;" id="recommendNow">--:--</div>
-      <div style="font-size:12px;color:var(--muted);margin-top:4px;" id="recommendRange"></div>
     </div>
     <div class="card" style="margin-top:8px;">
       <div class="card-title">🎯 この時間帯のおすすめエリア</div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:4px;" id="recommendRange"></div>
       <div id="recommendAreaRanking"></div>
     </div>
+    <div style="font-size:12px;color:var(--muted);margin:10px 2px 4px;" id="recommendListRange"></div>
     <div id="recommendList"></div>
   </div>
 
@@ -529,6 +532,12 @@
         <input type="time" id="breakEndInput" class="input-field" style="flex:1;padding:6px 8px;font-size:13px;">
         <button class="btn btn-gray btn-sm" onclick="addScheduleBreak()" style="padding:6px 10px;font-size:12px;white-space:nowrap;">休憩追加</button>
       </div>
+      <div style="display:flex;gap:6px;align-items:center;margin-top:6px;">
+        <input type="time" id="fuelStartInput" class="input-field" style="flex:1;padding:6px 8px;font-size:13px;">
+        <span style="color:var(--muted);font-size:12px;">〜</span>
+        <input type="time" id="fuelEndInput" class="input-field" style="flex:1;padding:6px 8px;font-size:13px;">
+        <button class="btn btn-gray btn-sm" onclick="addScheduleFuel()" style="padding:6px 10px;font-size:12px;white-space:nowrap;">給油追加</button>
+      </div>
     </div>
     <div class="stat-grid">
       <div class="stat-card">
@@ -538,6 +547,18 @@
       <div class="stat-card">
         <div class="stat-value" id="schedWaitTotal">0分</div>
         <div class="stat-label">空車時間</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="schedBreakTotal">0分</div>
+        <div class="stat-label">休憩時間</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="schedFuelTotal">0分</div>
+        <div class="stat-label">給油時間</div>
+      </div>
+      <div class="stat-card accent">
+        <div class="stat-value" id="schedAllTotal">0分</div>
+        <div class="stat-label">合計（業務開始〜終了）</div>
       </div>
     </div>
     <div id="scheduleList"></div>
@@ -816,6 +837,22 @@ function saveScheduleBreaks(date, breaks) {
     const data = JSON.parse(localStorage.getItem(BREAKS_KEY) || '{}');
     data[date] = breaks;
     localStorage.setItem(BREAKS_KEY, JSON.stringify(data));
+  } catch(e) {}
+}
+
+// 給油時間の管理（日付ごとに複数登録可能）
+const FUEL_STOPS_KEY = 'taxi_fuel_stops';
+function getScheduleFuelStops(date) {
+  try {
+    const data = JSON.parse(localStorage.getItem(FUEL_STOPS_KEY) || '{}');
+    return data[date] || [];
+  } catch(e) { return []; }
+}
+function saveScheduleFuelStops(date, stops) {
+  try {
+    const data = JSON.parse(localStorage.getItem(FUEL_STOPS_KEY) || '{}');
+    data[date] = stops;
+    localStorage.setItem(FUEL_STOPS_KEY, JSON.stringify(data));
   } catch(e) {}
 }
 
@@ -1220,16 +1257,18 @@ function calcWaitMinutes(date, endTime) {
     if (diff > 0) tripMin += diff;
   });
 
-  // 休憩時間は待機時間から除外する
-  const breakMin = getScheduleBreaks(date).reduce((s, b) => {
-    const [sh, sm] = b.start.split(':').map(Number);
-    const [eh, em] = b.end.split(':').map(Number);
+  // 休憩時間・給油時間は待機時間から除外する
+  const sumTimeRanges = (list) => list.reduce((s, item) => {
+    const [sh, sm] = item.start.split(':').map(Number);
+    const [eh, em] = item.end.split(':').map(Number);
     let diff = (eh * 60 + em) - (sh * 60 + sm);
     if (diff < 0) diff += 24 * 60;
     return s + diff;
   }, 0);
+  const breakMin = sumTimeRanges(getScheduleBreaks(date));
+  const fuelMin = sumTimeRanges(getScheduleFuelStops(date));
 
-  return Math.max(0, totalShiftMin - tripMin - breakMin);
+  return Math.max(0, totalShiftMin - tripMin - breakMin - fuelMin);
 }
 
 // タイムラインと同じ考え方で、この日の空車時間計算に使う終端時刻を求める
@@ -1934,31 +1973,33 @@ function renderRecommend() {
   const now = new Date();
   document.getElementById('recommendNow').textContent = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
 
-  // 現在時刻からの1時間分のデータから集計
-  const curHour = now.getHours();
-  const nowMin = now.getMinutes();
-  const hours = [curHour];
-  const rangeStart = hours[0];
-  const rangeEnd = (hours[0] + 1) % 24;
-  document.getElementById('recommendRange').textContent = `${pad(rangeStart)}:00〜${pad(rangeEnd)}:00の過去データから算出`;
+  // 現在時刻を起点とした「分」単位のローリングウィンドウで集計（時計の1時間区切りをまたいでも必ずフルの長さになる）
+  const nowKey = now.getHours() * 60 + now.getMinutes();
+  const fmtTimeOfDay = m => `${pad(Math.floor((m % 1440) / 60))}:${pad(m % 60)}`;
 
-  // 窓をまたぐ場合（例: 23時〜1時）も正しい時系列で並ぶよう、hoursの並び順を基準にする
-  const hourOrder = {};
-  hours.forEach((h, idx) => { hourOrder[h] = idx; });
-  const nowKey = nowMin; // curHourのhourOrderは0なので現在時刻のキーはそのまま分
+  const rankingWindowLen = 60;  // おすすめエリアランキングは現在時刻から1時間
+  const listWindowLen = 180;    // 一覧表示は現在時刻から3時間
+
+  document.getElementById('recommendRange').textContent =
+    `${fmtTimeOfDay(nowKey)}〜${fmtTimeOfDay(nowKey + rankingWindowLen)}の過去データから算出`;
+  document.getElementById('recommendListRange').textContent =
+    `${fmtTimeOfDay(nowKey)}〜${fmtTimeOfDay(nowKey + listWindowLen)}の記録`;
 
   const trips = getTrips().filter(t => t.pickup && t.pickup.trim() !== '' && t.pickupTime && t.tripType !== '配車');
-  // この時間帯（3時間分）に該当する過去データ全体からエリアを集計
-  const windowTrips = trips.filter(t => hours.includes(parseInt(t.pickupTime.split(':')[0])));
-  const matched = windowTrips.filter(t => {
-    const h = parseInt(t.pickupTime.split(':')[0]);
-    const m = parseInt(t.pickupTime.split(':')[1]);
-    return (hourOrder[h]*60 + m) >= nowKey; // 現在時刻以降のみ
-  });
+  // 現在時刻からの経過分数（日をまたぐ場合も0〜1439の範囲でループするよう調整）
+  const minutesFromNow = t => {
+    const [h, m] = t.pickupTime.split(':').map(Number);
+    let diff = (h * 60 + m) - nowKey;
+    if (diff < 0) diff += 1440;
+    return diff;
+  };
+
+  const rankingWindowTrips = trips.filter(t => minutesFromNow(t) < rankingWindowLen);
+  const matched = trips.filter(t => minutesFromNow(t) < listWindowLen);
 
   // おすすめエリアランキング（乗車回数順、上位3件）
   const areaMap = {};
-  windowTrips.forEach(t => {
+  rankingWindowTrips.forEach(t => {
     const loc = t.pickup.trim();
     if (!areaMap[loc]) areaMap[loc] = { count: 0, total: 0 };
     areaMap[loc].count++;
@@ -1988,11 +2029,7 @@ function renderRecommend() {
     return;
   }
 
-  const sorted = matched.slice().sort((a,b) => {
-    const [ah, am] = a.pickupTime.split(':').map(Number);
-    const [bh, bm] = b.pickupTime.split(':').map(Number);
-    return (hourOrder[ah]*60 + am) - (hourOrder[bh]*60 + bm);
-  });
+  const sorted = matched.slice().sort((a,b) => minutesFromNow(a) - minutesFromNow(b));
 
   const weekdays = ['日','月','火','水','木','金','土'];
   const typeColors = { '配車': '#ff6b00', 'GO': '#1a73e8', '流し': '#00a152' };
@@ -2081,15 +2118,17 @@ function addScheduleBreak() {
     });
 
   const breaks = getScheduleBreaks(date);
-  const overlapsExisting = breaks.some(b => {
-    const s = new Date(date + 'T' + b.start + ':00');
+  const fuelStops = getScheduleFuelStops(date);
+  const overlapsTimeRange = (list) => list.some(item => {
+    const s = new Date(date + 'T' + item.start + ':00');
     if (s < shiftStart) s.setDate(s.getDate() + 1);
-    const e = new Date(date + 'T' + b.end + ':00');
+    const e = new Date(date + 'T' + item.end + ':00');
     if (e <= s) e.setDate(e.getDate() + 1);
     return bStart < e && bEnd > s;
   });
+  const overlapsExisting = overlapsTimeRange(breaks) || overlapsTimeRange(fuelStops);
   const overlapsTrip = occupied.some(o => bStart < o.end && bEnd > o.start);
-  if (overlapsTrip || overlapsExisting) { showToast('実車時間や既存の休憩と重複しています'); return; }
+  if (overlapsTrip || overlapsExisting) { showToast('実車時間や既存の休憩・給油と重複しています'); return; }
 
   breaks.push({ start: startVal, end: endVal });
   saveScheduleBreaks(date, breaks);
@@ -2104,6 +2143,60 @@ function deleteScheduleBreak(index) {
   const breaks = getScheduleBreaks(date);
   breaks.splice(index, 1);
   saveScheduleBreaks(date, breaks);
+  renderSchedule();
+}
+
+function addScheduleFuel() {
+  const date = schedCurrentDate;
+  const startVal = document.getElementById('fuelStartInput').value;
+  const endVal = document.getElementById('fuelEndInput').value;
+  if (!startVal || !endVal) { showToast('給油の開始・終了時刻を入力してください'); return; }
+
+  const shiftStart = new Date(date + 'T07:30:00');
+  const fStart = new Date(date + 'T' + startVal + ':00');
+  if (fStart < shiftStart) fStart.setDate(fStart.getDate() + 1);
+  const fEnd = new Date(date + 'T' + endVal + ':00');
+  if (fEnd <= fStart) fEnd.setDate(fEnd.getDate() + 1);
+
+  let cursor = shiftStart;
+  const toDate = (timeStr) => { const d = new Date(date + 'T' + timeStr + ':00'); while (d < cursor) d.setDate(d.getDate() + 1); return d; };
+  const occupied = getTrips()
+    .filter(t => t.date === date && t.pickupTime && t.dropoffTime)
+    .sort((a, b) => tripSortKey(a) - tripSortKey(b))
+    .map(t => {
+      const p = toDate(t.pickupTime);
+      let d = toDate(t.dropoffTime);
+      if (d < p) d.setDate(d.getDate() + 1);
+      if (d > cursor) cursor = d;
+      return { start: p, end: d };
+    });
+
+  const breaks = getScheduleBreaks(date);
+  const fuelStops = getScheduleFuelStops(date);
+  const overlapsTimeRange = (list) => list.some(item => {
+    const s = new Date(date + 'T' + item.start + ':00');
+    if (s < shiftStart) s.setDate(s.getDate() + 1);
+    const e = new Date(date + 'T' + item.end + ':00');
+    if (e <= s) e.setDate(e.getDate() + 1);
+    return fStart < e && fEnd > s;
+  });
+  const overlapsExisting = overlapsTimeRange(breaks) || overlapsTimeRange(fuelStops);
+  const overlapsTrip = occupied.some(o => fStart < o.end && fEnd > o.start);
+  if (overlapsTrip || overlapsExisting) { showToast('実車時間や既存の休憩・給油と重複しています'); return; }
+
+  fuelStops.push({ start: startVal, end: endVal });
+  saveScheduleFuelStops(date, fuelStops);
+  document.getElementById('fuelStartInput').value = '';
+  document.getElementById('fuelEndInput').value = '';
+  showToast('給油時間を保存しました ✓');
+  renderSchedule();
+}
+
+function deleteScheduleFuel(index) {
+  const date = schedCurrentDate;
+  const fuelStops = getScheduleFuelStops(date);
+  fuelStops.splice(index, 1);
+  saveScheduleFuelStops(date, fuelStops);
   renderSchedule();
 }
 
@@ -2197,6 +2290,9 @@ function renderSchedule() {
   if (trips.length === 0) {
     document.getElementById('schedJisshaTotal').textContent = '0分';
     document.getElementById('schedWaitTotal').textContent = '0分';
+    document.getElementById('schedBreakTotal').textContent = '0分';
+    document.getElementById('schedFuelTotal').textContent = '0分';
+    document.getElementById('schedAllTotal').textContent = '0分';
     const msg = (isToday && now < shiftStart) ? 'まだ業務開始前です' : 'この日の記録はありません';
     document.getElementById('scheduleList').innerHTML = emptyState(msg);
     return;
@@ -2255,8 +2351,40 @@ function renderSchedule() {
     segments.splice(idx, 1, ...replacement);
   });
 
+  // 給油時間を空車枠に割り込ませる形で反映
+  const scheduleFuelStops = getScheduleFuelStops(date);
+  scheduleFuelStops.forEach((fs, fsIdx) => {
+    const fStart = new Date(date + 'T' + fs.start + ':00');
+    if (fStart < shiftStart) fStart.setDate(fStart.getDate() + 1);
+    const fEnd = new Date(date + 'T' + fs.end + ':00');
+    if (fEnd < fStart) fEnd.setDate(fEnd.getDate() + 1);
+
+    const idx = segments.findIndex(seg => seg.type === 'vacant' && fStart >= seg.start && fEnd <= seg.end);
+    if (idx === -1) return; // 実車時間や休憩と重なるなど、空車枠に収まらない場合は反映しない
+    const seg = segments[idx];
+    const replacement = [];
+    if (fStart > seg.start) replacement.push({ type: 'vacant', start: seg.start, end: fStart });
+    replacement.push({ type: 'fuel', start: fStart, end: fEnd, fuelIndex: fsIdx });
+    if (fEnd < seg.end) replacement.push({ type: 'vacant', start: fEnd, end: seg.end, ongoing: seg.ongoing });
+    segments.splice(idx, 1, ...replacement);
+  });
+
+  const sumTimeRangeMin = (list) => list.reduce((s, item) => {
+    const [sh, sm] = item.start.split(':').map(Number);
+    const [eh, em] = item.end.split(':').map(Number);
+    let diff = (eh * 60 + em) - (sh * 60 + sm);
+    if (diff < 0) diff += 24 * 60;
+    return s + diff;
+  }, 0);
+  const breakMin = sumTimeRangeMin(scheduleBreaks);
+  const fuelMin = sumTimeRangeMin(scheduleFuelStops);
+  const allMin = Math.max(0, Math.round((endTime - shiftStart) / 60000));
+
   document.getElementById('schedJisshaTotal').textContent = fmtWait(jisshaMin);
   document.getElementById('schedWaitTotal').textContent = fmtWait(calcWaitMinutes(date, endTime));
+  document.getElementById('schedBreakTotal').textContent = fmtWait(breakMin);
+  document.getElementById('schedFuelTotal').textContent = fmtWait(fuelMin);
+  document.getElementById('schedAllTotal').textContent = fmtWait(allMin);
 
   const typeColors = { '配車': '#ff6b00', 'GO': '#1a73e8', '流し': '#00a152' };
   const fmtHM = d => `${pad(d.getHours())}:${pad(d.getMinutes())}`;
@@ -2306,6 +2434,14 @@ function renderSchedule() {
         <div class="sched-item break">
           <div class="sched-time">${fmtHM(seg.start)}〜${fmtHM(seg.end)} <span class="sched-dur">（${fmtWait(durMin)}）</span></div>
           <div class="sched-body">休憩 <span style="cursor:pointer;color:var(--primary);font-weight:700;" onclick="deleteScheduleBreak(${seg.breakIndex})">✕ 削除</span></div>
+        </div>
+      `;
+    }
+    if (seg.type === 'fuel') {
+      return `
+        <div class="sched-item fuel">
+          <div class="sched-time">${fmtHM(seg.start)}〜${fmtHM(seg.end)} <span class="sched-dur">（${fmtWait(durMin)}）</span></div>
+          <div class="sched-body">給油 <span style="cursor:pointer;color:var(--primary);font-weight:700;" onclick="deleteScheduleFuel(${seg.fuelIndex})">✕ 削除</span></div>
         </div>
       `;
     }
