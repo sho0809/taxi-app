@@ -552,10 +552,6 @@
         <div class="stat-value" id="schedBreakTotal">0分</div>
         <div class="stat-label">休憩時間</div>
       </div>
-      <div class="stat-card">
-        <div class="stat-value" id="schedFuelTotal">0分</div>
-        <div class="stat-label">給油時間</div>
-      </div>
       <div class="stat-card accent">
         <div class="stat-value" id="schedAllTotal">0分</div>
         <div class="stat-label">合計（業務開始〜終了）</div>
@@ -2291,7 +2287,6 @@ function renderSchedule() {
     document.getElementById('schedJisshaTotal').textContent = '0分';
     document.getElementById('schedWaitTotal').textContent = '0分';
     document.getElementById('schedBreakTotal').textContent = '0分';
-    document.getElementById('schedFuelTotal').textContent = '0分';
     document.getElementById('schedAllTotal').textContent = '0分';
     const msg = (isToday && now < shiftStart) ? 'まだ業務開始前です' : 'この日の記録はありません';
     document.getElementById('scheduleList').innerHTML = emptyState(msg);
@@ -2377,13 +2372,11 @@ function renderSchedule() {
     return s + diff;
   }, 0);
   const breakMin = sumTimeRangeMin(scheduleBreaks);
-  const fuelMin = sumTimeRangeMin(scheduleFuelStops);
   const allMin = Math.max(0, Math.round((endTime - shiftStart) / 60000));
 
   document.getElementById('schedJisshaTotal').textContent = fmtWait(jisshaMin);
   document.getElementById('schedWaitTotal').textContent = fmtWait(calcWaitMinutes(date, endTime));
   document.getElementById('schedBreakTotal').textContent = fmtWait(breakMin);
-  document.getElementById('schedFuelTotal').textContent = fmtWait(fuelMin);
   document.getElementById('schedAllTotal').textContent = fmtWait(allMin);
 
   const typeColors = { '配車': '#ff6b00', 'GO': '#1a73e8', '流し': '#00a152' };
