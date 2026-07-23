@@ -656,18 +656,15 @@
 <div class="modal-overlay" id="scheduleGraphModal" onclick="if(event.target===this) closeScheduleGraphModal()">
   <div class="modal">
     <div class="modal-handle"></div>
-    <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
-      <button class="btn btn-gray btn-sm" onclick="scheduleGraphPrev()" style="padding:8px 14px;font-size:18px;line-height:1;">‹</button>
-      <div class="modal-title" style="flex:1;text-align:center;margin-bottom:0;" id="scheduleGraphTitle"></div>
-      <button class="btn btn-gray btn-sm" onclick="scheduleGraphNext()" style="padding:8px 14px;font-size:18px;line-height:1;">›</button>
-    </div>
-    <div id="scheduleGraphBar" style="display:flex;height:48px;border-radius:8px;overflow:hidden;background:var(--bg);margin-top:12px;"></div>
-    <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-top:4px;">
-      <span id="scheduleGraphTimeStart"></span>
-      <span id="scheduleGraphTimeEnd"></span>
+    <div class="modal-title" style="text-align:center;">稼働状況グラフ</div>
+    <div style="display:flex;">
+      <div id="scheduleGraphAxis" style="position:relative;width:34px;flex-shrink:0;height:260px;"></div>
+      <div id="scheduleGraphScroll" style="flex:1;overflow-x:auto;-webkit-overflow-scrolling:touch;">
+        <div id="scheduleGraphColumns" style="display:flex;align-items:flex-end;gap:8px;height:260px;padding:0 4px;"></div>
+      </div>
     </div>
     <div id="scheduleGraphLegend" style="margin-top:14px;text-align:center;"></div>
-    <div style="text-align:center;font-size:11px;color:var(--muted);margin-top:12px;">← 左右にスワイプで前後の日付を表示 →</div>
+    <div style="text-align:center;font-size:11px;color:var(--muted);margin-top:12px;">← 横にスクロールすると別日も見られます →</div>
     <div style="margin-top:16px;">
       <button class="btn btn-primary" onclick="closeScheduleGraphModal()">閉じる</button>
     </div>
@@ -2494,77 +2491,78 @@ function renderSchedule() {
   }).join('');
 }
 
-// ==================== タイムライン グラフ ====================
-let scheduleGraphDate = null;
+// ==================== タイムライン グラフ（縦棒・複数日表示） ====================
+// 07:30〜翌5:00（アプリのシフト日の境界）を固定の縦軸スケールとして使う
+const GRAPH_DAY_SPAN_MIN = 21.5 * 60;
+const GRAPH_TYPE_COLORS = { '配車': '#ff6b00', 'GO': '#1a73e8', '流し': '#00a152' };
+const GRAPH_OTHER_COLORS = { break: '#f5a623', fuel: '#00acc1', vacant: '#ddd' };
 
 function openScheduleGraph() {
-  scheduleGraphDate = schedCurrentDate;
   renderScheduleGraph();
   document.getElementById('scheduleGraphModal').classList.add('open');
+  // 直近の日付（右端）が見えるように表示位置を合わせる
+  const scrollEl = document.getElementById('scheduleGraphScroll');
+  requestAnimationFrame(() => { scrollEl.scrollLeft = scrollEl.scrollWidth; });
 }
 function closeScheduleGraphModal() {
   document.getElementById('scheduleGraphModal').classList.remove('open');
 }
-function scheduleGraphPrev() {
-  const allDates = [...new Set(getTrips().map(t=>t.date))].filter(d => d < scheduleGraphDate).sort();
-  if (allDates.length === 0) return;
-  scheduleGraphDate = allDates[allDates.length - 1];
-  renderScheduleGraph();
-}
-function scheduleGraphNext() {
-  if (scheduleGraphDate >= todayStr()) return;
-  const allDates = [...new Set(getTrips().map(t=>t.date))].filter(d => d > scheduleGraphDate && d < todayStr()).sort();
-  scheduleGraphDate = allDates.length > 0 ? allDates[0] : todayStr();
-  renderScheduleGraph();
-}
 
 function renderScheduleGraph() {
-  const date = scheduleGraphDate;
-  const d = new Date(date + 'T00:00:00');
-  const dow = ['日','月','火','水','木','金','土'][d.getDay()];
-  const isToday = date === todayStr();
-  document.getElementById('scheduleGraphTitle').textContent = `${d.getMonth()+1}月${d.getDate()}日（${dow}）${isToday ? ' 今日' : ''}`;
+  // 記録がある日＋今日を古い順に並べて、それぞれを縦棒グラフの1列にする
+  const dates = [...new Set(getTrips().map(t => t.date))];
+  if (!dates.includes(todayStr())) dates.push(todayStr());
+  dates.sort();
 
-  const typeColors = { '配車': '#ff6b00', 'GO': '#1a73e8', '流し': '#00a152' };
-  const otherColors = { break: '#f5a623', fuel: '#43a047', vacant: '#ccc' };
-  const fmtHM = dt => `${pad(dt.getHours())}:${pad(dt.getMinutes())}`;
+  document.getElementById('scheduleGraphColumns').innerHTML = dates.map(date => {
+    const d = new Date(date + 'T00:00:00');
+    const dow = ['日','月','火','水','木','金','土'][d.getDay()];
+    const isToday = date === todayStr();
+    const label = `${d.getMonth()+1}/${d.getDate()}(${dow})`;
+    const labelStyle = isToday ? 'color:var(--primary);font-weight:800;' : 'color:var(--muted);';
 
-  const result = computeScheduleSegments(date);
-  if (!result) {
-    document.getElementById('scheduleGraphBar').innerHTML =
-      `<div style="width:100%;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:13px;">この日の記録はありません</div>`;
-    document.getElementById('scheduleGraphLegend').innerHTML = '';
-    document.getElementById('scheduleGraphTimeStart').textContent = '';
-    document.getElementById('scheduleGraphTimeEnd').textContent = '';
-    return;
-  }
+    const result = computeScheduleSegments(date);
+    const barsHTML = result ? result.segments.map(seg => {
+      const startMin = (seg.start - result.shiftStart) / 60000;
+      const durMin = (seg.end - seg.start) / 60000;
+      const topPct = Math.max(0, startMin / GRAPH_DAY_SPAN_MIN * 100);
+      const heightPct = Math.max(0, durMin / GRAPH_DAY_SPAN_MIN * 100);
+      let color, label2;
+      if (seg.type === 'occupied') {
+        const type = seg.trip.tripType || '流し';
+        color = GRAPH_TYPE_COLORS[type] || '#1a73e8';
+        label2 = type;
+      } else if (seg.type === 'break') { color = GRAPH_OTHER_COLORS.break; label2 = '休憩'; }
+      else if (seg.type === 'fuel') { color = GRAPH_OTHER_COLORS.fuel; label2 = '給油'; }
+      else { color = GRAPH_OTHER_COLORS.vacant; label2 = '空車'; }
+      const fmtHM = dt => `${pad(dt.getHours())}:${pad(dt.getMinutes())}`;
+      return `<div style="position:absolute;left:0;right:0;top:${topPct}%;height:${heightPct}%;background:${color};" title="${label2} ${fmtHM(seg.start)}〜${fmtHM(seg.end)}"></div>`;
+    }).join('') : '';
 
-  const { segments, shiftStart, endTime } = result;
-  const totalMs = Math.max(1, endTime - shiftStart);
-
-  document.getElementById('scheduleGraphBar').innerHTML = segments.map(seg => {
-    const widthPct = (seg.end - seg.start) / totalMs * 100;
-    let color, label;
-    if (seg.type === 'occupied') {
-      const type = seg.trip.tripType || '流し';
-      color = typeColors[type] || '#1a73e8';
-      label = type;
-    } else if (seg.type === 'break') { color = otherColors.break; label = '休憩'; }
-    else if (seg.type === 'fuel') { color = otherColors.fuel; label = '給油'; }
-    else { color = otherColors.vacant; label = '空車'; }
-    return `<div style="flex:0 0 ${widthPct}%;background:${color};height:100%;" title="${label} ${fmtHM(seg.start)}〜${fmtHM(seg.end)}"></div>`;
+    return `
+      <div style="display:flex;flex-direction:column;align-items:center;flex-shrink:0;">
+        <div style="position:relative;width:28px;height:260px;background:var(--bg);border-radius:4px;overflow:hidden;">${barsHTML}</div>
+        <div style="font-size:10px;margin-top:4px;white-space:nowrap;${labelStyle}">${label}</div>
+      </div>
+    `;
   }).join('');
 
-  document.getElementById('scheduleGraphTimeStart').textContent = fmtHM(shiftStart);
-  document.getElementById('scheduleGraphTimeEnd').textContent = fmtHM(endTime);
+  // 左側の時刻目盛り（07:30〜翌5:00）
+  const axisHours = [7, 10, 13, 16, 19, 22, 1, 4];
+  document.getElementById('scheduleGraphAxis').innerHTML = axisHours.map(h => {
+    let minFromStart = (h - 7.5) * 60;
+    if (minFromStart < 0) minFromStart += 24 * 60;
+    const topPct = minFromStart / GRAPH_DAY_SPAN_MIN * 100;
+    return `<div style="position:absolute;top:${topPct}%;right:4px;transform:translateY(-50%);font-size:10px;color:var(--muted);">${pad(h)}:00</div>`;
+  }).join('');
 
   const legendItems = [
-    { color: typeColors['GO'], label: 'GO' },
-    { color: typeColors['流し'], label: '流し' },
-    { color: typeColors['配車'], label: '配車' },
-    { color: otherColors.break, label: '休憩' },
-    { color: otherColors.fuel, label: '給油' },
-    { color: otherColors.vacant, label: '空車' },
+    { color: GRAPH_TYPE_COLORS['GO'], label: 'GO' },
+    { color: GRAPH_TYPE_COLORS['流し'], label: '流し' },
+    { color: GRAPH_TYPE_COLORS['配車'], label: '配車' },
+    { color: GRAPH_OTHER_COLORS.break, label: '休憩' },
+    { color: GRAPH_OTHER_COLORS.fuel, label: '給油' },
+    { color: GRAPH_OTHER_COLORS.vacant, label: '空車' },
   ];
   document.getElementById('scheduleGraphLegend').innerHTML = legendItems.map(li => `
     <span style="display:inline-flex;align-items:center;gap:4px;margin-right:10px;font-size:12px;color:var(--muted);">
@@ -2572,23 +2570,6 @@ function renderScheduleGraph() {
     </span>
   `).join('');
 }
-
-// タイムライングラフのモーダルは左右スワイプで前後の日付に移動できる
-(function initScheduleGraphSwipe() {
-  const modal = document.getElementById('scheduleGraphModal');
-  let startX = 0, startY = 0;
-  modal.addEventListener('touchstart', e => {
-    startX = e.touches[0].clientX;
-    startY = e.touches[0].clientY;
-  }, { passive: true });
-  modal.addEventListener('touchend', e => {
-    const dx = e.changedTouches[0].clientX - startX;
-    const dy = e.changedTouches[0].clientY - startY;
-    if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy)) {
-      if (dx < 0) scheduleGraphNext(); else scheduleGraphPrev();
-    }
-  }, { passive: true });
-})();
 
 // カスタム締め日（指定期間）
 // カスタム締め日（2026年度）
