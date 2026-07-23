@@ -521,6 +521,7 @@
       <div style="text-align:center;margin-top:10px;">
         <div style="font-size:26px;font-weight:800;color:var(--success);" id="schedDaySales">¥0</div>
         <div style="font-size:12px;color:var(--muted);margin-top:2px;">この日の営収額</div>
+        <button class="btn btn-gray btn-sm" onclick="openScheduleGraph()" style="margin-top:8px;padding:6px 14px;font-size:12px;">グラフ</button>
       </div>
       <div style="display:flex;gap:6px;align-items:center;margin-top:10px;">
         <input type="time" id="schedEndTimeInput" class="input-field" style="flex:1;padding:6px 8px;font-size:13px;">
@@ -650,6 +651,28 @@
   </button>
 
 </nav>
+
+<!-- Schedule Graph Modal -->
+<div class="modal-overlay" id="scheduleGraphModal" onclick="if(event.target===this) closeScheduleGraphModal()">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+      <button class="btn btn-gray btn-sm" onclick="scheduleGraphPrev()" style="padding:8px 14px;font-size:18px;line-height:1;">‹</button>
+      <div class="modal-title" style="flex:1;text-align:center;margin-bottom:0;" id="scheduleGraphTitle"></div>
+      <button class="btn btn-gray btn-sm" onclick="scheduleGraphNext()" style="padding:8px 14px;font-size:18px;line-height:1;">›</button>
+    </div>
+    <div id="scheduleGraphBar" style="display:flex;height:48px;border-radius:8px;overflow:hidden;background:var(--bg);margin-top:12px;"></div>
+    <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-top:4px;">
+      <span id="scheduleGraphTimeStart"></span>
+      <span id="scheduleGraphTimeEnd"></span>
+    </div>
+    <div id="scheduleGraphLegend" style="margin-top:14px;text-align:center;"></div>
+    <div style="text-align:center;font-size:11px;color:var(--muted);margin-top:12px;">← 左右にスワイプで前後の日付を表示 →</div>
+    <div style="margin-top:16px;">
+      <button class="btn btn-primary" onclick="closeScheduleGraphModal()">閉じる</button>
+    </div>
+  </div>
+</div>
 
 <!-- Hour Location Modal -->
 <div class="modal-overlay" id="hourLocationModal" onclick="if(event.target===this) closeHourLocationModal()">
@@ -1232,6 +1255,15 @@ function todayStr() {
   return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
 }
 
+// 当日の記録がなければ、記録がある直近の日を返す（サマリー・履歴のデフォルト表示用）
+function resolveDefaultViewDate() {
+  const today = todayStr();
+  const trips = getTrips();
+  if (trips.some(t => t.date === today)) return today;
+  const pastDates = [...new Set(trips.map(t => t.date))].filter(d => d < today).sort();
+  return pastDates.length > 0 ? pastDates[pastDates.length - 1] : today;
+}
+
 // 待機時間を自動計算（7:30起点 − 乗車時間合計）
 function calcWaitMinutes(date, endTime) {
   const shiftStart = new Date(date + 'T07:30:00');
@@ -1298,7 +1330,7 @@ function fmtWait(min) {
   return `${Math.floor(min/60)}時間${min%60 > 0 ? min%60+'分' : ''}`;
 }
 
-let summaryCurrentDate = todayStr();
+let summaryCurrentDate = resolveDefaultViewDate();
 
 function summaryNavPrev() {
   const allDates = [...new Set(getTrips().map(t=>t.date))].filter(d => d < summaryCurrentDate).sort();
@@ -1373,7 +1405,7 @@ function updateTodaySummary() {
   document.getElementById('todayUncollected').textContent = `¥${totalUncollected.toLocaleString()}`;
   document.getElementById('todayTip').textContent = `¥${totalTip.toLocaleString()}`;
   document.getElementById('todayGoCount').textContent = `${goCount}件`;
-  document.getElementById('todayNashiTotal').textContent = `¥${exTax(nashiTotal).toLocaleString()}`;
+  document.getElementById('todayNashiTotal').textContent = `¥${nashiTotal.toLocaleString()}`;
   document.getElementById('todayPax').textContent = `${totalPax}名`;
 
   // 待機時間は月・水・金のみ表示
@@ -1387,7 +1419,7 @@ function updateTodaySummary() {
 }
 
 // ==================== HISTORY ====================
-let histCurrentDate = todayStr(); // currently viewed date
+let histCurrentDate = resolveDefaultViewDate(); // currently viewed date
 let histShowAll = false;          // true = show all dates
 
 function renderHistory() {
@@ -1482,13 +1514,13 @@ function histNavNext() {
 
 function histGoToday() {
   histShowAll = false;
-  histCurrentDate = todayStr();
+  histCurrentDate = resolveDefaultViewDate();
   renderHistory();
 }
 
 function histToggleAll() {
   histShowAll = !histShowAll;
-  if (!histShowAll) histCurrentDate = todayStr();
+  if (!histShowAll) histCurrentDate = resolveDefaultViewDate();
   renderHistory();
 }
 
@@ -1697,7 +1729,7 @@ document.getElementById('tripEditModal').addEventListener('click', function(e) {
 
 function clearHistoryFilter() {
   histShowAll = false;
-  histCurrentDate = todayStr();
+  histCurrentDate = resolveDefaultViewDate();
   renderHistory();
 }
 
@@ -2236,62 +2268,17 @@ function closeCustHistoryModal() {
   document.getElementById('custHistoryModal').classList.remove('open');
 }
 
-function renderSchedule() {
-  // 本日の記録がまだない場合は、直近の記録がある日にフォールバックする
-  const todayForFallback = todayStr();
-  if (schedCurrentDate === todayForFallback && !getTrips().some(t => t.date === todayForFallback)) {
-    const pastDates = [...new Set(getTrips().map(t => t.date))].filter(d => d < todayForFallback).sort();
-    if (pastDates.length > 0) schedCurrentDate = pastDates[pastDates.length - 1];
-  }
-
-  const date = schedCurrentDate;
+// 指定日のタイムライン（実車・空車・休憩・給油）のセグメントを計算する。記録がない日は null を返す
+function computeScheduleSegments(date) {
   const isToday = date === todayStr();
   const now = new Date();
   const shiftStart = new Date(date + 'T07:30:00');
-
-  // 業務終了時刻の入力欄に保存済みの値を反映
-  const savedEndForInput = getDayEndTime(date);
-  document.getElementById('schedEndTimeInput').value = savedEndForInput
-    ? `${pad(savedEndForInput.getHours())}:${pad(savedEndForInput.getMinutes())}`
-    : '';
-
-  // 過去の勤務日一覧（記録がある日＋今日）をプルダウンに表示
-  const workDates = [...new Set(getTrips().map(t=>t.date))];
-  if (!workDates.includes(todayStr())) workDates.push(todayStr());
-  workDates.sort().reverse();
-  document.getElementById('scheduleFilter').innerHTML = workDates.map(wd => {
-    const wdd = new Date(wd + 'T00:00:00');
-    const wDow = ['日','月','火','水','木','金','土'][wdd.getDay()];
-    const label = `${wdd.getMonth()+1}月${wdd.getDate()}日（${wDow}）` + (wd === todayStr() ? ' 今日' : '');
-    return `<option value="${wd}"${wd === date ? ' selected' : ''}>${label}</option>`;
-  }).join('');
-
-  const allDates = [...new Set(getTrips().map(t=>t.date))].sort();
-  document.getElementById('schedNavPrevBtn').disabled = !allDates.some(dt => dt < date);
-  document.getElementById('schedNavNextBtn').disabled = date >= todayStr();
-
-  // この日の営収額
-  const daySales = getTrips().filter(t => t.date === date).reduce((s,t) => s + getTripFare(t), 0);
-  document.getElementById('schedDaySales').textContent = `¥${exTax(daySales).toLocaleString()}`;
 
   const trips = getTrips()
     .filter(t => t.date === date && t.pickupTime && t.dropoffTime)
     .sort((a,b) => tripSortKey(a) - tripSortKey(b));
 
-  // その日の何回目の乗車かを求める
-  const rideNumberMap = {};
-  trips.forEach((t, i) => { rideNumberMap[t.id] = i + 1; });
-
-  // 最初の記録がない場合は空車時間を0にする
-  if (trips.length === 0) {
-    document.getElementById('schedJisshaTotal').textContent = '0分';
-    document.getElementById('schedWaitTotal').textContent = '0分';
-    document.getElementById('schedBreakTotal').textContent = '0分';
-    document.getElementById('schedAllTotal').textContent = '0分';
-    const msg = (isToday && now < shiftStart) ? 'まだ業務開始前です' : 'この日の記録はありません';
-    document.getElementById('scheduleList').innerHTML = emptyState(msg);
-    return;
-  }
+  if (trips.length === 0) return null;
 
   const savedEnd = getDayEndTime(date);
   const isOngoing = isToday && !savedEnd;
@@ -2374,6 +2361,66 @@ function renderSchedule() {
   const breakMin = sumTimeRangeMin(scheduleBreaks);
   const allMin = Math.max(0, Math.round((endTime - shiftStart) / 60000));
 
+  return { trips, segments, shiftStart, endTime, jisshaMin, breakMin, allMin, isToday };
+}
+
+function renderSchedule() {
+  // 本日の記録がまだない場合は、直近の記録がある日にフォールバックする
+  const todayForFallback = todayStr();
+  if (schedCurrentDate === todayForFallback && !getTrips().some(t => t.date === todayForFallback)) {
+    const pastDates = [...new Set(getTrips().map(t => t.date))].filter(d => d < todayForFallback).sort();
+    if (pastDates.length > 0) schedCurrentDate = pastDates[pastDates.length - 1];
+  }
+
+  const date = schedCurrentDate;
+  const isToday = date === todayStr();
+  const now = new Date();
+  const shiftStart = new Date(date + 'T07:30:00');
+
+  // 業務終了時刻の入力欄に保存済みの値を反映
+  const savedEndForInput = getDayEndTime(date);
+  document.getElementById('schedEndTimeInput').value = savedEndForInput
+    ? `${pad(savedEndForInput.getHours())}:${pad(savedEndForInput.getMinutes())}`
+    : '';
+
+  // 過去の勤務日一覧（記録がある日＋今日）をプルダウンに表示
+  const workDates = [...new Set(getTrips().map(t=>t.date))];
+  if (!workDates.includes(todayStr())) workDates.push(todayStr());
+  workDates.sort().reverse();
+  document.getElementById('scheduleFilter').innerHTML = workDates.map(wd => {
+    const wdd = new Date(wd + 'T00:00:00');
+    const wDow = ['日','月','火','水','木','金','土'][wdd.getDay()];
+    const label = `${wdd.getMonth()+1}月${wdd.getDate()}日（${wDow}）` + (wd === todayStr() ? ' 今日' : '');
+    return `<option value="${wd}"${wd === date ? ' selected' : ''}>${label}</option>`;
+  }).join('');
+
+  const allDates = [...new Set(getTrips().map(t=>t.date))].sort();
+  document.getElementById('schedNavPrevBtn').disabled = !allDates.some(dt => dt < date);
+  document.getElementById('schedNavNextBtn').disabled = date >= todayStr();
+
+  // この日の営収額
+  const daySales = getTrips().filter(t => t.date === date).reduce((s,t) => s + getTripFare(t), 0);
+  document.getElementById('schedDaySales').textContent = `¥${exTax(daySales).toLocaleString()}`;
+
+  const result = computeScheduleSegments(date);
+
+  // 最初の記録がない場合は空車時間を0にする
+  if (!result) {
+    document.getElementById('schedJisshaTotal').textContent = '0分';
+    document.getElementById('schedWaitTotal').textContent = '0分';
+    document.getElementById('schedBreakTotal').textContent = '0分';
+    document.getElementById('schedAllTotal').textContent = '0分';
+    const msg = (isToday && now < shiftStart) ? 'まだ業務開始前です' : 'この日の記録はありません';
+    document.getElementById('scheduleList').innerHTML = emptyState(msg);
+    return;
+  }
+
+  const { trips, segments, endTime, jisshaMin, breakMin, allMin } = result;
+
+  // その日の何回目の乗車かを求める
+  const rideNumberMap = {};
+  trips.forEach((t, i) => { rideNumberMap[t.id] = i + 1; });
+
   document.getElementById('schedJisshaTotal').textContent = fmtWait(jisshaMin);
   document.getElementById('schedWaitTotal').textContent = fmtWait(calcWaitMinutes(date, endTime));
   document.getElementById('schedBreakTotal').textContent = fmtWait(breakMin);
@@ -2447,6 +2494,102 @@ function renderSchedule() {
   }).join('');
 }
 
+// ==================== タイムライン グラフ ====================
+let scheduleGraphDate = null;
+
+function openScheduleGraph() {
+  scheduleGraphDate = schedCurrentDate;
+  renderScheduleGraph();
+  document.getElementById('scheduleGraphModal').classList.add('open');
+}
+function closeScheduleGraphModal() {
+  document.getElementById('scheduleGraphModal').classList.remove('open');
+}
+function scheduleGraphPrev() {
+  const allDates = [...new Set(getTrips().map(t=>t.date))].filter(d => d < scheduleGraphDate).sort();
+  if (allDates.length === 0) return;
+  scheduleGraphDate = allDates[allDates.length - 1];
+  renderScheduleGraph();
+}
+function scheduleGraphNext() {
+  if (scheduleGraphDate >= todayStr()) return;
+  const allDates = [...new Set(getTrips().map(t=>t.date))].filter(d => d > scheduleGraphDate && d < todayStr()).sort();
+  scheduleGraphDate = allDates.length > 0 ? allDates[0] : todayStr();
+  renderScheduleGraph();
+}
+
+function renderScheduleGraph() {
+  const date = scheduleGraphDate;
+  const d = new Date(date + 'T00:00:00');
+  const dow = ['日','月','火','水','木','金','土'][d.getDay()];
+  const isToday = date === todayStr();
+  document.getElementById('scheduleGraphTitle').textContent = `${d.getMonth()+1}月${d.getDate()}日（${dow}）${isToday ? ' 今日' : ''}`;
+
+  const typeColors = { '配車': '#ff6b00', 'GO': '#1a73e8', '流し': '#00a152' };
+  const otherColors = { break: '#f5a623', fuel: '#43a047', vacant: '#ccc' };
+  const fmtHM = dt => `${pad(dt.getHours())}:${pad(dt.getMinutes())}`;
+
+  const result = computeScheduleSegments(date);
+  if (!result) {
+    document.getElementById('scheduleGraphBar').innerHTML =
+      `<div style="width:100%;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:13px;">この日の記録はありません</div>`;
+    document.getElementById('scheduleGraphLegend').innerHTML = '';
+    document.getElementById('scheduleGraphTimeStart').textContent = '';
+    document.getElementById('scheduleGraphTimeEnd').textContent = '';
+    return;
+  }
+
+  const { segments, shiftStart, endTime } = result;
+  const totalMs = Math.max(1, endTime - shiftStart);
+
+  document.getElementById('scheduleGraphBar').innerHTML = segments.map(seg => {
+    const widthPct = (seg.end - seg.start) / totalMs * 100;
+    let color, label;
+    if (seg.type === 'occupied') {
+      const type = seg.trip.tripType || '流し';
+      color = typeColors[type] || '#1a73e8';
+      label = type;
+    } else if (seg.type === 'break') { color = otherColors.break; label = '休憩'; }
+    else if (seg.type === 'fuel') { color = otherColors.fuel; label = '給油'; }
+    else { color = otherColors.vacant; label = '空車'; }
+    return `<div style="flex:0 0 ${widthPct}%;background:${color};height:100%;" title="${label} ${fmtHM(seg.start)}〜${fmtHM(seg.end)}"></div>`;
+  }).join('');
+
+  document.getElementById('scheduleGraphTimeStart').textContent = fmtHM(shiftStart);
+  document.getElementById('scheduleGraphTimeEnd').textContent = fmtHM(endTime);
+
+  const legendItems = [
+    { color: typeColors['GO'], label: 'GO' },
+    { color: typeColors['流し'], label: '流し' },
+    { color: typeColors['配車'], label: '配車' },
+    { color: otherColors.break, label: '休憩' },
+    { color: otherColors.fuel, label: '給油' },
+    { color: otherColors.vacant, label: '空車' },
+  ];
+  document.getElementById('scheduleGraphLegend').innerHTML = legendItems.map(li => `
+    <span style="display:inline-flex;align-items:center;gap:4px;margin-right:10px;font-size:12px;color:var(--muted);">
+      <span style="width:10px;height:10px;border-radius:2px;background:${li.color};display:inline-block;"></span>${li.label}
+    </span>
+  `).join('');
+}
+
+// タイムライングラフのモーダルは左右スワイプで前後の日付に移動できる
+(function initScheduleGraphSwipe() {
+  const modal = document.getElementById('scheduleGraphModal');
+  let startX = 0, startY = 0;
+  modal.addEventListener('touchstart', e => {
+    startX = e.touches[0].clientX;
+    startY = e.touches[0].clientY;
+  }, { passive: true });
+  modal.addEventListener('touchend', e => {
+    const dx = e.changedTouches[0].clientX - startX;
+    const dy = e.changedTouches[0].clientY - startY;
+    if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy)) {
+      if (dx < 0) scheduleGraphNext(); else scheduleGraphPrev();
+    }
+  }, { passive: true });
+})();
+
 // カスタム締め日（指定期間）
 // カスタム締め日（2026年度）
 const CUSTOM_PERIODS = [
@@ -2496,6 +2639,33 @@ function renderStats() {
   const allTrips = getTrips();
   const allWaits = getWaits();
   let trips, waits, label;
+
+  // 現在の期間（当日・今週・今月）に記録がなければ、記録がある直近の期間まで自動的にさかのぼる
+  if (statPeriodOffset === 0 && allTrips.length > 0) {
+    if (currentStatTab === 'day') {
+      if (!allTrips.some(t => t.date === today)) {
+        const pastDates = [...new Set(allTrips.map(t => t.date))].filter(d => d < today).sort();
+        if (pastDates.length > 0) {
+          const latestDate = pastDates[pastDates.length - 1];
+          statPeriodOffset = Math.round((new Date(today + 'T00:00:00') - new Date(latestDate + 'T00:00:00')) / 86400000);
+        }
+      }
+    } else if (currentStatTab === 'week') {
+      const wStartDate0 = new Date(getWeekStart() + 'T00:00:00');
+      for (let off = 0; off <= 520; off++) {
+        const s = new Date(wStartDate0); s.setDate(s.getDate() - off * 7);
+        const e = new Date(s); e.setDate(e.getDate() + 6);
+        const sStr = `${s.getFullYear()}-${pad(s.getMonth()+1)}-${pad(s.getDate())}`;
+        const eStr = `${e.getFullYear()}-${pad(e.getMonth()+1)}-${pad(e.getDate())}`;
+        if (allTrips.some(t => t.date >= sStr && t.date <= eStr)) { statPeriodOffset = off; break; }
+      }
+    } else if (currentStatTab === 'month') {
+      for (let off = 0; off <= 120; off++) {
+        const period = getShiftedBillingPeriod(off);
+        if (allTrips.some(t => t.date >= period.startStr && t.date <= period.endStr)) { statPeriodOffset = off; break; }
+      }
+    }
+  }
 
   document.getElementById('statPeriodNextBtn').disabled = statPeriodOffset <= 0;
 
