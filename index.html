@@ -2230,8 +2230,9 @@ function deleteScheduleFuel(index) {
 // 同じGO乗客の過去の乗車回数・履歴を取得（名前が完全一致するもの）
 function getGoPaxHistory(trip) {
   if (!trip || trip.tripType !== 'GO' || !trip.paxName) return null;
+  // 名前・性別・年代がすべて一致した場合のみ同一人物とみなす
   const all = getTrips()
-    .filter(t => t.tripType === 'GO' && t.paxName === trip.paxName)
+    .filter(t => t.tripType === 'GO' && t.paxName === trip.paxName && t.paxGender === trip.paxGender && t.paxAge === trip.paxAge)
     .sort((a,b) => (a.date + (a.pickupTime||'')).localeCompare(b.date + (b.pickupTime||'')));
   const visitNumber = all.findIndex(t => t.id === trip.id) + 1;
   return { visitNumber, total: all.length, all };
