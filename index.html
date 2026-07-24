@@ -2357,7 +2357,8 @@ function computeScheduleSegments(date) {
     if (diff < 0) diff += 24 * 60;
     return s + diff;
   }, 0);
-  const breakMin = sumTimeRangeMin(scheduleBreaks);
+  // 「休憩時間」には給油時間も含めて表示する
+  const breakMin = sumTimeRangeMin(scheduleBreaks) + sumTimeRangeMin(scheduleFuelStops);
   const allMin = Math.max(0, Math.round((endTime - shiftStart) / 60000));
 
   return { trips, segments, shiftStart, endTime, jisshaMin, breakMin, allMin, isToday };
