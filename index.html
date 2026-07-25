@@ -179,9 +179,10 @@
   /* Fare input with ¥ */
   .fare-wrap { position: relative; }
   .fare-wrap .yen { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); font-size: 16px; color: var(--muted); }
-  /* 料金は下2桁の「00」を省略して入力するため、末尾に「00」を固定表示する */
-  .fare-wrap .fare-suffix { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); font-size: 16px; color: var(--text); pointer-events: none; }
-  .fare-wrap .input-field.fare-with-suffix { padding-right: 34px; }
+  /* 料金は下2桁の「00」を省略して入力するため、入力した数字のすぐ右に「00」を表示する。
+     leftの値は入力文字幅に合わせてJS（positionFareSuffix）が設定する */
+  .fare-wrap .fare-suffix { position: absolute; left: 0; top: 0; color: var(--text); pointer-events: none; white-space: pre; }
+  .fare-wrap .fare-sizer { position: absolute; visibility: hidden; white-space: pre; left: 0; top: 0; }
 
   /* Payment method buttons */
   .pay-btns { display: flex; gap: 6px; flex-wrap: wrap; }
@@ -304,8 +305,9 @@
           <label class="input-label" id="fareLabelMain">💴 料金（現金）</label>
           <div class="fare-wrap">
             <span class="yen">¥</span>
-            <input class="input-field fare-with-suffix" id="fareAmount" type="number" placeholder="0" inputmode="numeric">
-            <span class="fare-suffix">00</span>
+            <input class="input-field" id="fareAmount" type="number" placeholder="" inputmode="numeric" oninput="positionFareSuffix()">
+            <span class="fare-suffix" id="fareSuffix">00</span>
+            <span class="fare-sizer" id="fareSizer"></span>
           </div>
         </div>
         <div class="input-group" style="flex:1;">
@@ -1032,7 +1034,7 @@ function buildGoMemo() {
   if (!name) return '';
   const gender = document.getElementById('goPaxGender').value;
   const age = document.getElementById('goPaxAge').value;
-  const parts = [`${name}様`, gender];
+  const parts = [`${name}`, gender];
   if (age) parts.push(age);
   return parts.join(' / ');
 }
@@ -1091,7 +1093,7 @@ function onGoPaxNameInput() {
     const fare = getTripFare(t);
     return `
       <div class="pax-history-item" onclick="applyGoPaxHistory(${t.id})">
-        <span class="ph-date">${parseInt(mm)}/${parseInt(dd)}</span> ${t.paxName}様 ${t.paxGender||''}${t.paxAge||''}　<b>¥${fare.toLocaleString()}</b>
+        <span class="ph-date">${parseInt(mm)}/${parseInt(dd)}</span> ${t.paxName} ${t.paxGender||''}${t.paxAge||''}　<b>¥${fare.toLocaleString()}</b>
         <div class="ph-route">${t.pickup||'?'} → ${t.dropoff||'?'}</div>
       </div>
     `;
@@ -1309,6 +1311,23 @@ function selectPay(method) {
 }
 
 // 料金合計ヘルパー（後方互換）
+// 料金欄の「00」を、入力された数字のすぐ右隣に表示する（フォントは入力欄と同じものを使う）
+function positionFareSuffix() {
+  const input = document.getElementById('fareAmount');
+  const suffix = document.getElementById('fareSuffix');
+  const sizer = document.getElementById('fareSizer');
+  if (!input || !suffix || !sizer) return;
+  const cs = getComputedStyle(input);
+  sizer.style.font = cs.font;
+  suffix.style.font = cs.font;
+  sizer.textContent = input.value;
+  suffix.style.left = `${parseFloat(cs.paddingLeft) + sizer.getBoundingClientRect().width}px`;
+  // 入力文字と同じ高さに揃えるため、入力欄の枠線・余白・行の高さに合わせて配置する
+  suffix.style.lineHeight = cs.lineHeight;
+  suffix.style.top = `${input.offsetTop + parseFloat(cs.borderTopWidth) + parseFloat(cs.paddingTop)}px`;
+  suffix.style.height = `${input.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom)}px`;
+}
+
 function getTripFare(t) {
   if (t.cashFare !== undefined || t.uncollectedFare !== undefined) {
     return (t.cashFare||0) + (t.uncollectedFare||0);
@@ -1368,6 +1387,7 @@ function saveTrip() {
     const el = document.getElementById(id);
     if (el) el.value = '';
   });
+  positionFareSuffix();
   document.getElementById('pickupTime').value = '';
   document.getElementById('dropoffTime').value = '';
   resetPax();
@@ -1776,7 +1796,7 @@ function buildEditGoMemo() {
   if (!name) return '';
   const gender = document.getElementById('editGoPaxGender').value;
   const age = document.getElementById('editGoPaxAge').value;
-  const parts = [`${name}様`, gender];
+  const parts = [`${name}`, gender];
   if (age) parts.push(age);
   return parts.join(' / ');
 }
@@ -2208,7 +2228,7 @@ function renderRecommend() {
     const [,mm,dd] = t.date.split('-');
     const dow = weekdays[new Date(t.date + 'T00:00:00').getDay()];
     const type = t.tripType || '流し';
-    const name = t.paxName ? `${t.paxName}様` : (type === 'GO' && t.memo ? t.memo.split(' / ')[0] : '');
+    const name = t.paxName ? `${t.paxName}` : (type === 'GO' && t.memo ? t.memo.split(' / ')[0] : '');
     const typeColor = typeColors[type] || '#1a73e8';
     const fare = getTripFare(t);
     return `
@@ -2388,7 +2408,7 @@ function showCustomerHistory(tripId) {
   if (!info) return;
   const sorted = info.all.slice().reverse(); // 新しい順
   const totalFare = info.all.reduce((s,t) => s + getTripFare(t), 0);
-  document.getElementById('custHistoryTitle').textContent = `${trip.paxName}様のご利用履歴（${info.total}回）`;
+  document.getElementById('custHistoryTitle').textContent = `${trip.paxName}のご利用履歴（${info.total}回）`;
   document.getElementById('custHistoryContent').innerHTML =
     `<div style="text-align:center;font-size:13px;color:var(--muted);margin-bottom:10px;">合計¥${totalFare.toLocaleString()}</div>` +
     sorted.map(t => {
@@ -3022,6 +3042,7 @@ function updateHeader() {
 
 updateHeader();
 updateTodaySummary();
+positionFareSuffix();
 setInterval(() => {
   updateHeader();
   updateTodaySummary();
