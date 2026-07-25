@@ -80,19 +80,6 @@
   .btn-row { display: flex; gap: 10px; margin-top: 10px; }
   .btn-row .btn { flex: 1; }
 
-  /* Sticky 運行操作 wrapper */
-  .sticky-op-wrap {
-    position: sticky;
-    top: var(--header-h);
-    z-index: 50;
-    background: var(--bg);
-    padding-bottom: 4px;
-    margin-bottom: 4px;
-  }
-  .sticky-op-wrap .card { margin-bottom: 0; padding: 8px 12px; }
-  .sticky-op-wrap .card-title { display: none; }
-  .sticky-op-wrap .btn-row { margin-top: 0; gap: 8px; }
-  .sticky-op-wrap > .btn { padding: 10px; font-size: 14px; margin-bottom: 4px; }
 
   /* コンパクトフォーム */
   #tripFormCard { padding: 10px 12px; }
@@ -106,12 +93,18 @@
   #tripFormCard .type-btn { padding: 8px 4px; font-size: 13px; }
 
   /* Inputs */
-  .input-group { margin-bottom: 12px; }
+  .input-group { margin-bottom: 12px; position: relative; }
   .input-label { font-size: 13px; font-weight: 600; color: var(--muted); margin-bottom: 5px; display: block; }
   .input-field { width: 100%; padding: 12px 14px; border: 1.5px solid var(--border); border-radius: 12px; font-size: 16px; background: white; color: var(--text); outline: none; transition: border-color 0.15s; -webkit-appearance: none; }
   .input-field:focus { border-color: var(--primary); }
   .input-row { display: flex; gap: 8px; }
   .input-row .input-group { flex: 1; }
+
+  /* 乗車/降車場所の予測変換候補 */
+  .loc-suggest { display: none; position: absolute; left: 0; right: 0; top: 100%; margin-top: 4px; background: white; border: 1px solid var(--border); border-radius: 10px; box-shadow: 0 4px 14px rgba(0,0,0,0.15); z-index: 60; max-height: 180px; overflow-y: auto; }
+  .loc-suggest-item { padding: 9px 12px; font-size: 14px; color: var(--text); cursor: pointer; border-bottom: 1px solid var(--border); }
+  .loc-suggest-item:last-child { border-bottom: none; }
+  .loc-suggest-item:active { background: var(--bg); }
 
   /* Tabs (sub) */
   .tab-bar { display: flex; background: #f0f0f5; border-radius: 12px; padding: 3px; margin-bottom: 14px; }
@@ -276,14 +269,6 @@
   <!-- ===== PAGE: 運行記録 ===== -->
   <div class="page active" id="page-record">
 
-    <!-- 保存ボタン (sticky) -->
-    <div class="sticky-op-wrap">
-      <button class="btn btn-primary" onclick="saveTrip()" style="margin-bottom:8px;">
-        <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z"/></svg>
-        乗降記録を保存
-      </button>
-    </div>
-
     <!-- Trip Entry Form -->
     <div class="card" id="tripFormCard">
       <div class="card-title">乗降記録入力</div>
@@ -341,11 +326,13 @@
       <div class="input-row">
         <div class="input-group">
           <label class="input-label">🟢 乗車場所</label>
-          <input class="input-field" id="pickupLoc" type="text" placeholder="" autocomplete="off">
+          <input class="input-field" id="pickupLoc" type="text" placeholder="" autocomplete="off" oninput="onLocInput('pickupLoc','pickupLocSuggest')" onfocus="onLocInput('pickupLoc','pickupLocSuggest')" onblur="hideLocSuggest('pickupLocSuggest')">
+          <div id="pickupLocSuggest" class="loc-suggest"></div>
         </div>
         <div class="input-group">
           <label class="input-label">🔴 降車場所</label>
-          <input class="input-field" id="dropoffLoc" type="text" placeholder="" autocomplete="off">
+          <input class="input-field" id="dropoffLoc" type="text" placeholder="" autocomplete="off" oninput="onLocInput('dropoffLoc','dropoffLocSuggest')" onfocus="onLocInput('dropoffLoc','dropoffLocSuggest')" onblur="hideLocSuggest('dropoffLocSuggest')">
+          <div id="dropoffLocSuggest" class="loc-suggest"></div>
         </div>
       </div>
 
@@ -396,6 +383,11 @@
         </div>
         <input type="hidden" id="plainPaxGender" value="">
       </div>
+
+      <button class="btn btn-primary" onclick="saveTrip()" style="margin-top:4px;">
+        <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z"/></svg>
+        乗降記録を保存
+      </button>
 
     </div>
   </div>
@@ -705,11 +697,13 @@
 
     <div class="input-group">
       <label class="input-label">🟢 乗車場所</label>
-      <input class="input-field" id="editPickupLoc" type="text" placeholder="例：渋谷駅前" autocomplete="off">
+      <input class="input-field" id="editPickupLoc" type="text" placeholder="例：渋谷駅前" autocomplete="off" oninput="onLocInput('editPickupLoc','editPickupLocSuggest')" onfocus="onLocInput('editPickupLoc','editPickupLocSuggest')" onblur="hideLocSuggest('editPickupLocSuggest')">
+      <div id="editPickupLocSuggest" class="loc-suggest"></div>
     </div>
     <div class="input-group">
       <label class="input-label">🔴 降車場所</label>
-      <input class="input-field" id="editDropoffLoc" type="text" placeholder="例：新宿三丁目" autocomplete="off">
+      <input class="input-field" id="editDropoffLoc" type="text" placeholder="例：新宿三丁目" autocomplete="off" oninput="onLocInput('editDropoffLoc','editDropoffLocSuggest')" onfocus="onLocInput('editDropoffLoc','editDropoffLocSuggest')" onblur="hideLocSuggest('editDropoffLocSuggest')">
+      <div id="editDropoffLocSuggest" class="loc-suggest"></div>
     </div>
     <div class="input-row">
       <div class="input-group">
@@ -1107,6 +1101,52 @@ function applyGoPaxHistory(id) {
   showToast(`前回: ${t.date.split('-').slice(1).map(n=>parseInt(n)).join('/')} ${t.pickup||''} → ${t.dropoff||''}`);
 }
 
+// ==================== 乗車/降車場所の予測変換 ====================
+// 過去の乗車場所・降車場所を1つの候補プールとして扱い、部分一致したものを
+// 使用回数の多い順（同数なら直近利用順）に並べて表示する
+let locSuggestCache = {};
+function getLocationSuggestions(query) {
+  const q = query.trim();
+  if (!q) return [];
+  const freq = new Map();
+  getTrips().forEach(t => {
+    [t.pickup, t.dropoff].forEach(loc => {
+      if (!loc || !loc.includes(q)) return;
+      const key = t.date + (t.pickupTime || '');
+      const entry = freq.get(loc);
+      if (entry) { entry.count++; if (key > entry.lastKey) entry.lastKey = key; }
+      else freq.set(loc, { count: 1, lastKey: key });
+    });
+  });
+  return [...freq.entries()]
+    .filter(([name]) => name !== q)
+    .sort((a,b) => b[1].count - a[1].count || b[1].lastKey.localeCompare(a[1].lastKey))
+    .map(([name]) => name)
+    .slice(0, 6);
+}
+function onLocInput(inputId, suggestId) {
+  const input = document.getElementById(inputId);
+  const box = document.getElementById(suggestId);
+  const suggestions = getLocationSuggestions(input.value);
+  locSuggestCache[suggestId] = suggestions;
+  if (suggestions.length === 0) { box.style.display = 'none'; box.innerHTML = ''; return; }
+  box.innerHTML = suggestions.map((name, i) =>
+    `<div class="loc-suggest-item" onmousedown="event.preventDefault();selectLocSuggest('${inputId}','${suggestId}',${i})">${name}</div>`
+  ).join('');
+  box.style.display = 'block';
+}
+function selectLocSuggest(inputId, suggestId, idx) {
+  const name = (locSuggestCache[suggestId] || [])[idx];
+  if (name === undefined) return;
+  document.getElementById(inputId).value = name;
+  hideLocSuggest(suggestId);
+}
+function hideLocSuggest(suggestId) {
+  const box = document.getElementById(suggestId);
+  box.style.display = 'none';
+  box.innerHTML = '';
+}
+
 // 支払方法選択
 let currentPayMethod = '現金';
 
@@ -1388,10 +1428,11 @@ function updateTodaySummary() {
     return s + (diff > 0 ? diff : 0);
   }, 0);
 
-  // タイムラインの「合計（業務開始〜終了）」時間で本日の営収額（税抜）を割って時給を算出する
+  // 時給 = 営収額（税抜） ÷ 実働時間（タイムラインの合計時間） × 0.5
+  // （スプレッドシートの計算式 =IF(AND(ISNUMBER(F40),ISNUMBER(H34),H34<>0),F40/(H34*24)*0.5,"") に準拠）
   const scheduleResult = computeScheduleSegments(today);
   const totalWorkMin = scheduleResult ? scheduleResult.allMin : 0;
-  const hourlyWage = totalWorkMin > 0 ? Math.round(totalExTax / (totalWorkMin / 60)) : null;
+  const hourlyWage = totalWorkMin > 0 ? Math.round(totalExTax / (totalWorkMin / 60) * 0.5) : null;
 
   const totalUncollected = trips.reduce((s,t) => s + (t.uncollectedFare||0), 0);
   const totalTip = trips.reduce((s,t) => s + (t.tip||0), 0);
@@ -2519,8 +2560,10 @@ function renderScheduleGraph() {
   // （当日はまだ1件も記録がなければ列を表示しない）
   const dates = [...new Set(getTrips().map(t => t.date))].sort();
 
-  // 左側の時刻目盛り（07:30〜翌5:00）。各列のグリッド線と位置を揃えるため先に計算する
-  const axisHours = [7, 10, 13, 16, 19, 22, 1, 4];
+  // 左側の時刻目盛り（07:30〜翌5:00）。1時間刻みで細かく表示する。各列のグリッド線と位置を揃えるため先に計算する
+  const axisHours = [];
+  for (let h = 8; h <= 23; h++) axisHours.push(h);
+  for (let h = 0; h <= 4; h++) axisHours.push(h);
   const axisTicks = axisHours.map(h => {
     let minFromStart = (h - 7.5) * 60;
     if (minFromStart < 0) minFromStart += 24 * 60;
@@ -2536,6 +2579,9 @@ function renderScheduleGraph() {
     const isToday = date === todayStr();
     const label = `${d.getMonth()+1}/${d.getDate()}(${dow})`;
     const labelStyle = isToday ? 'color:var(--primary);font-weight:800;' : 'color:var(--muted);';
+
+    const daySalesRaw = getTrips().filter(t => t.date === date).reduce((s,t) => s + getTripFare(t), 0);
+    const daySalesLabel = `¥${exTax(daySalesRaw).toLocaleString()}`;
 
     const result = computeScheduleSegments(date);
     const barsHTML = result ? result.segments.map(seg => {
@@ -2557,6 +2603,7 @@ function renderScheduleGraph() {
 
     return `
       <div style="display:flex;flex-direction:column;align-items:center;flex-shrink:0;height:100%;">
+        <div style="font-size:10px;font-weight:700;color:var(--success);margin-bottom:4px;white-space:nowrap;flex-shrink:0;">${daySalesLabel}</div>
         <div style="position:relative;width:28px;flex:1;min-height:0;background:var(--bg);border-radius:4px;overflow:hidden;">${gridHTML}${barsHTML}</div>
         <div style="font-size:10px;margin-top:4px;white-space:nowrap;flex-shrink:0;${labelStyle}">${label}</div>
       </div>
