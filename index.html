@@ -179,10 +179,11 @@
   /* Fare input with ¥ */
   .fare-wrap { position: relative; }
   .fare-wrap .yen { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); font-size: 16px; color: var(--muted); }
-  /* 料金は下2桁の「00」を省略して入力するため、入力した数字のすぐ右に「00」を表示する。
-     leftの値は入力文字幅に合わせてJS（positionFareSuffix）が設定する */
-  .fare-wrap .fare-suffix { position: absolute; left: 0; top: 0; color: var(--text); pointer-events: none; white-space: pre; }
-  .fare-wrap .fare-sizer { position: absolute; visibility: hidden; white-space: pre; left: 0; top: 0; }
+  /* 料金は下2桁の「00」を省略して入力する。入力欄の文字は透明にしておき、
+     「入力値＋00」を1つの文字列として重ねて表示することで、数字と00の間隔が
+     通常の数字同士の間隔とまったく同じになるようにしている（カーソルは表示したまま） */
+  .fare-wrap .input-field.fare-masked { color: transparent; -webkit-text-fill-color: transparent; caret-color: var(--text); }
+  .fare-wrap .fare-display { position: absolute; left: 0; top: 0; color: var(--text); pointer-events: none; white-space: pre; }
 
   /* Payment method buttons */
   .pay-btns { display: flex; gap: 6px; flex-wrap: wrap; }
@@ -305,9 +306,8 @@
           <label class="input-label" id="fareLabelMain">💴 料金（現金）</label>
           <div class="fare-wrap">
             <span class="yen">¥</span>
-            <input class="input-field" id="fareAmount" type="number" placeholder="" inputmode="numeric" oninput="positionFareSuffix()">
-            <span class="fare-suffix" id="fareSuffix">00</span>
-            <span class="fare-sizer" id="fareSizer"></span>
+            <input class="input-field fare-masked" id="fareAmount" type="number" placeholder="" inputmode="numeric" oninput="updateFareDisplay()">
+            <span class="fare-display" id="fareDisplay">00</span>
           </div>
         </div>
         <div class="input-group" style="flex:1;">
@@ -373,8 +373,8 @@
           </div>
         </div>
         <div style="display:flex;gap:6px;">
-          <button class="pay-btn active" id="goGender-男性" onclick="selectGoGender('男性')" style="flex:1;">男性</button>
-          <button class="pay-btn" id="goGender-女性" onclick="selectGoGender('女性')" style="flex:1;">女性</button>
+          <button class="pay-btn active" id="goGender-男性" onclick="selectGoGender('男性', true)" style="flex:1;">男性</button>
+          <button class="pay-btn" id="goGender-女性" onclick="selectGoGender('女性', true)" style="flex:1;">女性</button>
         </div>
         <input type="hidden" id="goPaxGender" value="男性">
         <div id="goPaxHistory" style="display:none;margin-top:8px;"></div>
@@ -622,6 +622,37 @@
   </div>
 
 </div><!-- end content -->
+
+<!-- 休憩・給油 編集モーダル -->
+<div class="modal-overlay" id="schedItemEditModal" onclick="if(event.target===this) closeSchedItemEdit()">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="schedItemEditTitle">休憩を修正</div>
+    <div class="input-row">
+      <div class="input-group">
+        <label class="input-label">⏱ 開始</label>
+        <input class="input-field" id="schedItemEditStart" type="time">
+      </div>
+      <div class="input-group">
+        <label class="input-label">🏁 終了</label>
+        <input class="input-field" id="schedItemEditEnd" type="time">
+      </div>
+    </div>
+    <div class="input-group">
+      <label class="input-label">📍 場所</label>
+      <input class="input-field" id="schedItemEditPlace" type="text" placeholder="" autocomplete="off"
+             oninput="onLocInput('schedItemEditPlace','schedItemEditPlaceSuggest')"
+             onfocus="onLocInput('schedItemEditPlace','schedItemEditPlaceSuggest')"
+             onblur="hideLocSuggest('schedItemEditPlaceSuggest')">
+      <div id="schedItemEditPlaceSuggest" class="loc-suggest"></div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-gray" onclick="closeSchedItemEdit()">キャンセル</button>
+      <button class="btn btn-primary" onclick="saveSchedItemEdit()">保存</button>
+    </div>
+    <button class="btn btn-danger" style="margin-top:8px;" onclick="deleteSchedItemEdit()">🗑 削除</button>
+  </div>
+</div>
 
 <!-- Bottom Navigation -->
 <nav class="bottom-nav">
@@ -1021,7 +1052,11 @@ function selectType(type) {
 }
 
 // GOアプリ乗客情報（メモ）
-function selectGoGender(g) {
+// goGenderChosen: 利用者が自分で性別を選んだかどうか。既定値（男性）のままの状態で
+// 候補を性別で絞り込むと、まだ何も選んでいないのに女性の履歴が消えてしまうため区別する
+let goGenderChosen = false;
+function selectGoGender(g, userChose) {
+  if (userChose) goGenderChosen = true;
   document.getElementById('goPaxGender').value = g;
   ['男性','女性'].forEach(x => {
     document.getElementById(`goGender-${x}`).className = 'pay-btn' + (x === g ? ' active' : '');
@@ -1041,6 +1076,7 @@ function buildGoMemo() {
 function resetGoMemo() {
   document.getElementById('goPaxName').value = '';
   document.getElementById('goPaxAge').value = '';
+  goGenderChosen = false;
   selectGoGender('男性');
   const hist = document.getElementById('goPaxHistory');
   hist.style.display = 'none';
@@ -1073,11 +1109,11 @@ function onGoPaxNameInput() {
   const gender = document.getElementById('goPaxGender').value;
   const age = document.getElementById('goPaxAge').value;
 
+  // 頭文字が一致する履歴を候補にし、年代・性別が選択されていればさらに絞り込む
   const allMatches = getTrips()
-    .filter(t => t.tripType === 'GO' && t.paxName
-      && t.paxName.charAt(0) === q.charAt(0)
-      && t.paxGender === gender
-      && t.paxAge === age)
+    .filter(t => t.tripType === 'GO' && t.paxName && t.paxName.charAt(0) === q.charAt(0))
+    .filter(t => !age || t.paxAge === age)
+    .filter(t => !goGenderChosen || t.paxGender === gender)
     .sort((a,b) => (b.date + (b.pickupTime||'')).localeCompare(a.date + (a.pickupTime||'')));
 
   if (allMatches.length === 0) { hist.style.display = 'none'; hist.innerHTML = ''; return; }
@@ -1110,7 +1146,7 @@ function applyGoPaxHistory(id) {
   const t = getTrips().find(x => x.id === id);
   if (!t) return;
   document.getElementById('goPaxName').value = t.paxName || '';
-  if (t.paxGender) selectGoGender(t.paxGender);
+  if (t.paxGender) selectGoGender(t.paxGender, true);
   if (t.paxAge) document.getElementById('goPaxAge').value = t.paxAge;
   document.getElementById('goPaxHistory').style.display = 'none';
   showToast(`前回: ${t.date.split('-').slice(1).map(n=>parseInt(n)).join('/')} ${t.pickup||''} → ${t.dropoff||''}`);
@@ -1311,21 +1347,21 @@ function selectPay(method) {
 }
 
 // 料金合計ヘルパー（後方互換）
-// 料金欄の「00」を、入力された数字のすぐ右隣に表示する（フォントは入力欄と同じものを使う）
-function positionFareSuffix() {
+// 料金欄の表示を「入力値＋00」の1つの文字列として描画する。
+// 数字と00を同じ文字列として描くことで、間隔が通常の数字同士と完全に同じになる。
+function updateFareDisplay() {
   const input = document.getElementById('fareAmount');
-  const suffix = document.getElementById('fareSuffix');
-  const sizer = document.getElementById('fareSizer');
-  if (!input || !suffix || !sizer) return;
+  const disp = document.getElementById('fareDisplay');
+  if (!input || !disp) return;
   const cs = getComputedStyle(input);
-  sizer.style.font = cs.font;
-  suffix.style.font = cs.font;
-  sizer.textContent = input.value;
-  suffix.style.left = `${parseFloat(cs.paddingLeft) + sizer.getBoundingClientRect().width}px`;
-  // 入力文字と同じ高さに揃えるため、入力欄の枠線・余白・行の高さに合わせて配置する
-  suffix.style.lineHeight = cs.lineHeight;
-  suffix.style.top = `${input.offsetTop + parseFloat(cs.borderTopWidth) + parseFloat(cs.paddingTop)}px`;
-  suffix.style.height = `${input.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom)}px`;
+  disp.textContent = `${input.value}00`;
+  disp.style.font = cs.font;
+  disp.style.letterSpacing = cs.letterSpacing;
+  // 入力欄の文字と同じ位置・高さに重ねる
+  disp.style.lineHeight = cs.lineHeight;
+  disp.style.left = `${input.offsetLeft + parseFloat(cs.borderLeftWidth) + parseFloat(cs.paddingLeft)}px`;
+  disp.style.top = `${input.offsetTop + parseFloat(cs.borderTopWidth) + parseFloat(cs.paddingTop)}px`;
+  disp.style.height = `${input.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom)}px`;
 }
 
 function getTripFare(t) {
@@ -1387,7 +1423,7 @@ function saveTrip() {
     const el = document.getElementById(id);
     if (el) el.value = '';
   });
-  positionFareSuffix();
+  updateFareDisplay();
   document.getElementById('pickupTime').value = '';
   document.getElementById('dropoffTime').value = '';
   resetPax();
@@ -1689,6 +1725,11 @@ function histPickDate(val) {
   renderHistory();
 }
 
+// 以前の記録にはメモに「様」が付いて保存されているため、表示時に取り除く
+function stripSama(text) {
+  return String(text || '').replace(/様(?=\s*\/)|様$/g, '');
+}
+
 function tripCard(t) {
   const duration = t.pickupTime && t.dropoffTime ? calcDuration(t.pickupTime, t.dropoffTime) : '';
   const payColors = {GO:'#ff6b00', PayPay:'#e00', クレジット:'#34a853', 現金:'#1a73e8', 'd払い':'#b00068', その他:'#888'};
@@ -1729,7 +1770,7 @@ function tripCard(t) {
       <div class="trip-meta">
         <span class="meta-chip">👥 ${paxLabel}</span>
         ${fareDetail}
-        ${t.memo ? `<span class="meta-chip">📝 ${t.memo}</span>` : ''}
+        ${t.memo ? `<span class="meta-chip">📝 ${stripSama(t.memo)}</span>` : ''}
       </div>
       <div class="trip-actions">
         <button class="btn-edit" onclick="openTripEditModal(${t.id})">✏️ 修正</button>
@@ -1919,18 +1960,42 @@ function switchStatTab(tab) {
   document.getElementById('statMain').style.display = ['day','week','month'].includes(tab) ? 'block' : 'none';
   document.getElementById('statHourly').style.display = tab === 'hourly' ? 'block' : 'none';
   document.getElementById('statLocation').style.display = tab === 'location' ? 'block' : 'none';
-  if (tab === 'hourly') renderHourlyChart();
+  if (tab === 'hourly') { applyTodayHourlyDow(); renderHourlyChart(); }
   else if (tab === 'location') renderLocationRanking();
   else renderStats();
 }
 
+// 日別タブでは記録がある日だけを行き来する（記録のない日は飛ばす）
+function findStatDayOffsetWithData(fromOffset, direction) {
+  const today = todayStr();
+  const dates = [...new Set(getTrips().map(t => t.date))];
+  if (dates.length === 0) return null;
+  const offsetOf = d => Math.round((new Date(today + 'T00:00:00') - new Date(d + 'T00:00:00')) / 86400000);
+  const offsets = dates.map(offsetOf).sort((a,b) => a - b);
+  return direction > 0
+    ? (offsets.filter(o => o > fromOffset)[0] ?? null)                 // 過去へ
+    : (offsets.filter(o => o < fromOffset).pop() ?? null);             // 未来へ
+}
+
 function statPeriodPrev() {
-  statPeriodOffset++;
+  if (currentStatTab === 'day') {
+    const next = findStatDayOffsetWithData(statPeriodOffset, 1);
+    if (next === null) return;
+    statPeriodOffset = next;
+  } else {
+    statPeriodOffset++;
+  }
   renderStats();
 }
 function statPeriodNext() {
-  if (statPeriodOffset <= 0) return;
-  statPeriodOffset--;
+  if (currentStatTab === 'day') {
+    const next = findStatDayOffsetWithData(statPeriodOffset, -1);
+    if (next === null) return;
+    statPeriodOffset = next;
+  } else {
+    if (statPeriodOffset <= 0) return;
+    statPeriodOffset--;
+  }
   renderStats();
 }
 
@@ -1959,6 +2024,17 @@ function switchHourlyDow(dow) {
     el.className = 'dow-tab' + (el.dataset.dow === dow ? ' active' : '');
   });
   renderHourlyChart();
+}
+
+// 時間帯タブを開いたときは当日の曜日を自動選択する。
+// 専用タブがない土・日・火・木曜日は「全体」を表示する。
+function applyTodayHourlyDow() {
+  const dow = new Date(todayStr() + 'T00:00:00').getDay();
+  const target = [1, 3, 5].includes(dow) ? String(dow) : 'all';
+  currentHourlyDow = target;
+  document.querySelectorAll('#hourlyDowTabs .dow-tab').forEach(el => {
+    el.className = 'dow-tab' + (el.dataset.dow === target ? ' active' : '');
+  });
 }
 
 function filterTripsByHourlyDow(trips) {
@@ -2093,21 +2169,17 @@ function renderLocationRanking() {
   const map = {};
   trips.forEach(t => {
     const loc = t.pickup.trim();
-    if (!map[loc]) map[loc] = { count:0, total:0, fares:[], names:[] };
+    if (!map[loc]) map[loc] = { count:0, total:0, fares:[] };
     const f = getTripFare(t);
     map[loc].count++;
     map[loc].total += f;
     if (f > 0) map[loc].fares.push(f);
-    // メモ（お客様名）も表示する。GOの乗客名がなければ自由記入メモを使う
-    const name = (t.paxName || t.memo || '').trim();
-    if (name && !map[loc].names.includes(name)) map[loc].names.push(name);
   });
 
   const items = Object.entries(map).map(([loc, d]) => ({
     loc,
     count: d.count,
     total: d.total,
-    names: d.names,
     avg: d.fares.length ? Math.round(d.fares.reduce((s,v)=>s+v,0)/d.fares.length) : 0
   }));
 
@@ -2122,7 +2194,6 @@ function renderLocationRanking() {
       <div class="loc-rank-body">
         <div class="loc-rank-name">${item.loc}</div>
         <div class="loc-rank-meta">${item.count}回 ／ 平均 ¥${item.avg.toLocaleString()} ／ 合計 ¥${item.total.toLocaleString()}</div>
-        ${item.names.length ? `<div class="loc-rank-meta" style="color:var(--primary);">👤 ${item.names.join('、')}</div>` : ''}
       </div>
       <div class="loc-rank-fare">
         ${currentLocTab === 'count' ? `${item.count}回`
@@ -2146,6 +2217,8 @@ function showLocationHistory(encodedLoc) {
       const [,mm,dd] = t.date.split('-');
       const dow = ['日','月','火','水','木','金','土'][new Date(t.date + 'T00:00:00').getDay()];
       const fare = getTripFare(t);
+      // 各乗車記録ではお客様の名前を表示する（一覧では非表示）
+      const name = stripSama(t.paxName || t.memo || '').trim();
       return `
         <div style="padding:8px;border-bottom:1px solid var(--border);">
           <div style="display:flex;justify-content:space-between;">
@@ -2153,6 +2226,7 @@ function showLocationHistory(encodedLoc) {
             <span style="font-weight:700;color:var(--success);">¥${fare.toLocaleString()}</span>
           </div>
           <div style="font-size:12px;color:var(--muted);margin-top:2px;">→ ${t.dropoff||'?'}</div>
+          ${name ? `<div style="font-size:12px;font-weight:700;color:var(--primary);margin-top:2px;">👤 ${name}</div>` : ''}
         </div>
       `;
     }).join('');
@@ -2228,7 +2302,7 @@ function renderRecommend() {
     const [,mm,dd] = t.date.split('-');
     const dow = weekdays[new Date(t.date + 'T00:00:00').getDay()];
     const type = t.tripType || '流し';
-    const name = t.paxName ? `${t.paxName}` : (type === 'GO' && t.memo ? t.memo.split(' / ')[0] : '');
+    const name = t.paxName ? `${t.paxName}` : (type === 'GO' && t.memo ? stripSama(t.memo.split(' / ')[0]) : '');
     const typeColor = typeColors[type] || '#1a73e8';
     const fare = getTripFare(t);
     return `
@@ -2391,6 +2465,49 @@ function deleteScheduleFuel(index) {
   renderSchedule();
 }
 
+// ---- 休憩・給油をタップして編集（時刻・場所の修正／削除） ----
+let schedItemEditTarget = null; // { kind: 'break'|'fuel', index: number }
+
+function openSchedItemEdit(kind, index) {
+  const list = kind === 'break' ? getScheduleBreaks(schedCurrentDate) : getScheduleFuelStops(schedCurrentDate);
+  const item = list[index];
+  if (!item) return;
+  schedItemEditTarget = { kind, index };
+  document.getElementById('schedItemEditTitle').textContent = kind === 'break' ? '休憩を修正' : '給油を修正';
+  document.getElementById('schedItemEditStart').value = item.start || '';
+  document.getElementById('schedItemEditEnd').value = item.end || '';
+  document.getElementById('schedItemEditPlace').value = item.place || '';
+  hideLocSuggest('schedItemEditPlaceSuggest');
+  document.getElementById('schedItemEditModal').classList.add('open');
+}
+function closeSchedItemEdit() {
+  document.getElementById('schedItemEditModal').classList.remove('open');
+  schedItemEditTarget = null;
+}
+function saveSchedItemEdit() {
+  if (!schedItemEditTarget) return;
+  const { kind, index } = schedItemEditTarget;
+  const start = document.getElementById('schedItemEditStart').value;
+  const end = document.getElementById('schedItemEditEnd').value;
+  const place = document.getElementById('schedItemEditPlace').value.trim();
+  if (!start || !end) { showToast('開始・終了時刻を入力してください'); return; }
+  const list = kind === 'break' ? getScheduleBreaks(schedCurrentDate) : getScheduleFuelStops(schedCurrentDate);
+  if (!list[index]) return;
+  list[index] = { start, end, place };
+  if (kind === 'break') saveScheduleBreaks(schedCurrentDate, list);
+  else saveScheduleFuelStops(schedCurrentDate, list);
+  closeSchedItemEdit();
+  showToast(kind === 'break' ? '休憩を更新しました ✓' : '給油を更新しました ✓');
+  renderSchedule();
+}
+function deleteSchedItemEdit() {
+  if (!schedItemEditTarget) return;
+  const { kind, index } = schedItemEditTarget;
+  closeSchedItemEdit();
+  if (kind === 'break') deleteScheduleBreak(index);
+  else deleteScheduleFuel(index);
+}
+
 // 同じGO乗客の過去の乗車回数・履歴を取得（名前が完全一致するもの）
 function getGoPaxHistory(trip) {
   if (!trip || trip.tripType !== 'GO' || !trip.paxName) return null;
@@ -2492,7 +2609,7 @@ function computeScheduleSegments(date) {
     const seg = segments[idx];
     const replacement = [];
     if (bStart > seg.start) replacement.push({ type: 'vacant', start: seg.start, end: bStart });
-    replacement.push({ type: 'break', start: bStart, end: bEnd, breakIndex: brkIdx });
+    replacement.push({ type: 'break', start: bStart, end: bEnd, breakIndex: brkIdx, place: brk.place || '' });
     if (bEnd < seg.end) replacement.push({ type: 'vacant', start: bEnd, end: seg.end, ongoing: seg.ongoing });
     segments.splice(idx, 1, ...replacement);
   });
@@ -2510,7 +2627,7 @@ function computeScheduleSegments(date) {
     const seg = segments[idx];
     const replacement = [];
     if (fStart > seg.start) replacement.push({ type: 'vacant', start: seg.start, end: fStart });
-    replacement.push({ type: 'fuel', start: fStart, end: fEnd, fuelIndex: fsIdx });
+    replacement.push({ type: 'fuel', start: fStart, end: fEnd, fuelIndex: fsIdx, place: fs.place || '' });
     if (fEnd < seg.end) replacement.push({ type: 'vacant', start: fEnd, end: seg.end, ongoing: seg.ongoing });
     segments.splice(idx, 1, ...replacement);
   });
@@ -2582,9 +2699,15 @@ function renderSchedule() {
 
   const { trips, segments, endTime, jisshaMin, breakMin, allMin } = result;
 
-  // その日の何回目の乗車かを求める
+  // その日の何回目の乗車かと、その時点までの累計営収額（税抜）を求める
   const rideNumberMap = {};
-  trips.forEach((t, i) => { rideNumberMap[t.id] = i + 1; });
+  const cumulativeFareMap = {};
+  let runningTotal = 0;
+  trips.forEach((t, i) => {
+    rideNumberMap[t.id] = i + 1;
+    runningTotal += getTripFare(t);
+    cumulativeFareMap[t.id] = exTax(runningTotal);
+  });
 
   document.getElementById('schedJisshaTotal').textContent = fmtWait(jisshaMin);
   document.getElementById('schedWaitTotal').textContent = fmtWait(calcWaitMinutes(date, endTime));
@@ -2616,37 +2739,41 @@ function renderSchedule() {
         if (showVisit) { paxLine += `（${visitInfo.visitNumber}回目）`; paxClickable = true; }
       } else {
         const parts = [];
-        if (t.memo) parts.push(t.memo);
+        if (t.memo) parts.push(stripSama(t.memo));
         if (t.paxGender) parts.push(t.paxGender);
         paxLine = parts.join(' / ');
       }
 
       const rideNumber = rideNumberMap[t.id];
+      const cumulative = cumulativeFareMap[t.id];
       return `
-        <div class="sched-item" style="border-left-color:${typeColor};position:relative;">
-          <span style="position:absolute;top:10px;right:12px;font-size:12px;font-weight:800;color:var(--muted);">${rideNumber}</span>
+        <div class="sched-item" style="border-left-color:${typeColor};position:relative;cursor:pointer;" onclick="openTripEditModal(${t.id})">
+          <div style="position:absolute;top:10px;right:12px;text-align:right;">
+            <div style="font-size:12px;font-weight:800;color:var(--muted);">${rideNumber}</div>
+            <div style="font-size:11px;font-weight:700;color:var(--success);margin-top:2px;">¥${cumulative.toLocaleString()}</div>
+          </div>
           <div class="sched-time">${fmtHM(seg.start)}〜${fmtHM(seg.end)} <span class="sched-dur">（${fmtWait(durMin)}）</span></div>
           <div class="sched-body">
             <span class="sched-type-badge" style="background:${typeColor}22;color:${typeColor};">${type}</span>
             ${t.pickup||'（乗車場所未設定）'} → ${t.dropoff||'（降車場所未設定）'}　<span style="color:var(--success);font-weight:700;">¥${fare.toLocaleString()}</span>
-            ${paxLine ? `<div style="margin-top:4px;font-size:12px;font-weight:700;color:var(--primary);${paxClickable ? 'cursor:pointer;' : ''}"${paxClickable ? ` onclick="showCustomerHistory(${t.id})"` : ''}>👤 ${paxLine}${paxClickable ? ' ›' : ''}</div>` : ''}
+            ${paxLine ? `<div style="margin-top:4px;font-size:12px;font-weight:700;color:var(--primary);${paxClickable ? 'cursor:pointer;' : ''}"${paxClickable ? ` onclick="event.stopPropagation();showCustomerHistory(${t.id})"` : ''}>👤 ${paxLine}${paxClickable ? ' ›' : ''}</div>` : ''}
           </div>
         </div>
       `;
     }
     if (seg.type === 'break') {
       return `
-        <div class="sched-item break">
+        <div class="sched-item break" style="cursor:pointer;" onclick="openSchedItemEdit('break',${seg.breakIndex})">
           <div class="sched-time">${fmtHM(seg.start)}〜${fmtHM(seg.end)} <span class="sched-dur">（${fmtWait(durMin)}）</span></div>
-          <div class="sched-body">休憩 <span style="cursor:pointer;color:var(--primary);font-weight:700;" onclick="deleteScheduleBreak(${seg.breakIndex})">✕ 削除</span></div>
+          <div class="sched-body">休憩${seg.place ? `　<span style="color:var(--muted);">📍 ${seg.place}</span>` : ''}</div>
         </div>
       `;
     }
     if (seg.type === 'fuel') {
       return `
-        <div class="sched-item fuel">
+        <div class="sched-item fuel" style="cursor:pointer;" onclick="openSchedItemEdit('fuel',${seg.fuelIndex})">
           <div class="sched-time">${fmtHM(seg.start)}〜${fmtHM(seg.end)} <span class="sched-dur">（${fmtWait(durMin)}）</span></div>
-          <div class="sched-body">給油 <span style="cursor:pointer;color:var(--primary);font-weight:700;" onclick="deleteScheduleFuel(${seg.fuelIndex})">✕ 削除</span></div>
+          <div class="sched-body">給油${seg.place ? `　<span style="color:var(--muted);">📍 ${seg.place}</span>` : ''}</div>
         </div>
       `;
     }
@@ -2830,7 +2957,14 @@ function renderStats() {
     }
   }
 
-  document.getElementById('statPeriodNextBtn').disabled = statPeriodOffset <= 0;
+  if (currentStatTab === 'day') {
+    // 日別は記録がある日だけを行き来するため、その方向に記録がなければボタンを無効化する
+    document.getElementById('statPeriodPrevBtn').disabled = findStatDayOffsetWithData(statPeriodOffset, 1) === null;
+    document.getElementById('statPeriodNextBtn').disabled = findStatDayOffsetWithData(statPeriodOffset, -1) === null;
+  } else {
+    document.getElementById('statPeriodPrevBtn').disabled = false;
+    document.getElementById('statPeriodNextBtn').disabled = statPeriodOffset <= 0;
+  }
 
   if (currentStatTab === 'day') {
     const d = new Date(today + 'T00:00:00');
@@ -3042,7 +3176,7 @@ function updateHeader() {
 
 updateHeader();
 updateTodaySummary();
-positionFareSuffix();
+updateFareDisplay();
 setInterval(() => {
   updateHeader();
   updateTodaySummary();
