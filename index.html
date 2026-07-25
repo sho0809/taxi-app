@@ -660,7 +660,7 @@
     <div class="modal-handle"></div>
     <div class="modal-title" style="text-align:center;flex-shrink:0;">稼働状況グラフ</div>
     <div style="display:flex;flex:1;min-height:0;">
-      <div id="scheduleGraphAxis" style="position:relative;width:34px;flex-shrink:0;height:100%;"></div>
+      <div id="scheduleGraphAxis" style="position:relative;width:44px;flex-shrink:0;height:100%;"></div>
       <div id="scheduleGraphScroll" style="flex:1;overflow-x:auto;-webkit-overflow-scrolling:touch;">
         <div id="scheduleGraphColumns" style="display:flex;align-items:flex-end;gap:8px;height:100%;padding:0 4px;"></div>
       </div>
@@ -1388,8 +1388,10 @@ function updateTodaySummary() {
     return s + (diff > 0 ? diff : 0);
   }, 0);
 
-  const totalWorkMin = jisshaMin + waitMin;
-  const hourlyWage = totalWorkMin > 0 ? Math.round(totalExTax * 0.5 / (totalWorkMin / 60)) : null;
+  // タイムラインの「合計（業務開始〜終了）」時間で本日の営収額（税抜）を割って時給を算出する
+  const scheduleResult = computeScheduleSegments(today);
+  const totalWorkMin = scheduleResult ? scheduleResult.allMin : 0;
+  const hourlyWage = totalWorkMin > 0 ? Math.round(totalExTax / (totalWorkMin / 60)) : null;
 
   const totalUncollected = trips.reduce((s,t) => s + (t.uncollectedFare||0), 0);
   const totalTip = trips.reduce((s,t) => s + (t.tip||0), 0);
@@ -2517,6 +2519,17 @@ function renderScheduleGraph() {
   // （当日はまだ1件も記録がなければ列を表示しない）
   const dates = [...new Set(getTrips().map(t => t.date))].sort();
 
+  // 左側の時刻目盛り（07:30〜翌5:00）。各列のグリッド線と位置を揃えるため先に計算する
+  const axisHours = [7, 10, 13, 16, 19, 22, 1, 4];
+  const axisTicks = axisHours.map(h => {
+    let minFromStart = (h - 7.5) * 60;
+    if (minFromStart < 0) minFromStart += 24 * 60;
+    return { h, topPct: minFromStart / GRAPH_DAY_SPAN_MIN * 100 };
+  });
+  const gridHTML = axisTicks.map(tick =>
+    `<div style="position:absolute;left:0;right:0;top:${tick.topPct}%;border-top:1px dashed var(--border);"></div>`
+  ).join('');
+
   document.getElementById('scheduleGraphColumns').innerHTML = dates.map(date => {
     const d = new Date(date + 'T00:00:00');
     const dow = ['日','月','火','水','木','金','土'][d.getDay()];
@@ -2544,20 +2557,18 @@ function renderScheduleGraph() {
 
     return `
       <div style="display:flex;flex-direction:column;align-items:center;flex-shrink:0;height:100%;">
-        <div style="position:relative;width:28px;flex:1;min-height:0;background:var(--bg);border-radius:4px;overflow:hidden;">${barsHTML}</div>
+        <div style="position:relative;width:28px;flex:1;min-height:0;background:var(--bg);border-radius:4px;overflow:hidden;">${gridHTML}${barsHTML}</div>
         <div style="font-size:10px;margin-top:4px;white-space:nowrap;flex-shrink:0;${labelStyle}">${label}</div>
       </div>
     `;
   }).join('');
 
-  // 左側の時刻目盛り（07:30〜翌5:00）
-  const axisHours = [7, 10, 13, 16, 19, 22, 1, 4];
-  document.getElementById('scheduleGraphAxis').innerHTML = axisHours.map(h => {
-    let minFromStart = (h - 7.5) * 60;
-    if (minFromStart < 0) minFromStart += 24 * 60;
-    const topPct = minFromStart / GRAPH_DAY_SPAN_MIN * 100;
-    return `<div style="position:absolute;top:${topPct}%;right:4px;transform:translateY(-50%);font-size:10px;color:var(--muted);">${pad(h)}:00</div>`;
-  }).join('');
+  document.getElementById('scheduleGraphAxis').innerHTML = axisTicks.map(tick => `
+    <div style="position:absolute;top:${tick.topPct}%;left:0;right:0;transform:translateY(-50%);display:flex;align-items:center;justify-content:flex-end;gap:3px;">
+      <span style="font-size:11px;font-weight:600;color:var(--text);white-space:nowrap;">${pad(tick.h)}:00</span>
+      <span style="width:5px;height:1px;background:var(--border);flex-shrink:0;"></span>
+    </div>
+  `).join('');
 
   const legendItems = [
     { color: GRAPH_TYPE_COLORS['GO'], label: 'GO' },
@@ -2788,6 +2799,28 @@ function switchPage(page) {
   if (page === 'recommend') renderRecommend();
   if (page === 'schedule') renderSchedule();
 }
+
+// メインタブを左右スワイプで切り替えられるようにする
+const TAB_ORDER = ['record', 'schedule', 'summary', 'recommend', 'stats', 'history'];
+(function initTabSwipe() {
+  const el = document.querySelector('.content');
+  let startX = 0, startY = 0;
+  el.addEventListener('touchstart', e => {
+    startX = e.touches[0].clientX;
+    startY = e.touches[0].clientY;
+  }, { passive: true });
+  el.addEventListener('touchend', e => {
+    const dx = e.changedTouches[0].clientX - startX;
+    const dy = e.changedTouches[0].clientY - startY;
+    if (Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
+    const activePage = document.querySelector('.page.active');
+    if (!activePage) return;
+    const idx = TAB_ORDER.indexOf(activePage.id.replace('page-', ''));
+    if (idx === -1) return;
+    if (dx < 0 && idx < TAB_ORDER.length - 1) switchPage(TAB_ORDER[idx + 1]);
+    else if (dx > 0 && idx > 0) switchPage(TAB_ORDER[idx - 1]);
+  }, { passive: true });
+})();
 
 // ==================== HELPERS ====================
 function emptyState(msg) {
