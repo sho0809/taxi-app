@@ -301,8 +301,9 @@
           <label class="input-label" id="fareLabelMain">💴 料金（現金）</label>
           <div class="fare-wrap">
             <span class="yen">¥</span>
-            <input class="input-field" id="fareAmount" type="number" placeholder="0" inputmode="numeric">
+            <input class="input-field" id="fareAmount" type="number" placeholder="0" inputmode="numeric" oninput="updateFarePreview()">
           </div>
+          <div id="farePreview" style="font-size:11px;color:var(--muted);margin-top:3px;text-align:right;">下2桁の00は入力不要</div>
         </div>
         <div class="input-group" style="flex:1;">
           <label class="input-label">🎁 チップ</label>
@@ -354,7 +355,7 @@
             <input class="input-field" id="goPaxName" type="text" placeholder="" autocomplete="off" oninput="onGoPaxNameInput()">
           </div>
           <div class="input-group" style="flex:1;margin-bottom:0;">
-            <select class="input-field" id="goPaxAge">
+            <select class="input-field" id="goPaxAge" onchange="onGoPaxNameInput()">
               <option value="">年代</option>
               <option value="10代">10代</option>
               <option value="20代">20代</option>
@@ -1020,6 +1021,8 @@ function selectGoGender(g) {
   ['男性','女性'].forEach(x => {
     document.getElementById(`goGender-${x}`).className = 'pay-btn' + (x === g ? ' active' : '');
   });
+  // 候補は性別・年代でも絞り込むため、切り替え時に再表示する
+  if (document.getElementById('goPaxName').value.trim()) onGoPaxNameInput();
 }
 function buildGoMemo() {
   const name = document.getElementById('goPaxName').value.trim();
@@ -1055,14 +1058,21 @@ function resetPlainGender() {
   });
 }
 
-// 名前入力中に過去のGO乗車履歴（日付・乗降場所）を候補表示
+// 名前入力中に過去のGO乗車履歴（日付・乗降場所）を候補表示。
+// 名前の頭文字が一致し、かつ現在選択中の性別・年代が一致する履歴のみを候補にする。
 function onGoPaxNameInput() {
   const q = document.getElementById('goPaxName').value.trim();
   const hist = document.getElementById('goPaxHistory');
   if (!q) { hist.style.display = 'none'; hist.innerHTML = ''; return; }
 
+  const gender = document.getElementById('goPaxGender').value;
+  const age = document.getElementById('goPaxAge').value;
+
   const allMatches = getTrips()
-    .filter(t => t.tripType === 'GO' && t.paxName && t.paxName.includes(q))
+    .filter(t => t.tripType === 'GO' && t.paxName
+      && t.paxName.charAt(0) === q.charAt(0)
+      && t.paxGender === gender
+      && t.paxAge === age)
     .sort((a,b) => (b.date + (b.pickupTime||'')).localeCompare(a.date + (a.pickupTime||'')));
 
   if (allMatches.length === 0) { hist.style.display = 'none'; hist.innerHTML = ''; return; }
@@ -1181,15 +1191,19 @@ let locSuggestCache = {};
 function getLocationSuggestions(query) {
   const q = query.trim();
   if (!q) return [];
+  // 並び順は統計「場所」タブの乗車回数（＝乗車場所としての利用回数）に合わせる
   const freq = new Map();
+  const touch = (loc, key, isPickup) => {
+    if (!loc || !locationMatchesQuery(loc, q)) return;
+    let entry = freq.get(loc);
+    if (!entry) { entry = { count: 0, lastKey: '' }; freq.set(loc, entry); }
+    if (isPickup) entry.count++;
+    if (key > entry.lastKey) entry.lastKey = key;
+  };
   getTrips().forEach(t => {
-    [t.pickup, t.dropoff].forEach(loc => {
-      if (!loc || !locationMatchesQuery(loc, q)) return;
-      const key = t.date + (t.pickupTime || '');
-      const entry = freq.get(loc);
-      if (entry) { entry.count++; if (key > entry.lastKey) entry.lastKey = key; }
-      else freq.set(loc, { count: 1, lastKey: key });
-    });
+    const key = t.date + (t.pickupTime || '');
+    touch(t.pickup, key, true);
+    touch(t.dropoff, key, false);
   });
   // 登録済みの地名は、まだ利用実績がなくても候補に含める（実績があるものより下位に表示）
   Object.keys(PLACE_NAME_READING_HINT).forEach(name => {
@@ -1292,6 +1306,14 @@ function selectPay(method) {
 }
 
 // 料金合計ヘルパー（後方互換）
+// 料金入力欄は下2桁の「00」を省略して入力するため、実際の金額をその場で表示する
+function updateFarePreview() {
+  const raw = document.getElementById('fareAmount').value.trim();
+  const el = document.getElementById('farePreview');
+  const n = parseInt(raw) || 0;
+  el.textContent = raw && n > 0 ? `= ¥${(n * 100).toLocaleString()}` : '下2桁の00は入力不要';
+}
+
 function getTripFare(t) {
   if (t.cashFare !== undefined || t.uncollectedFare !== undefined) {
     return (t.cashFare||0) + (t.uncollectedFare||0);
@@ -1326,7 +1348,8 @@ function saveTrip() {
     return;
   }
 
-  const fareAmount = parseInt(fareRaw) || 0;
+  // 料金は必ず100円単位のため、下2桁の「00」は入力不要（例：「15」→1500円）
+  const fareAmount = (parseInt(fareRaw) || 0) * 100;
   const cashFare = payMethod === '現金' ? fareAmount : 0;
   const uncollectedFare = payMethod !== '現金' ? fareAmount : 0;
 
@@ -1350,6 +1373,7 @@ function saveTrip() {
     const el = document.getElementById(id);
     if (el) el.value = '';
   });
+  updateFarePreview();
   document.getElementById('pickupTime').value = '';
   document.getElementById('dropoffTime').value = '';
   resetPax();
@@ -1589,7 +1613,7 @@ function renderHistory() {
                         .sort((a,b)=>tripSortKey(b) - tripSortKey(a));
   const dayTotal = dayTrips.reduce((s,t)=>s+(t.cashFare!==undefined?t.cashFare+(t.uncollectedFare||0):(t.fare||0)),0);
   document.getElementById('histNavSub').textContent = dayTrips.length > 0
-    ? `${dayTrips.length}件 ／ ¥${dayTotal.toLocaleString()}`
+    ? `${dayTrips.length}件 ／ ¥${exTax(dayTotal).toLocaleString()}`
     : '記録なし';
 
   // 前後ナビ ボタン状態
@@ -2055,17 +2079,21 @@ function renderLocationRanking() {
   const map = {};
   trips.forEach(t => {
     const loc = t.pickup.trim();
-    if (!map[loc]) map[loc] = { count:0, total:0, fares:[] };
+    if (!map[loc]) map[loc] = { count:0, total:0, fares:[], names:[] };
     const f = getTripFare(t);
     map[loc].count++;
     map[loc].total += f;
     if (f > 0) map[loc].fares.push(f);
+    // メモ（お客様名）も表示する。GOの乗客名がなければ自由記入メモを使う
+    const name = (t.paxName || t.memo || '').trim();
+    if (name && !map[loc].names.includes(name)) map[loc].names.push(name);
   });
 
   const items = Object.entries(map).map(([loc, d]) => ({
     loc,
     count: d.count,
     total: d.total,
+    names: d.names,
     avg: d.fares.length ? Math.round(d.fares.reduce((s,v)=>s+v,0)/d.fares.length) : 0
   }));
 
@@ -2074,12 +2102,13 @@ function renderLocationRanking() {
   else items.sort((a,b) => b.total - a.total);
 
   const medals = ['gold','silver','bronze'];
-  document.getElementById('locationRanking').innerHTML = items.slice(0,20).map((item, i) => `
+  document.getElementById('locationRanking').innerHTML = items.map((item, i) => `
     <div class="loc-rank-item" style="cursor:pointer;" onclick="showLocationHistory('${encodeURIComponent(item.loc)}')">
       <div class="loc-rank-num ${medals[i]||''}">${i+1}</div>
       <div class="loc-rank-body">
         <div class="loc-rank-name">${item.loc}</div>
         <div class="loc-rank-meta">${item.count}回 ／ 平均 ¥${item.avg.toLocaleString()} ／ 合計 ¥${item.total.toLocaleString()}</div>
+        ${item.names.length ? `<div class="loc-rank-meta" style="color:var(--primary);">👤 ${item.names.join('、')}</div>` : ''}
       </div>
       <div class="loc-rank-fare">
         ${currentLocTab === 'count' ? `${item.count}回`
