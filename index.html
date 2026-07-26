@@ -1,4 +1,4 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
@@ -849,6 +849,10 @@
 </div>
 
 <script>
+// アプリの版数。ファイルを更新するたびにこの値を変えると、
+// 各端末が起動時に新しい版を検出して自動的に読み込み直す（checkForAppUpdate参照）
+const APP_VERSION = '2026-07-25a';
+
 // ==================== DATA STORAGE ====================
 const TRIPS_KEY = 'taxi_trips';
 const WAITS_KEY = 'taxi_waits';
@@ -914,11 +918,21 @@ function isWaitDay(date) {
 
 function pad(n) { return String(n).padStart(2,'0'); }
 
+// 「更新」ボタンでは保存済みのキャッシュを消してから読み込み直す。
+// 単なるリロードだとブラウザのキャッシュが使われ、古い画面のままになることがあるため。
 function triggerReload() {
   const btn = document.getElementById('reloadBtn');
   btn.classList.add('loading');
   btn.innerHTML = '<span>↻</span> 更新中...';
-  setTimeout(() => location.reload(true), 600);
+  const clearCaches = ('caches' in window)
+    ? caches.keys().then(keys => Promise.all(keys.map(k => caches.delete(k)))).catch(() => {})
+    : Promise.resolve();
+  clearCaches.then(() => {
+    // キャッシュを確実に回避するため、URLに現在時刻を付けて読み込み直す
+    const url = new URL(location.href);
+    url.searchParams.set('v', Date.now());
+    location.replace(url.toString());
+  });
 }
 
 // 消費税抜き（10円単位切り捨て）
@@ -3185,22 +3199,26 @@ setInterval(() => {
 }, 60000);
 selectType(getDefaultType()); // 起動時の種別を時間帯で設定
 
-// PWA Service Worker registration
-if ('serviceWorker' in navigator) {
-  const swCode = `
-    const CACHE = 'taxi-v1';
-    self.addEventListener('install', e => {
-      e.waitUntil(caches.open(CACHE).then(c => c.addAll(['./', './index.html'])));
-      self.skipWaiting();
-    });
-    self.addEventListener('fetch', e => {
-      e.respondWith(caches.match(e.request).then(r => r || fetch(e.request).catch(() => caches.match('./'))));
-    });
-  `;
-  const blob = new Blob([swCode], {type: 'application/javascript'});
-  const swUrl = URL.createObjectURL(blob);
-  navigator.serviceWorker.register(swUrl).catch(() => {});
+// ==================== 自動アップデート ====================
+// 以前はService Workerでキャッシュしようとしていたが、blob URLのスクリプトは
+// Service Workerとして登録できない仕様のため、実際には一度も動作していなかった。
+// 代わりに、起動時にサーバー上のファイルを直接確認して、新しい版があれば自動で読み込み直す。
+async function checkForAppUpdate() {
+  try {
+    // cache: 'no-store' でブラウザのキャッシュを迂回して必ず最新を取得する
+    const res = await fetch('./index.html', { cache: 'no-store' });
+    if (!res.ok) return;
+    const text = await res.text();
+    const m = text.match(/const APP_VERSION = '([^']+)'/);
+    if (m && m[1] !== APP_VERSION) {
+      const url = new URL(location.href);
+      url.searchParams.set('v', m[1]);
+      location.replace(url.toString());
+    }
+  } catch (e) { /* オフライン時などは何もしない */ }
 }
+// 起動直後（まだ入力していない状態）に確認するので、自動で読み込み直しても入力内容は失われない
+checkForAppUpdate();
 
 // Install prompt banner for Android/desktop (iOS uses Safari share)
 let deferredPrompt;
