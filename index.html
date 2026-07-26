@@ -1746,6 +1746,30 @@ function stripSama(text) {
   return String(text || '').replace(/様(?=\s*\/)|様$/g, '');
 }
 
+// 「田中（女性　２０代）」のように括弧書きで記録された乗客情報を、名前・性別・年代に分解する。
+// 括弧がなければ全体を名前として扱う
+function parsePaxText(text) {
+  const s = stripSama(text).trim();
+  const m = s.match(/^(.*?)[（(]([^（）()]*)[）)]\s*$/);
+  if (!m) return { name: s, gender: '', age: '' };
+  let gender = '', age = '';
+  m[2].split(/[\s　/／・,、]+/).filter(Boolean).forEach(part => {
+    if (/[男女]/.test(part)) gender = part;
+    else if (/[0-9０-９]|代/.test(part)) age = part;
+  });
+  return { name: m[1].trim() || s, gender, age };
+}
+
+// 乗客情報を「名前 / 性別 / 年代」の形式にそろえる。
+// 専用の欄（GOの氏名・性別・年代）があればそれを優先し、
+// なければメモの括弧書きから読み取る
+function formatPaxLabel(t) {
+  if (!t) return '';
+  const src = (t.tripType === 'GO' && t.paxName) ? t.paxName : (t.memo || '');
+  const p = parsePaxText(src);
+  return [p.name, t.paxGender || p.gender, t.paxAge || p.age].filter(Boolean).join(' / ');
+}
+
 function tripCard(t) {
   const duration = t.pickupTime && t.dropoffTime ? calcDuration(t.pickupTime, t.dropoffTime) : '';
   const payColors = {GO:'#ff6b00', PayPay:'#e00', クレジット:'#34a853', 現金:'#1a73e8', 'd払い':'#b00068', その他:'#888'};
@@ -1935,6 +1959,13 @@ function saveTripEdit() {
   closeTripEditModal();
   renderHistory();
   updateTodaySummary();
+  // 統計・エリア・タイムラインからも修正できるため、表示中の画面を更新する
+  const activePage = document.querySelector('.page.active');
+  if (activePage) {
+    if (activePage.id === 'page-stats') renderStats();
+    if (activePage.id === 'page-recommend') renderRecommend();
+    if (activePage.id === 'page-schedule') renderSchedule();
+  }
   showToast('記録を修正しました ✓');
 }
 
@@ -2246,12 +2277,13 @@ function showLocationHistory(encodedLoc) {
       const dow = ['日','月','火','水','木','金','土'][new Date(t.date + 'T00:00:00').getDay()];
       const fare = getTripFare(t);
       // 各乗車記録ではお客様の名前を表示する（一覧では非表示）
-      const name = stripSama(t.paxName || t.memo || '').trim();
+      const name = formatPaxLabel(t);
       // 種別バッジ。色はタイムラインと同じ（GO=青／流し=緑／配車=橙）
       const type = t.tripType || '流し';
       const typeColor = { '配車': '#ff6b00', 'GO': '#1a73e8', '流し': '#00a152' }[type] || '#1a73e8';
+      // 記録をタップするとそのまま修正できるようにする（見た目は変えない）
       return `
-        <div style="padding:8px;border-bottom:1px solid var(--border);">
+        <div style="padding:8px;border-bottom:1px solid var(--border);cursor:pointer;" onclick="closeHourLocationModal();openTripEditModal(${t.id})">
           <div style="display:flex;justify-content:space-between;align-items:center;">
             <span style="font-size:13px;font-weight:700;">
               <span class="sched-type-badge" style="background:${typeColor}22;color:${typeColor};">${type}</span>${parseInt(mm)}/${parseInt(dd)}(${dow}) ${t.pickupTime||''}
@@ -2263,6 +2295,37 @@ function showLocationHistory(encodedLoc) {
         </div>
       `;
     }).join('');
+  document.getElementById('hourLocationModal').classList.add('open');
+}
+
+// 売上ランキング（日別）の日付をタップして、その日の乗車記録を一覧する。
+// 場所の履歴と同じ体裁で、各記録をタップするとそのまま修正できる
+function showDayHistory(date) {
+  const trips = getTrips().filter(t => t.date === date).sort((a,b) => tripSortKey(a) - tripSortKey(b));
+  const totalFare = trips.reduce((s,t) => s + getTripFare(t), 0);
+  document.getElementById('hourLocationTitle').textContent = `${fmtDate(date)}の記録（${trips.length}件）`;
+  document.getElementById('hourLocationContent').innerHTML =
+    `<div style="text-align:center;font-size:13px;color:var(--muted);margin-bottom:10px;">合計¥${totalFare.toLocaleString()}</div>` +
+    (trips.length === 0
+      ? `<div style="text-align:center;padding:24px;color:var(--muted);">データがありません</div>`
+      : trips.map(t => {
+        const fare = getTripFare(t);
+        const name = formatPaxLabel(t);
+        const type = t.tripType || '流し';
+        const typeColor = { '配車': '#ff6b00', 'GO': '#1a73e8', '流し': '#00a152' }[type] || '#1a73e8';
+        return `
+          <div style="padding:8px;border-bottom:1px solid var(--border);cursor:pointer;" onclick="closeHourLocationModal();openTripEditModal(${t.id})">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <span style="font-size:13px;font-weight:700;">
+                <span class="sched-type-badge" style="background:${typeColor}22;color:${typeColor};">${type}</span>${t.pickupTime||''}${t.dropoffTime ? `〜${t.dropoffTime}` : ''}
+              </span>
+              <span style="font-weight:700;color:var(--success);">¥${fare.toLocaleString()}</span>
+            </div>
+            <div style="font-size:12px;color:var(--muted);margin-top:2px;">${t.pickup||'?'} → ${t.dropoff||'?'}</div>
+            ${name ? `<div style="font-size:12px;font-weight:700;color:var(--primary);margin-top:2px;">👤 ${name}</div>` : ''}
+          </div>
+        `;
+      }).join(''));
   document.getElementById('hourLocationModal').classList.add('open');
 }
 
@@ -2335,11 +2398,12 @@ function renderRecommend() {
     const [,mm,dd] = t.date.split('-');
     const dow = weekdays[new Date(t.date + 'T00:00:00').getDay()];
     const type = t.tripType || '流し';
-    const name = t.paxName ? `${t.paxName}` : (type === 'GO' && t.memo ? stripSama(t.memo.split(' / ')[0]) : '');
+    // 乗客情報は「名前 / 性別 / 年代」の形式にそろえて表示する
+    const name = formatPaxLabel(t);
     const typeColor = typeColors[type] || '#1a73e8';
     const fare = getTripFare(t);
     return `
-      <div class="loc-rank-item">
+      <div class="loc-rank-item" style="cursor:pointer;" onclick="openTripEditModal(${t.id})">
         <div class="loc-rank-body">
           <div class="loc-rank-name">${t.pickupTime}　${t.pickup.trim()}${t.dropoff && t.dropoff.trim() ? ` → ${t.dropoff.trim()}` : ''}</div>
           <div class="loc-rank-meta">
@@ -3112,8 +3176,11 @@ function renderStats() {
     const vEx = exTax(r.total);
     const avgEx = Math.floor(vEx / r.count / 10) * 10;
     const isCurrent = key === currentKey;
+    // 日別タブでは日付をタップするとその日の記録を一覧できる（見た目は変えない）
+    const isDay = currentStatTab === 'day';
+    const style = `${isCurrent ? 'background:#e3f2fd;' : ''}${isDay ? 'cursor:pointer;' : ''}`;
     return `
-    <div class="loc-rank-item"${isCurrent ? ' style="background:#e3f2fd;"' : ''}>
+    <div class="loc-rank-item"${style ? ` style="${style}"` : ''}${isDay ? ` onclick="showDayHistory('${key}')"` : ''}>
       <div class="loc-rank-num ${medalClasses[i]||''}">${i+1}</div>
       <div class="loc-rank-body">
         <div class="loc-rank-name">${r.label}</div>
