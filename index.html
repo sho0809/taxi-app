@@ -1123,9 +1123,11 @@ function onGoPaxNameInput() {
   const gender = document.getElementById('goPaxGender').value;
   const age = document.getElementById('goPaxAge').value;
 
-  // 頭文字が一致する履歴を候補にし、年代・性別が選択されていればさらに絞り込む
+  // 入力した文字が先頭から一致する履歴のみを候補にする。
+  // 1文字目が一致すれば候補に出るが、2文字目を入力した時点でそこが違う履歴は候補から外れる。
+  // さらに年代・性別が選択されていれば、それでも絞り込む。
   const allMatches = getTrips()
-    .filter(t => t.tripType === 'GO' && t.paxName && t.paxName.charAt(0) === q.charAt(0))
+    .filter(t => t.tripType === 'GO' && t.paxName && t.paxName.startsWith(q))
     .filter(t => !age || t.paxAge === age)
     .filter(t => !goGenderChosen || t.paxGender === gender)
     .sort((a,b) => (b.date + (b.pickupTime||'')).localeCompare(a.date + (a.pickupTime||'')));
@@ -2183,17 +2185,21 @@ function renderLocationRanking() {
   const map = {};
   trips.forEach(t => {
     const loc = t.pickup.trim();
-    if (!map[loc]) map[loc] = { count:0, total:0, fares:[] };
+    if (!map[loc]) map[loc] = { count:0, total:0, fares:[], types:{} };
     const f = getTripFare(t);
     map[loc].count++;
     map[loc].total += f;
     if (f > 0) map[loc].fares.push(f);
+    // その場所がGO中心か流し中心かがわかるように、種別ごとの件数も数える
+    const type = t.tripType || '流し';
+    map[loc].types[type] = (map[loc].types[type] || 0) + 1;
   });
 
   const items = Object.entries(map).map(([loc, d]) => ({
     loc,
     count: d.count,
     total: d.total,
+    types: d.types,
     avg: d.fares.length ? Math.round(d.fares.reduce((s,v)=>s+v,0)/d.fares.length) : 0
   }));
 
@@ -2202,12 +2208,20 @@ function renderLocationRanking() {
   else items.sort((a,b) => b.total - a.total);
 
   const medals = ['gold','silver','bronze'];
+  // 種別の内訳バッジ。色はタイムラインと同じ（GO=青／流し=緑／配車=橙）
+  const typeBadges = types => ['GO','流し','配車']
+    .filter(tp => types[tp])
+    .map(tp => {
+      const c = { '配車': '#ff6b00', 'GO': '#1a73e8', '流し': '#00a152' }[tp];
+      return `<span class="sched-type-badge" style="background:${c}22;color:${c};">${tp} ${types[tp]}</span>`;
+    }).join('');
   document.getElementById('locationRanking').innerHTML = items.map((item, i) => `
     <div class="loc-rank-item" style="cursor:pointer;" onclick="showLocationHistory('${encodeURIComponent(item.loc)}')">
       <div class="loc-rank-num ${medals[i]||''}">${i+1}</div>
       <div class="loc-rank-body">
         <div class="loc-rank-name">${item.loc}</div>
         <div class="loc-rank-meta">${item.count}回 ／ 平均 ¥${item.avg.toLocaleString()} ／ 合計 ¥${item.total.toLocaleString()}</div>
+        <div style="margin-top:3px;">${typeBadges(item.types)}</div>
       </div>
       <div class="loc-rank-fare">
         ${currentLocTab === 'count' ? `${item.count}回`
@@ -2233,10 +2247,15 @@ function showLocationHistory(encodedLoc) {
       const fare = getTripFare(t);
       // 各乗車記録ではお客様の名前を表示する（一覧では非表示）
       const name = stripSama(t.paxName || t.memo || '').trim();
+      // 種別バッジ。色はタイムラインと同じ（GO=青／流し=緑／配車=橙）
+      const type = t.tripType || '流し';
+      const typeColor = { '配車': '#ff6b00', 'GO': '#1a73e8', '流し': '#00a152' }[type] || '#1a73e8';
       return `
         <div style="padding:8px;border-bottom:1px solid var(--border);">
-          <div style="display:flex;justify-content:space-between;">
-            <span style="font-size:13px;font-weight:700;">${parseInt(mm)}/${parseInt(dd)}(${dow}) ${t.pickupTime||''}</span>
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <span style="font-size:13px;font-weight:700;">
+              <span class="sched-type-badge" style="background:${typeColor}22;color:${typeColor};">${type}</span>${parseInt(mm)}/${parseInt(dd)}(${dow}) ${t.pickupTime||''}
+            </span>
             <span style="font-weight:700;color:var(--success);">¥${fare.toLocaleString()}</span>
           </div>
           <div style="font-size:12px;color:var(--muted);margin-top:2px;">→ ${t.dropoff||'?'}</div>
@@ -2523,11 +2542,26 @@ function deleteSchedItemEdit() {
 }
 
 // 同じGO乗客の過去の乗車回数・履歴を取得（名前が完全一致するもの）
-function getGoPaxHistory(trip) {
-  if (!trip || trip.tripType !== 'GO' || !trip.paxName) return null;
-  // 名前・性別・年代がすべて一致した場合のみ同一人物とみなす
+// お客様の識別名。GOは氏名欄、流し・配車はメモを名前として扱う（場所の履歴表示と同じ扱い）
+function getPaxName(t) {
+  if (!t) return '';
+  const raw = (t.tripType === 'GO') ? t.paxName : t.memo;
+  return stripSama(raw || '').split(' / ')[0].trim();
+}
+
+// 同じお客様の乗車履歴を、GO・流し・配車をまたいで集める。
+// 名前と性別が一致した場合のみ同一人物とみなす。
+// 年代はGOにしか記録されないため、両方がGOのときだけ一致を求める。
+function getPaxHistory(trip) {
+  const name = getPaxName(trip);
+  if (!name) return null;
   const all = getTrips()
-    .filter(t => t.tripType === 'GO' && t.paxName === trip.paxName && t.paxGender === trip.paxGender && t.paxAge === trip.paxAge)
+    .filter(t => {
+      if (getPaxName(t) !== name) return false;
+      if ((t.paxGender || '') !== (trip.paxGender || '')) return false;
+      if (t.tripType === 'GO' && trip.tripType === 'GO' && (t.paxAge || '') !== (trip.paxAge || '')) return false;
+      return true;
+    })
     .sort((a,b) => (a.date + (a.pickupTime||'')).localeCompare(b.date + (b.pickupTime||'')));
   const visitNumber = all.findIndex(t => t.id === trip.id) + 1;
   return { visitNumber, total: all.length, all };
@@ -2535,11 +2569,11 @@ function getGoPaxHistory(trip) {
 
 function showCustomerHistory(tripId) {
   const trip = getTrips().find(t => t.id === tripId);
-  const info = getGoPaxHistory(trip);
+  const info = getPaxHistory(trip);
   if (!info) return;
   const sorted = info.all.slice().reverse(); // 新しい順
   const totalFare = info.all.reduce((s,t) => s + getTripFare(t), 0);
-  document.getElementById('custHistoryTitle').textContent = `${trip.paxName}のご利用履歴（${info.total}回）`;
+  document.getElementById('custHistoryTitle').textContent = `${getPaxName(trip)}のご利用履歴（${info.total}回）`;
   document.getElementById('custHistoryContent').innerHTML =
     `<div style="text-align:center;font-size:13px;color:var(--muted);margin-bottom:10px;">合計¥${totalFare.toLocaleString()}</div>` +
     sorted.map(t => {
@@ -2547,10 +2581,15 @@ function showCustomerHistory(tripId) {
       const dow = ['日','月','火','水','木','金','土'][new Date(t.date + 'T00:00:00').getDay()];
       const fare = getTripFare(t);
       const isCurrent = t.id === trip.id;
+      // 種別バッジ。色はタイムラインと同じ（GO=青／流し=緑／配車=橙）
+      const type = t.tripType || '流し';
+      const typeColor = { '配車': '#ff6b00', 'GO': '#1a73e8', '流し': '#00a152' }[type] || '#1a73e8';
       return `
         <div style="padding:8px;border-radius:8px;margin-bottom:4px;${isCurrent ? 'background:#e3f2fd;' : ''}border-bottom:${isCurrent ? 'none' : '1px solid var(--border)'};">
           <div style="display:flex;justify-content:space-between;">
-            <span style="font-size:13px;font-weight:700;">${parseInt(mm)}/${parseInt(dd)}(${dow}) ${t.pickupTime||''}</span>
+            <span style="font-size:13px;font-weight:700;">
+              <span class="sched-type-badge" style="background:${typeColor}22;color:${typeColor};">${type}</span>${parseInt(mm)}/${parseInt(dd)}(${dow}) ${t.pickupTime||''}
+            </span>
             <span style="font-weight:700;color:var(--success);">¥${fare.toLocaleString()}</span>
           </div>
           <div style="font-size:12px;color:var(--muted);margin-top:2px;">${t.pickup||'?'} → ${t.dropoff||'?'}</div>
@@ -2739,10 +2778,11 @@ function renderSchedule() {
       const type = t.tripType || '流し';
       const typeColor = typeColors[type] || '#1a73e8';
       const fare = getTripFare(t);
-      const visitInfo = getGoPaxHistory(t);
+      const visitInfo = getPaxHistory(t);
       const showVisit = visitInfo && visitInfo.visitNumber >= 2;
 
-      // 乗客情報：GOは氏名・性別・年代（＋来店回数）、流し・配車はメモと性別を表示
+      // 乗客情報：GOは氏名・性別・年代、流し・配車はメモと性別を表示。
+      // どちらも2回目以降は来店回数を付け、タップでご利用履歴を開けるようにする
       let paxLine = '';
       let paxClickable = false;
       if (type === 'GO' && t.paxName) {
@@ -2750,13 +2790,13 @@ function renderSchedule() {
         if (t.paxGender) parts.push(t.paxGender);
         if (t.paxAge) parts.push(t.paxAge);
         paxLine = parts.join(' / ');
-        if (showVisit) { paxLine += `（${visitInfo.visitNumber}回目）`; paxClickable = true; }
       } else {
         const parts = [];
         if (t.memo) parts.push(stripSama(t.memo));
         if (t.paxGender) parts.push(t.paxGender);
         paxLine = parts.join(' / ');
       }
+      if (paxLine && showVisit) { paxLine += `（${visitInfo.visitNumber}回目）`; paxClickable = true; }
 
       const rideNumber = rideNumberMap[t.id];
       const cumulative = cumulativeFareMap[t.id];
