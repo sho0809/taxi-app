@@ -90,7 +90,10 @@
   #tripFormCard .input-label { font-size: 11px; margin-bottom: 3px; }
   #tripFormCard .input-field { padding: 8px 12px; font-size: 15px; }
   #tripFormCard .fare-wrap .input-field { padding-left: 26px; }
-  #tripFormCard input[type="time"] { font-size: 15px; padding: 16px 12px; }
+  /* 乗車時刻・降車時刻を乗車場所・降車場所と同じ大きさにそろえ、
+     値を入れても高さが変わらないよう固定する */
+  #tripFormCard input[type="time"] { font-size: 15px; padding: 8px 12px; }
+  #tripFormCard input.input-field, #tripFormCard select.input-field { height: 40px; }
   #tripFormCard .pay-btn { padding: 6px 4px; font-size: 11px; }
   #tripFormCard .type-btn { padding: 8px 4px; font-size: 13px; }
 
@@ -383,20 +386,16 @@
           </div>
         </div>
         <div style="display:flex;gap:6px;">
-          <button class="pay-btn active" id="goGender-男性" onclick="selectGoGender('男性', true)" style="flex:1;">男性</button>
+          <button class="pay-btn" id="goGender-男性" onclick="selectGoGender('男性', true)" style="flex:1;">男性</button>
           <button class="pay-btn" id="goGender-女性" onclick="selectGoGender('女性', true)" style="flex:1;">女性</button>
         </div>
-        <input type="hidden" id="goPaxGender" value="男性">
+        <input type="hidden" id="goPaxGender" value="">
         <div id="goPaxHistory" style="display:none;margin-top:8px;"></div>
       </div>
 
       <div class="input-group" id="plainMemoGroup">
         <label class="input-label">📝 メモ</label>
         <textarea class="input-field" id="plainMemo" rows="2" placeholder="自由記入" style="resize:vertical;"></textarea>
-        <div style="display:flex;gap:6px;margin-top:6px;">
-          <button class="pay-btn" id="plainGender-男性" onclick="selectPlainGender('男性')" style="flex:1;">男性</button>
-          <button class="pay-btn" id="plainGender-女性" onclick="selectPlainGender('女性')" style="flex:1;">女性</button>
-        </div>
         <input type="hidden" id="plainPaxGender" value="">
       </div>
 
@@ -545,14 +544,14 @@
         <div class="stat-label">実車時間（乗客あり）</div>
       </div>
       <div class="stat-card">
-        <div class="stat-value" id="schedWaitTotal">0分</div>
-        <div class="stat-label">空車時間</div>
-      </div>
-      <div class="stat-card">
         <div class="stat-value" id="schedBreakTotal">0分</div>
         <div class="stat-label">休憩時間</div>
       </div>
-      <div class="stat-card accent">
+      <div class="stat-card">
+        <div class="stat-value" id="schedHourly">---</div>
+        <div class="stat-label">時給</div>
+      </div>
+      <div class="stat-card">
         <div class="stat-value" id="schedAllTotal">0分</div>
         <div class="stat-label">合計（業務開始〜終了）</div>
       </div>
@@ -594,7 +593,7 @@
         </div>
         <div class="stat-card" id="todayWaitCard">
           <div class="stat-value" id="todayWait">0分</div>
-          <div class="stat-label">待機時間計</div>
+          <div class="stat-label">空車時間</div>
         </div>
         <div class="stat-card">
           <div class="stat-value" id="todayUncollected">¥0</div>
@@ -1125,7 +1124,8 @@ function buildGoMemo() {
   if (!name) return '';
   const gender = document.getElementById('goPaxGender').value;
   const age = document.getElementById('goPaxAge').value;
-  const parts = [`${name}`, gender];
+  const parts = [`${name}`];
+  if (gender) parts.push(gender);
   if (age) parts.push(age);
   return parts.join(' / ');
 }
@@ -1133,26 +1133,15 @@ function resetGoMemo() {
   document.getElementById('goPaxName').value = '';
   document.getElementById('goPaxAge').value = '';
   goGenderChosen = false;
-  selectGoGender('男性');
+  selectGoGender('');  // 最初はどちらも選択されていない状態にする
   const hist = document.getElementById('goPaxHistory');
   hist.style.display = 'none';
   hist.innerHTML = '';
 }
 
-// 流し・配車の乗客の性別（メモの下）
-function selectPlainGender(g) {
-  const cur = document.getElementById('plainPaxGender').value;
-  const next = cur === g ? '' : g; // 同じボタンをもう一度押すと選択解除
-  document.getElementById('plainPaxGender').value = next;
-  ['男性','女性'].forEach(x => {
-    document.getElementById(`plainGender-${x}`).className = 'pay-btn' + (x === next ? ' active' : '');
-  });
-}
+// 流し・配車の乗客の性別は入力欄を廃止したため、保存値だけを初期化する
 function resetPlainGender() {
   document.getElementById('plainPaxGender').value = '';
-  ['男性','女性'].forEach(x => {
-    document.getElementById(`plainGender-${x}`).className = 'pay-btn';
-  });
 }
 
 // 名前入力中に過去のGO乗車履歴（日付・乗降場所）を候補表示。
@@ -1963,7 +1952,8 @@ function buildEditGoMemo() {
   if (!name) return '';
   const gender = document.getElementById('editGoPaxGender').value;
   const age = document.getElementById('editGoPaxAge').value;
-  const parts = [`${name}`, gender];
+  const parts = [`${name}`];
+  if (gender) parts.push(gender);
   if (age) parts.push(age);
   return parts.join(' / ');
 }
@@ -2897,8 +2887,8 @@ function renderSchedule() {
   // 最初の記録がない場合は空車時間を0にする
   if (!result) {
     document.getElementById('schedJisshaTotal').textContent = '0分';
-    document.getElementById('schedWaitTotal').textContent = '0分';
     document.getElementById('schedBreakTotal').textContent = '0分';
+    document.getElementById('schedHourly').textContent = '---';
     document.getElementById('schedAllTotal').textContent = '0分';
     const msg = (isToday && now < shiftStart) ? 'まだ業務開始前です' : 'この日の記録はありません';
     document.getElementById('scheduleList').innerHTML = emptyState(msg);
@@ -2918,16 +2908,21 @@ function renderSchedule() {
   });
 
   document.getElementById('schedJisshaTotal').textContent = fmtWait(jisshaMin);
-  document.getElementById('schedWaitTotal').textContent = fmtWait(calcWaitMinutes(date, endTime));
   document.getElementById('schedBreakTotal').textContent = fmtWait(breakMin);
   document.getElementById('schedAllTotal').textContent = fmtWait(allMin);
+  // 時給 = 営収額（税抜）÷ 実働時間 × 0.5（サマリーと同じ計算）
+  const schedHourlyWage = allMin > 0 ? Math.round(exTax(daySales) / (allMin / 60) * 0.5) : null;
+  document.getElementById('schedHourly').textContent =
+    schedHourlyWage !== null ? `¥${schedHourlyWage.toLocaleString()}` : '---';
 
   const typeColors = { '配車': '#ff6b00', 'GO': '#1a73e8', '流し': '#00a152' };
   const fmtHM = d => `${pad(d.getHours())}:${pad(d.getMinutes())}`;
   const diffMin = (a,b) => Math.max(0, Math.round((b-a)/60000));
 
-  document.getElementById('scheduleList').innerHTML = segments.slice().reverse().map(seg => {
+  document.getElementById('scheduleList').innerHTML = segments.slice().reverse().map((seg, revIdx) => {
     const durMin = diffMin(seg.start, seg.end);
+    // 逆順に並べているため、先頭がその日の最後のセグメント
+    const isLastSegment = revIdx === 0;
     if (seg.type === 'occupied') {
       const t = seg.trip;
       const type = t.tripType || '流し';
@@ -2953,6 +2948,12 @@ function renderSchedule() {
       }
       if (paxLine && showVisit) { paxLine += `（${visitInfo.visitNumber}回目）`; paxClickable = true; }
 
+      // 人員の内訳（運行記録と同じ表記）
+      const paxCount = t.passengers || 1;
+      const paxCountLabel = (t.paxMaleCount !== undefined || t.paxFemaleCount !== undefined)
+        ? `${paxCount}名（男${t.paxMaleCount||0}・女${t.paxFemaleCount||0}）`
+        : `${paxCount}名`;
+
       const rideNumber = rideNumberMap[t.id];
       const cumulative = cumulativeFareMap[t.id];
       return `
@@ -2965,7 +2966,8 @@ function renderSchedule() {
           <div class="sched-body">
             <span class="sched-type-badge" style="background:${typeColor}22;color:${typeColor};">${type}</span>
             ${t.pickup||'（乗車場所未設定）'} → ${t.dropoff||'（降車場所未設定）'}　<span style="color:var(--success);font-weight:700;">¥${fare.toLocaleString()}</span>
-            ${paxLine ? `<div style="margin-top:4px;font-size:12px;font-weight:700;color:var(--primary);${paxClickable ? 'cursor:pointer;' : ''}"${paxClickable ? ` onclick="event.stopPropagation();showCustomerHistory(${t.id})"` : ''}>👤 ${paxLine}${paxClickable ? ' ›' : ''}</div>` : ''}
+            ${paxLine ? `<div style="margin-top:4px;font-size:12px;font-weight:700;color:var(--primary);${paxClickable ? 'cursor:pointer;' : ''}"${paxClickable ? ` onclick="event.stopPropagation();showCustomerHistory(${t.id})"` : ''}>${paxLine}${paxClickable ? ' ›' : ''}</div>` : ''}
+            <div style="margin-top:4px;font-size:12px;color:var(--muted);">${paxCountLabel}</div>
           </div>
         </div>
       `;
@@ -2986,10 +2988,12 @@ function renderSchedule() {
         </div>
       `;
     }
+    // その日の最後の空車で業務を終えた場合は、終了時刻がわかるように印を付ける
+    const showEnd = isLastSegment && !seg.ongoing && endTime;
     return `
       <div class="sched-item vacant">
         <div class="sched-time">${fmtHM(seg.start)}〜${seg.ongoing ? '現在' : fmtHM(seg.end)} <span class="sched-dur">（${fmtWait(durMin)}${seg.ongoing ? '経過' : ''}）</span></div>
-        <div class="sched-body">空車</div>
+        <div class="sched-body">空車${showEnd ? `　<span style="color:var(--primary);font-weight:700;">${fmtHM(endTime)} 業務終了</span>` : ''}</div>
       </div>
     `;
   }).join('');
