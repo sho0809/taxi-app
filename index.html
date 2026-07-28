@@ -43,6 +43,8 @@
 
   /* Content area */
   .content { padding: 14px; padding-bottom: calc(var(--nav-h) + var(--safe-bottom) + 14px); }
+  /* 場所を入力している間は、入力欄を画面上部まで巻き上げられるよう下に余白を確保する */
+  .content.loc-focus { padding-bottom: 75vh; }
 
   /* Bottom nav */
   .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: white; border-top: 1px solid var(--border); display: flex; z-index: 200; padding-bottom: var(--safe-bottom); box-shadow: 0 -2px 12px rgba(0,0,0,0.1); }
@@ -110,6 +112,14 @@
   .tab-bar { display: flex; background: #f0f0f5; border-radius: 12px; padding: 3px; margin-bottom: 14px; }
   .tab-item { flex: 1; text-align: center; padding: 8px 6px; border-radius: 10px; font-size: 13px; font-weight: 600; color: var(--muted); cursor: pointer; transition: all 0.15s; }
   .tab-item.active { background: white; color: var(--primary); box-shadow: 0 1px 4px rgba(0,0,0,0.12); }
+  /* タイムラインの操作タブ（グラフ・休憩・給油・業務終了） */
+  .sched-tab-bar { display: flex; background: #f0f0f5; border-radius: 12px; padding: 3px; margin-top: 10px; gap: 2px; }
+  .sched-tab { flex: 1; text-align: center; padding: 9px 2px; border-radius: 10px; font-size: 12px; font-weight: 700; color: var(--muted); background: none; border: none; cursor: pointer; white-space: nowrap; transition: all 0.15s; }
+  .sched-tab:active { background: white; color: var(--primary); box-shadow: 0 1px 4px rgba(0,0,0,0.12); }
+  /* 休憩場所のよく使う候補 */
+  .place-chip-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .place-chip { padding: 7px 12px; border-radius: 999px; border: 1.5px solid var(--border); background: white; font-size: 13px; font-weight: 600; color: var(--text); cursor: pointer; }
+  .place-chip:active { background: var(--bg); border-color: var(--primary); color: var(--primary); }
 
   /* Trip list items */
   .trip-item { background: white; border-radius: 14px; padding: 14px; margin-bottom: 10px; box-shadow: 0 1px 4px rgba(0,0,0,0.07); position: relative; }
@@ -332,12 +342,12 @@
       <div class="input-row">
         <div class="input-group">
           <label class="input-label">🟢 乗車場所</label>
-          <input class="input-field" id="pickupLoc" type="text" placeholder="" autocomplete="off" oninput="onLocInput('pickupLoc','pickupLocSuggest')" onfocus="onLocInput('pickupLoc','pickupLocSuggest')" onblur="hideLocSuggest('pickupLocSuggest')">
+          <input class="input-field" id="pickupLoc" type="text" placeholder="" autocomplete="off" oninput="onLocInput('pickupLoc','pickupLocSuggest')" onfocus="onLocInput('pickupLoc','pickupLocSuggest');scrollLocFieldToTop('pickupLoc')" onblur="hideLocSuggest('pickupLocSuggest')">
           <div id="pickupLocSuggest" class="loc-suggest"></div>
         </div>
         <div class="input-group">
           <label class="input-label">🔴 降車場所</label>
-          <input class="input-field" id="dropoffLoc" type="text" placeholder="" autocomplete="off" oninput="onLocInput('dropoffLoc','dropoffLocSuggest')" onfocus="onLocInput('dropoffLoc','dropoffLocSuggest')" onblur="hideLocSuggest('dropoffLocSuggest')">
+          <input class="input-field" id="dropoffLoc" type="text" placeholder="" autocomplete="off" oninput="onLocInput('dropoffLoc','dropoffLocSuggest')" onfocus="onLocInput('dropoffLoc','dropoffLocSuggest');scrollLocFieldToTop('dropoffLoc')" onblur="hideLocSuggest('dropoffLocSuggest')">
           <div id="dropoffLocSuggest" class="loc-suggest"></div>
         </div>
       </div>
@@ -521,23 +531,12 @@
       <div style="text-align:center;margin-top:10px;">
         <div style="font-size:26px;font-weight:800;color:var(--success);" id="schedDaySales">¥0</div>
         <div style="font-size:12px;color:var(--muted);margin-top:2px;">この日の営収額</div>
-        <button class="btn btn-gray btn-sm" onclick="openScheduleGraph()" style="margin-top:8px;padding:6px 14px;font-size:12px;">グラフ</button>
       </div>
-      <div style="display:flex;gap:6px;align-items:center;margin-top:10px;">
-        <input type="time" id="schedEndTimeInput" class="input-field" style="flex:1;padding:6px 8px;font-size:13px;">
-        <button class="btn btn-gray btn-sm" onclick="saveSchedEndTime()" style="padding:6px 10px;font-size:12px;white-space:nowrap;">業務終了</button>
-      </div>
-      <div style="display:flex;gap:6px;align-items:center;margin-top:6px;">
-        <input type="time" id="breakStartInput" class="input-field" style="flex:1;padding:6px 8px;font-size:13px;">
-        <span style="color:var(--muted);font-size:12px;">〜</span>
-        <input type="time" id="breakEndInput" class="input-field" style="flex:1;padding:6px 8px;font-size:13px;">
-        <button class="btn btn-gray btn-sm" onclick="addScheduleBreak()" style="padding:6px 10px;font-size:12px;white-space:nowrap;">休憩追加</button>
-      </div>
-      <div style="display:flex;gap:6px;align-items:center;margin-top:6px;">
-        <input type="time" id="fuelStartInput" class="input-field" style="flex:1;padding:6px 8px;font-size:13px;">
-        <span style="color:var(--muted);font-size:12px;">〜</span>
-        <input type="time" id="fuelEndInput" class="input-field" style="flex:1;padding:6px 8px;font-size:13px;">
-        <button class="btn btn-gray btn-sm" onclick="addScheduleFuel()" style="padding:6px 10px;font-size:12px;white-space:nowrap;">給油追加</button>
+      <div class="sched-tab-bar">
+        <button class="sched-tab" onclick="openScheduleGraph()">グラフ</button>
+        <button class="sched-tab" onclick="openSchedAdd('break')">休憩</button>
+        <button class="sched-tab" onclick="openSchedAdd('fuel')">給油</button>
+        <button class="sched-tab" onclick="openSchedAdd('end')">業務終了</button>
       </div>
     </div>
     <div class="stat-grid">
@@ -623,6 +622,42 @@
 
 </div><!-- end content -->
 
+<!-- 休憩・給油・業務終了 追加モーダル -->
+<div class="modal-overlay" id="schedAddModal" onclick="if(event.target===this) closeSchedAdd()">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="schedAddTitle">休憩を追加</div>
+    <div class="input-row" id="schedAddRangeRow">
+      <div class="input-group">
+        <label class="input-label">⏱ 開始</label>
+        <input class="input-field" id="schedAddStart" type="time">
+      </div>
+      <div class="input-group">
+        <label class="input-label">🏁 終了</label>
+        <input class="input-field" id="schedAddEnd" type="time">
+      </div>
+    </div>
+    <div class="input-group" id="schedAddSingleRow" style="display:none;">
+      <label class="input-label">🏁 業務終了時刻</label>
+      <input class="input-field" id="schedAddEndTime" type="time">
+    </div>
+    <div class="input-group" id="schedAddPlaceRow">
+      <label class="input-label">📍 場所</label>
+      <input class="input-field" id="schedAddPlace" type="text" placeholder="" autocomplete="off"
+             oninput="onLocInput('schedAddPlace','schedAddPlaceSuggest',getBreakPlaceSuggestions)"
+             onfocus="onLocInput('schedAddPlace','schedAddPlaceSuggest',getBreakPlaceSuggestions);scrollLocFieldToTop('schedAddPlace')"
+             onblur="hideLocSuggest('schedAddPlaceSuggest')">
+      <div id="schedAddPlaceSuggest" class="loc-suggest"></div>
+      <div class="place-chip-row" id="schedAddPlaceChips"></div>
+    </div>
+    <div id="schedAddFuelNote" style="display:none;font-size:13px;color:var(--muted);margin-top:4px;">📍 場所は高岡町で記録されます</div>
+    <div class="btn-row" style="margin-top:14px;">
+      <button class="btn btn-gray" onclick="closeSchedAdd()">キャンセル</button>
+      <button class="btn btn-primary" onclick="saveSchedAdd()">保存</button>
+    </div>
+  </div>
+</div>
+
 <!-- 休憩・給油 編集モーダル -->
 <div class="modal-overlay" id="schedItemEditModal" onclick="if(event.target===this) closeSchedItemEdit()">
   <div class="modal">
@@ -638,14 +673,16 @@
         <input class="input-field" id="schedItemEditEnd" type="time">
       </div>
     </div>
-    <div class="input-group">
+    <div class="input-group" id="schedItemEditPlaceRow">
       <label class="input-label">📍 場所</label>
       <input class="input-field" id="schedItemEditPlace" type="text" placeholder="" autocomplete="off"
-             oninput="onLocInput('schedItemEditPlace','schedItemEditPlaceSuggest')"
-             onfocus="onLocInput('schedItemEditPlace','schedItemEditPlaceSuggest')"
+             oninput="onLocInput('schedItemEditPlace','schedItemEditPlaceSuggest',getBreakPlaceSuggestions)"
+             onfocus="onLocInput('schedItemEditPlace','schedItemEditPlaceSuggest',getBreakPlaceSuggestions);scrollLocFieldToTop('schedItemEditPlace')"
              onblur="hideLocSuggest('schedItemEditPlaceSuggest')">
       <div id="schedItemEditPlaceSuggest" class="loc-suggest"></div>
+      <div class="place-chip-row" id="schedItemEditPlaceChips"></div>
     </div>
+    <div id="schedItemEditFuelNote" style="display:none;font-size:13px;color:var(--muted);margin-top:4px;">📍 場所は高岡町で記録されます</div>
     <div class="btn-row">
       <button class="btn btn-gray" onclick="closeSchedItemEdit()">キャンセル</button>
       <button class="btn btn-primary" onclick="saveSchedItemEdit()">保存</button>
@@ -734,12 +771,12 @@
 
     <div class="input-group">
       <label class="input-label">🟢 乗車場所</label>
-      <input class="input-field" id="editPickupLoc" type="text" placeholder="例：渋谷駅前" autocomplete="off" oninput="onLocInput('editPickupLoc','editPickupLocSuggest')" onfocus="onLocInput('editPickupLoc','editPickupLocSuggest')" onblur="hideLocSuggest('editPickupLocSuggest')">
+      <input class="input-field" id="editPickupLoc" type="text" placeholder="例：渋谷駅前" autocomplete="off" oninput="onLocInput('editPickupLoc','editPickupLocSuggest')" onfocus="onLocInput('editPickupLoc','editPickupLocSuggest');scrollLocFieldToTop('editPickupLoc')" onblur="hideLocSuggest('editPickupLocSuggest')">
       <div id="editPickupLocSuggest" class="loc-suggest"></div>
     </div>
     <div class="input-group">
       <label class="input-label">🔴 降車場所</label>
-      <input class="input-field" id="editDropoffLoc" type="text" placeholder="例：新宿三丁目" autocomplete="off" oninput="onLocInput('editDropoffLoc','editDropoffLocSuggest')" onfocus="onLocInput('editDropoffLoc','editDropoffLocSuggest')" onblur="hideLocSuggest('editDropoffLocSuggest')">
+      <input class="input-field" id="editDropoffLoc" type="text" placeholder="例：新宿三丁目" autocomplete="off" oninput="onLocInput('editDropoffLoc','editDropoffLocSuggest')" onfocus="onLocInput('editDropoffLoc','editDropoffLocSuggest');scrollLocFieldToTop('editDropoffLoc')" onblur="hideLocSuggest('editDropoffLocSuggest')">
       <div id="editDropoffLocSuggest" class="loc-suggest"></div>
     </div>
     <div class="input-row">
@@ -863,6 +900,11 @@ function getWaits() { try { return JSON.parse(localStorage.getItem(WAITS_KEY) ||
 
 // 業務終了時刻の管理
 const DAY_END_KEY = 'taxi_day_end';
+// 保存済みの業務終了時刻を時刻入力欄用の HH:MM 形式で返す
+function getDayEndTimeValue(date) {
+  const d = getDayEndTime(date);
+  return d ? `${pad(d.getHours())}:${pad(d.getMinutes())}` : '';
+}
 function getDayEndTime(date) {
   try {
     const data = JSON.parse(localStorage.getItem(DAY_END_KEY) || '{}');
@@ -1176,6 +1218,8 @@ function applyGoPaxHistory(id) {
 // 漢字1文字から一般的な読みを推測する方式は、同じ漢字でも地名によって読みが異なるため
 // 誤った候補（例：空港通が「そら」の読みで「そ」に一致してしまう等）が出てしまうことがわかり廃止した。
 // 現在はこの対応表に登録された地名のみが、ひらがな入力による読み一致の対象になる。
+// 値は頭文字1文字でもよいが、読みを長く登録するほど文字を打ち足したときに絞り込める
+// （例：喜与町は「きよ」まで登録しているので、「き」でも「きよ」でも候補に出る）。
 const PLACE_NAME_READING_HINT = {
   '鷹子町':'た', '一番町':'い', '勝山町':'か', '小坂':'こ', '南久米町':'み', '中村':'な',
   '平井町':'ひ', '立花':'た', '久米窪田町':'く', '千舟町':'ち', '枝松':'え', '桑原':'く',
@@ -1194,7 +1238,7 @@ const PLACE_NAME_READING_HINT = {
   '岩崎町':'い', '中一万町':'な',
   '愛光町':'あ', '朝美':'あ', '朝日ケ丘':'あ', '祝谷':'い', '祝谷東町':'い', '祝谷西町':'い',
   '大街道':'お', '上市':'か', '萱町':'か', '北久米町':'き', '紅葉町':'も', '南堀端町':'み',
-  '二番町':'に', '三番町':'さ', '歩行町':'か', '喜与町':'き', '東雲町':'し', '昭和町':'し',
+  '二番町':'に', '三番町':'さ', '歩行町':'か', '喜与町':'きよ', '東雲町':'し', '昭和町':'し',
   '西一万町':'に', '北持田町':'き', '北立花町':'き', '永木町':'な', '新立町':'し',
   '道後公園':'ど', '道後北代':'ど', '道後樋又':'ど', '道後緑台':'ど', '道後多幸町':'ど',
   '道後鷺谷町':'ど', '道後湯月町':'ど', '南町':'み', '石手白石':'い', '日の出町':'ひ',
@@ -1202,7 +1246,7 @@ const PLACE_NAME_READING_HINT = {
   '今在家':'い', '天山':'あ', '居相':'い', '古川南':'ふ', '森松町':'も', '保免中':'ほ',
   '保免西':'ほ', '余戸東':'よ', '余戸中':'よ', '余戸西':'よ', '東垣生町':'ひ', '西垣生町':'に',
   '勝岡町':'か', '藤原町':'ふ', '藤原':'ふ', '北藤原町':'き', '春日町':'か', '室町':'む',
-  '真砂町':'ま', '土橋町':'と', '竹原町':'た', '針田町':'は', '若草町':'わ', '木屋町':'き',
+  '真砂町':'ま', '土橋町':'どばし', '竹原町':'た', '針田町':'は', '若草町':'わ', '木屋町':'き',
   '緑町':'み', '鉄炮町':'て', '清水町':'し', '姫原':'ひ',
 };
 
@@ -1273,10 +1317,50 @@ function getLocationSuggestions(query) {
     .map(([name]) => name)
     .slice(0, 6);
 }
-function onLocInput(inputId, suggestId) {
+// 乗車場所・降車場所をタップしたとき、入力欄を画面の上の方へ巻き上げて
+// 地名の候補リストがキーボードに隠れないようにする
+function scrollLocFieldToTop(inputId) {
+  const input = document.getElementById(inputId);
+  if (!input) return;
+  const modal = input.closest('.modal');
+  // ページ末尾の入力欄でもスクロールしきれるよう、入力中だけ下に余白を足す
+  if (!modal) document.querySelector('.content').classList.add('loc-focus');
+  const align = () => {
+    if (modal) {
+      // モーダル内はモーダル自身がスクロールするため、その中で位置を合わせる
+      const offset = input.getBoundingClientRect().top - modal.getBoundingClientRect().top;
+      modal.scrollTo({ top: Math.max(0, modal.scrollTop + offset - 12), behavior: 'smooth' });
+    } else {
+      const header = document.querySelector('.header');
+      const headerH = header ? header.offsetHeight : 0;
+      const top = input.getBoundingClientRect().top + window.scrollY - headerH - 12;
+      window.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
+    }
+  };
+  align();
+  // 端末のキーボードが出たあとに表示領域が変わるため、少し待ってもう一度合わせる
+  setTimeout(align, 300);
+}
+
+// 休憩でよく使う場所。空欄でタップしたときの候補として出し、
+// 文字を打ったときも一致すれば通常の候補より先に並べる
+const BREAK_PLACE_PRESETS = ['桑原','紅葉町','二番町','大街道'];
+// 給油の場所は常にここで記録する
+const FUEL_PLACE = '高岡町';
+
+function getBreakPlaceSuggestions(query) {
+  const q = (query || '').trim();
+  if (!q) return BREAK_PLACE_PRESETS.slice();
+  const presets = BREAK_PLACE_PRESETS.filter(n => n !== q && locationMatchesQuery(n, q));
+  const rest = getLocationSuggestions(q).filter(n => !presets.includes(n));
+  return [...presets, ...rest].slice(0, 6);
+}
+
+// suggester を渡すと候補の出し方を差し替えられる（既定は乗車・降車場所の候補）
+function onLocInput(inputId, suggestId, suggester) {
   const input = document.getElementById(inputId);
   const box = document.getElementById(suggestId);
-  const suggestions = getLocationSuggestions(input.value);
+  const suggestions = (suggester || getLocationSuggestions)(input.value);
   locSuggestCache[suggestId] = suggestions;
   if (suggestions.length === 0) { box.style.display = 'none'; box.innerHTML = ''; return; }
   box.innerHTML = suggestions.map((name, i) =>
@@ -1294,6 +1378,8 @@ function hideLocSuggest(suggestId) {
   const box = document.getElementById(suggestId);
   box.style.display = 'none';
   box.innerHTML = '';
+  // 入力中に足していた余白を戻す
+  document.querySelector('.content').classList.remove('loc-focus');
 }
 
 // 支払方法選択
@@ -2138,14 +2224,15 @@ function renderHourlyChart() {
 function drawHourlyChart(shiftCounts) {
   const ctx = document.getElementById('hourlyChart').getContext('2d');
   if (hourlyChartInstance) hourlyChartInstance.destroy();
-  const max = Math.max(...shiftCounts);
+  // 濃い青は現在時刻の時間帯を示す（件数が最も多い時間帯ではない）
+  const currentHour = new Date().getHours();
   hourlyChartInstance = new Chart(ctx, {
     type: 'bar',
     data: {
       labels: SHIFT_HOURS.map(h => `${h}時`),
       datasets: [{
         data: shiftCounts,
-        backgroundColor: shiftCounts.map(c => c === max && max > 0 ? '#1a73e8' : '#93c4f7'),
+        backgroundColor: SHIFT_HOURS.map(h => h === currentHour ? '#1a73e8' : '#93c4f7'),
         borderRadius: 4,
       }]
     },
@@ -2440,31 +2527,78 @@ function schedPickDate(v) {
   renderSchedule();
 }
 
-// 業務終了時刻を手動で入力・保存
-function saveSchedEndTime() {
+// ---- 休憩・給油・業務終了の追加モーダル ----
+let schedAddKind = null; // 'break' | 'fuel' | 'end'
+
+function openSchedAdd(kind) {
+  schedAddKind = kind;
+  const isEnd = kind === 'end';
+  const isBreak = kind === 'break';
+  document.getElementById('schedAddTitle').textContent =
+    isEnd ? '業務終了を記録' : isBreak ? '休憩を追加' : '給油を追加';
+  document.getElementById('schedAddRangeRow').style.display = isEnd ? 'none' : '';
+  document.getElementById('schedAddSingleRow').style.display = isEnd ? '' : 'none';
+  // 給油の場所は高岡町で固定のため、場所欄は休憩のときだけ出す
+  document.getElementById('schedAddPlaceRow').style.display = isBreak ? '' : 'none';
+  document.getElementById('schedAddFuelNote').style.display = (kind === 'fuel') ? '' : 'none';
+  document.getElementById('schedAddStart').value = '';
+  document.getElementById('schedAddEnd').value = '';
+  document.getElementById('schedAddEndTime').value = getDayEndTimeValue(schedCurrentDate) || '';
+  document.getElementById('schedAddPlace').value = '';
+  hideLocSuggest('schedAddPlaceSuggest');
+  renderPlaceChips('schedAddPlaceChips', 'schedAddPlace');
+  document.getElementById('schedAddModal').classList.add('open');
+}
+function closeSchedAdd() {
+  document.getElementById('schedAddModal').classList.remove('open');
+  schedAddKind = null;
+}
+function saveSchedAdd() {
+  const kind = schedAddKind;
+  if (!kind) return;
+  if (kind === 'end') {
+    if (!saveSchedEndTimeValue(document.getElementById('schedAddEndTime').value)) return;
+  } else {
+    const start = document.getElementById('schedAddStart').value;
+    const end = document.getElementById('schedAddEnd').value;
+    const place = kind === 'break' ? document.getElementById('schedAddPlace').value.trim() : FUEL_PLACE;
+    if (!addScheduleStop(kind, start, end, place)) return;
+  }
+  closeSchedAdd();
+}
+
+// 休憩でよく使う場所をワンタップで入れられるようにする
+function renderPlaceChips(containerId, inputId) {
+  document.getElementById(containerId).innerHTML = BREAK_PLACE_PRESETS.map(name =>
+    `<button type="button" class="place-chip" onclick="document.getElementById('${inputId}').value='${name}';hideLocSuggest('${inputId}Suggest')">${name}</button>`
+  ).join('');
+}
+
+// 業務終了時刻を保存（HH:MM形式）
+function saveSchedEndTimeValue(val) {
   const date = schedCurrentDate;
-  const val = document.getElementById('schedEndTimeInput').value;
-  if (!val) { showToast('終了時刻を入力してください'); return; }
+  if (!val) { showToast('終了時刻を入力してください'); return false; }
   const shiftStart = new Date(date + 'T07:30:00');
   const d = new Date(date + 'T' + val + ':00');
   if (d < shiftStart) d.setDate(d.getDate() + 1); // 深夜をまたぐ場合は翌日扱い
   saveDayEndTime(date, d);
   showToast('業務終了時刻を保存しました ✓');
   renderSchedule();
+  return true;
 }
 
-function addScheduleBreak() {
+// 休憩・給油を1つの処理でまとめて追加する。
+// 実車時間や既存の休憩・給油と重ならないことを確認してから保存する
+function addScheduleStop(kind, startVal, endVal, place) {
   const date = schedCurrentDate;
-  const startVal = document.getElementById('breakStartInput').value;
-  const endVal = document.getElementById('breakEndInput').value;
-  if (!startVal || !endVal) { showToast('休憩の開始・終了時刻を入力してください'); return; }
+  const label = kind === 'break' ? '休憩' : '給油';
+  if (!startVal || !endVal) { showToast(`${label}の開始・終了時刻を入力してください`); return false; }
 
-  // 実車時間帯・既存の休憩と重複していないか確認
   const shiftStart = new Date(date + 'T07:30:00');
-  const bStart = new Date(date + 'T' + startVal + ':00');
-  if (bStart < shiftStart) bStart.setDate(bStart.getDate() + 1);
-  const bEnd = new Date(date + 'T' + endVal + ':00');
-  if (bEnd <= bStart) bEnd.setDate(bEnd.getDate() + 1);
+  const nStart = new Date(date + 'T' + startVal + ':00');
+  if (nStart < shiftStart) nStart.setDate(nStart.getDate() + 1);
+  const nEnd = new Date(date + 'T' + endVal + ':00');
+  if (nEnd <= nStart) nEnd.setDate(nEnd.getDate() + 1);
 
   let cursor = shiftStart;
   const toDate = (timeStr) => { const d = new Date(date + 'T' + timeStr + ':00'); while (d < cursor) d.setDate(d.getDate() + 1); return d; };
@@ -2486,18 +2620,20 @@ function addScheduleBreak() {
     if (s < shiftStart) s.setDate(s.getDate() + 1);
     const e = new Date(date + 'T' + item.end + ':00');
     if (e <= s) e.setDate(e.getDate() + 1);
-    return bStart < e && bEnd > s;
+    return nStart < e && nEnd > s;
   });
-  const overlapsExisting = overlapsTimeRange(breaks) || overlapsTimeRange(fuelStops);
-  const overlapsTrip = occupied.some(o => bStart < o.end && bEnd > o.start);
-  if (overlapsTrip || overlapsExisting) { showToast('実車時間や既存の休憩・給油と重複しています'); return; }
+  if (occupied.some(o => nStart < o.end && nEnd > o.start) ||
+      overlapsTimeRange(breaks) || overlapsTimeRange(fuelStops)) {
+    showToast('実車時間や既存の休憩・給油と重複しています');
+    return false;
+  }
 
-  breaks.push({ start: startVal, end: endVal });
-  saveScheduleBreaks(date, breaks);
-  document.getElementById('breakStartInput').value = '';
-  document.getElementById('breakEndInput').value = '';
-  showToast('休憩時間を保存しました ✓');
+  const entry = { start: startVal, end: endVal, place: place || '' };
+  if (kind === 'break') { breaks.push(entry); saveScheduleBreaks(date, breaks); }
+  else { fuelStops.push(entry); saveScheduleFuelStops(date, fuelStops); }
+  showToast(`${label}時間を保存しました ✓`);
   renderSchedule();
+  return true;
 }
 
 function deleteScheduleBreak(index) {
@@ -2505,52 +2641,6 @@ function deleteScheduleBreak(index) {
   const breaks = getScheduleBreaks(date);
   breaks.splice(index, 1);
   saveScheduleBreaks(date, breaks);
-  renderSchedule();
-}
-
-function addScheduleFuel() {
-  const date = schedCurrentDate;
-  const startVal = document.getElementById('fuelStartInput').value;
-  const endVal = document.getElementById('fuelEndInput').value;
-  if (!startVal || !endVal) { showToast('給油の開始・終了時刻を入力してください'); return; }
-
-  const shiftStart = new Date(date + 'T07:30:00');
-  const fStart = new Date(date + 'T' + startVal + ':00');
-  if (fStart < shiftStart) fStart.setDate(fStart.getDate() + 1);
-  const fEnd = new Date(date + 'T' + endVal + ':00');
-  if (fEnd <= fStart) fEnd.setDate(fEnd.getDate() + 1);
-
-  let cursor = shiftStart;
-  const toDate = (timeStr) => { const d = new Date(date + 'T' + timeStr + ':00'); while (d < cursor) d.setDate(d.getDate() + 1); return d; };
-  const occupied = getTrips()
-    .filter(t => t.date === date && t.pickupTime && t.dropoffTime)
-    .sort((a, b) => tripSortKey(a) - tripSortKey(b))
-    .map(t => {
-      const p = toDate(t.pickupTime);
-      let d = toDate(t.dropoffTime);
-      if (d < p) d.setDate(d.getDate() + 1);
-      if (d > cursor) cursor = d;
-      return { start: p, end: d };
-    });
-
-  const breaks = getScheduleBreaks(date);
-  const fuelStops = getScheduleFuelStops(date);
-  const overlapsTimeRange = (list) => list.some(item => {
-    const s = new Date(date + 'T' + item.start + ':00');
-    if (s < shiftStart) s.setDate(s.getDate() + 1);
-    const e = new Date(date + 'T' + item.end + ':00');
-    if (e <= s) e.setDate(e.getDate() + 1);
-    return fStart < e && fEnd > s;
-  });
-  const overlapsExisting = overlapsTimeRange(breaks) || overlapsTimeRange(fuelStops);
-  const overlapsTrip = occupied.some(o => fStart < o.end && fEnd > o.start);
-  if (overlapsTrip || overlapsExisting) { showToast('実車時間や既存の休憩・給油と重複しています'); return; }
-
-  fuelStops.push({ start: startVal, end: endVal });
-  saveScheduleFuelStops(date, fuelStops);
-  document.getElementById('fuelStartInput').value = '';
-  document.getElementById('fuelEndInput').value = '';
-  showToast('給油時間を保存しました ✓');
   renderSchedule();
 }
 
@@ -2575,6 +2665,11 @@ function openSchedItemEdit(kind, index) {
   document.getElementById('schedItemEditEnd').value = item.end || '';
   document.getElementById('schedItemEditPlace').value = item.place || '';
   hideLocSuggest('schedItemEditPlaceSuggest');
+  // 給油の場所は高岡町で固定のため、場所欄は休憩のときだけ出す
+  const isBreak = kind === 'break';
+  document.getElementById('schedItemEditPlaceRow').style.display = isBreak ? '' : 'none';
+  document.getElementById('schedItemEditFuelNote').style.display = isBreak ? 'none' : '';
+  renderPlaceChips('schedItemEditPlaceChips', 'schedItemEditPlace');
   document.getElementById('schedItemEditModal').classList.add('open');
 }
 function closeSchedItemEdit() {
@@ -2586,7 +2681,8 @@ function saveSchedItemEdit() {
   const { kind, index } = schedItemEditTarget;
   const start = document.getElementById('schedItemEditStart').value;
   const end = document.getElementById('schedItemEditEnd').value;
-  const place = document.getElementById('schedItemEditPlace').value.trim();
+  // 給油の場所は常に高岡町
+  const place = kind === 'break' ? document.getElementById('schedItemEditPlace').value.trim() : FUEL_PLACE;
   if (!start || !end) { showToast('開始・終了時刻を入力してください'); return; }
   const list = kind === 'break' ? getScheduleBreaks(schedCurrentDate) : getScheduleFuelStops(schedCurrentDate);
   if (!list[index]) return;
@@ -2744,7 +2840,8 @@ function computeScheduleSegments(date) {
     const seg = segments[idx];
     const replacement = [];
     if (fStart > seg.start) replacement.push({ type: 'vacant', start: seg.start, end: fStart });
-    replacement.push({ type: 'fuel', start: fStart, end: fEnd, fuelIndex: fsIdx, place: fs.place || '' });
+    // 給油の場所は常に高岡町（場所が未記録の過去データも同じ扱いにする）
+    replacement.push({ type: 'fuel', start: fStart, end: fEnd, fuelIndex: fsIdx, place: FUEL_PLACE });
     if (fEnd < seg.end) replacement.push({ type: 'vacant', start: fEnd, end: seg.end, ongoing: seg.ongoing });
     segments.splice(idx, 1, ...replacement);
   });
@@ -2775,12 +2872,6 @@ function renderSchedule() {
   const isToday = date === todayStr();
   const now = new Date();
   const shiftStart = new Date(date + 'T07:30:00');
-
-  // 業務終了時刻の入力欄に保存済みの値を反映
-  const savedEndForInput = getDayEndTime(date);
-  document.getElementById('schedEndTimeInput').value = savedEndForInput
-    ? `${pad(savedEndForInput.getHours())}:${pad(savedEndForInput.getMinutes())}`
-    : '';
 
   // 過去の勤務日一覧（記録がある日＋今日）をプルダウンに表示
   const workDates = [...new Set(getTrips().map(t=>t.date))];
@@ -3138,9 +3229,14 @@ function renderStats() {
     document.getElementById('rankingLabel').textContent = '売上ランキング（週別）';
     allTrips.forEach(t => {
       const key = getWeekKeyOf(t.date);
-      if (!byGroup[key]) byGroup[key] = { total: 0, count: 0, label: fmtWeekLabel(key) };
+      if (!byGroup[key]) byGroup[key] = { total: 0, count: 0, label: '', dates: new Set() };
       byGroup[key].total += (t.fare||0);
       byGroup[key].count++;
+      byGroup[key].dates.add(t.date);
+    });
+    // 稼働した日が確定してからラベルを作る
+    Object.entries(byGroup).forEach(([key, g]) => {
+      g.label = fmtWeekWorkedDaysLabel(key, [...g.dates]);
     });
   } else if (currentStatTab === 'month') {
     document.getElementById('rankingLabel').textContent = '売上ランキング（月別）';
@@ -3202,6 +3298,17 @@ function fmtWeekLabel(weekStartStr) {
   const e = new Date(s);
   e.setDate(e.getDate() + 6);
   return `${s.getMonth()+1}/${s.getDate()}〜${e.getMonth()+1}/${e.getDate()}`;
+}
+
+// 週の売上ランキングは期間ではなく、実際に稼働した日を並べて表示する
+// （例：6/22(月) 6/24(水) 6/26(金)）
+function fmtWeekWorkedDaysLabel(weekStartStr, dates) {
+  if (!dates || dates.length === 0) return fmtWeekLabel(weekStartStr);
+  const weekdays = ['日','月','火','水','木','金','土'];
+  return dates.slice().sort().map(d => {
+    const dt = new Date(d + 'T00:00:00');
+    return `${dt.getMonth()+1}/${dt.getDate()}(${weekdays[dt.getDay()]})`;
+  }).join('　');
 }
 
 function getWeekStart() {
