@@ -71,8 +71,12 @@
   @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
 
   /* Buttons */
-  .btn { display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%; padding: 14px; border-radius: 12px; border: none; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.15s; letter-spacing: -0.2px; }
+  .btn { display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%; padding: 14px; border-radius: 12px; border: none; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.15s; letter-spacing: -0.2px; touch-action: manipulation; }
   .btn:active { transform: scale(0.97); }
+  /* ボタン内のアイコン・文字を貫通させ、どこを押してもボタン自身が反応するようにする */
+  .btn > *, .pay-btn > *, .type-btn > *, .sched-tab > *, .nav-btn > * { pointer-events: none; }
+  /* タップ後の待ち時間をなくして反応を良くする */
+  .btn, .pay-btn, .type-btn, .tab-item, .sched-tab, .place-chip, .nav-btn, .loc-suggest-item, .pax-history-item { touch-action: manipulation; }
   .btn-primary { background: var(--primary); color: white; }
   .btn-success { background: var(--success); color: white; }
   .btn-warning { background: var(--warning); color: #333; }
@@ -133,6 +137,8 @@
   .sched-tab-bar { display: flex; background: #f0f0f5; border-radius: 12px; padding: 3px; margin-top: 10px; gap: 2px; }
   .sched-tab { flex: 1; text-align: center; padding: 9px 2px; border-radius: 10px; font-size: 12px; font-weight: 700; color: var(--muted); background: none; border: none; cursor: pointer; white-space: nowrap; transition: all 0.15s; }
   .sched-tab:active { background: white; color: var(--primary); box-shadow: 0 1px 4px rgba(0,0,0,0.12); }
+  /* 休憩中・給油中はタブを塗りつぶして状態がわかるようにする */
+  .sched-tab.ongoing { background: var(--primary); color: white; box-shadow: 0 1px 4px rgba(0,0,0,0.15); }
   /* 休憩場所のよく使う候補 */
   .place-chip-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
   .place-chip { padding: 7px 12px; border-radius: 999px; border: 1.5px solid var(--border); background: white; font-size: 13px; font-weight: 600; color: var(--text); cursor: pointer; }
@@ -375,11 +381,11 @@
       <div class="input-row">
         <div class="input-group">
           <label class="input-label">⏱ 乗車時刻</label>
-          <input class="input-field" id="pickupTime" type="time">
+          <input class="input-field" id="pickupTime" type="time" onfocus="scrollLocFieldToTop('pickupTime')" onblur="releaseLocFocus()">
         </div>
         <div class="input-group">
           <label class="input-label">🏁 降車時刻</label>
-          <input class="input-field" id="dropoffTime" type="time">
+          <input class="input-field" id="dropoffTime" type="time" onfocus="scrollLocFieldToTop('dropoffTime')" onblur="releaseLocFocus()">
         </div>
       </div>
 
@@ -550,9 +556,9 @@
       </div>
       <div class="sched-tab-bar">
         <button class="sched-tab" onclick="openScheduleGraph()">グラフ</button>
-        <button class="sched-tab" onclick="openSchedAdd('break')">休憩</button>
-        <button class="sched-tab" onclick="openSchedAdd('fuel')">給油</button>
-        <button class="sched-tab" onclick="openSchedAdd('end')">業務終了</button>
+        <button class="sched-tab" id="schedTabBreak" onclick="toggleSchedStop('break')">休憩</button>
+        <button class="sched-tab" id="schedTabFuel" onclick="toggleSchedStop('fuel')">給油</button>
+        <button class="sched-tab" onclick="openSchedAdd()">業務終了</button>
       </div>
     </div>
     <div class="stat-grid">
@@ -638,35 +644,15 @@
 
 </div><!-- end content -->
 
-<!-- 休憩・給油・業務終了 追加モーダル -->
+<!-- 業務終了 記録モーダル -->
 <div class="modal-overlay" id="schedAddModal" onclick="if(event.target===this) closeSchedAdd()">
   <div class="modal">
     <div class="modal-handle"></div>
-    <div class="modal-title" id="schedAddTitle">休憩を追加</div>
-    <div class="input-row" id="schedAddRangeRow">
-      <div class="input-group">
-        <label class="input-label">⏱ 開始</label>
-        <input class="input-field" id="schedAddStart" type="time">
-      </div>
-      <div class="input-group">
-        <label class="input-label">🏁 終了</label>
-        <input class="input-field" id="schedAddEnd" type="time">
-      </div>
-    </div>
-    <div class="input-group" id="schedAddSingleRow" style="display:none;">
+    <div class="modal-title" id="schedAddTitle">業務終了を記録</div>
+    <div class="input-group">
       <label class="input-label">🏁 業務終了時刻</label>
       <input class="input-field" id="schedAddEndTime" type="time">
     </div>
-    <div class="input-group" id="schedAddPlaceRow">
-      <label class="input-label">📍 場所</label>
-      <input class="input-field" id="schedAddPlace" type="text" placeholder="" autocomplete="off"
-             oninput="onLocInput('schedAddPlace','schedAddPlaceSuggest',getBreakPlaceSuggestions)"
-             onfocus="onLocInput('schedAddPlace','schedAddPlaceSuggest',getBreakPlaceSuggestions);scrollLocFieldToTop('schedAddPlace')"
-             onblur="hideLocSuggest('schedAddPlaceSuggest')">
-      <div id="schedAddPlaceSuggest" class="loc-suggest"></div>
-      <div class="place-chip-row" id="schedAddPlaceChips"></div>
-    </div>
-    <div id="schedAddFuelNote" style="display:none;font-size:13px;color:var(--muted);margin-top:4px;">📍 場所は高岡町で記録されます</div>
     <div class="btn-row" style="margin-top:14px;">
       <button class="btn btn-gray" onclick="closeSchedAdd()">キャンセル</button>
       <button class="btn btn-primary" onclick="saveSchedAdd()">保存</button>
@@ -1212,7 +1198,8 @@ function applyGoPaxHistory(id) {
   document.getElementById('goPaxName').value = t.paxName || '';
   if (t.paxGender) selectGoGender(t.paxGender, true);
   if (t.paxAge) document.getElementById('goPaxAge').value = t.paxAge;
-  document.getElementById('goPaxHistory').style.display = 'none';
+  // 履歴は閉じずに、選んだ内容で絞り込み直して表示したままにする
+  onGoPaxNameInput();
   showToast(`前回: ${t.date.split('-').slice(1).map(n=>parseInt(n)).join('/')} ${t.pickup||''} → ${t.dropoff||''}`);
 }
 
@@ -1384,7 +1371,10 @@ function hideLocSuggest(suggestId) {
   const box = document.getElementById(suggestId);
   box.style.display = 'none';
   box.innerHTML = '';
-  // 入力中に足していた余白を戻す
+  releaseLocFocus();
+}
+// 入力欄を巻き上げるために足していた余白を戻す
+function releaseLocFocus() {
   document.querySelector('.content').classList.remove('loc-focus');
 }
 
@@ -1584,10 +1574,12 @@ function calcWaitMinutes(date, endTime) {
     if (diff > 0) tripMin += diff;
   });
 
-  // 休憩時間・給油時間は待機時間から除外する
+  // 休憩時間・給油時間は待機時間から除外する。
+  // 終了時刻が未記録のもの（進行中）は現在時刻までとして数える
   const sumTimeRanges = (list) => list.reduce((s, item) => {
     const [sh, sm] = item.start.split(':').map(Number);
-    const [eh, em] = item.end.split(':').map(Number);
+    const endStr = item.end || nowHM();
+    const [eh, em] = endStr.split(':').map(Number);
     let diff = (eh * 60 + em) - (sh * 60 + sm);
     if (diff < 0) diff += 24 * 60;
     return s + diff;
@@ -2551,7 +2543,7 @@ function renderRecommend() {
           <div class="loc-rank-meta">
             <span style="display:inline-block;padding:2px 8px;border-radius:6px;font-weight:700;background:${typeColor}22;color:${typeColor};margin-right:6px;">${type}</span>
             ${parseInt(mm)}/${parseInt(dd)}(${dow})
-            ${name ? `<div style="margin-top:2px;">👤 ${name}</div>` : ''}
+            ${name ? `<div style="margin-top:2px;">${name}</div>` : ''}
           </div>
         </div>
         <div class="loc-rank-fare">¥${fare.toLocaleString()}</div>
@@ -2582,44 +2574,58 @@ function schedPickDate(v) {
   renderSchedule();
 }
 
-// ---- 休憩・給油・業務終了の追加モーダル ----
-let schedAddKind = null; // 'break' | 'fuel' | 'end'
+// 現在時刻を HH:MM で返す
+function nowHM() {
+  const d = new Date();
+  return `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
 
-function openSchedAdd(kind) {
-  schedAddKind = kind;
-  const isEnd = kind === 'end';
-  const isBreak = kind === 'break';
-  document.getElementById('schedAddTitle').textContent =
-    isEnd ? '業務終了を記録' : isBreak ? '休憩を追加' : '給油を追加';
-  document.getElementById('schedAddRangeRow').style.display = isEnd ? 'none' : '';
-  document.getElementById('schedAddSingleRow').style.display = isEnd ? '' : 'none';
-  // 給油の場所は高岡町で固定のため、場所欄は休憩のときだけ出す
-  document.getElementById('schedAddPlaceRow').style.display = isBreak ? '' : 'none';
-  document.getElementById('schedAddFuelNote').style.display = (kind === 'fuel') ? '' : 'none';
-  document.getElementById('schedAddStart').value = '';
-  document.getElementById('schedAddEnd').value = '';
+// 休憩・給油をワンタップで開始／終了する。
+// 開始すると終了時刻を空のまま保存し（＝進行中）、もう一度押すと現在時刻を終了として記録する
+function toggleSchedStop(kind) {
+  const date = schedCurrentDate;
+  const label = kind === 'break' ? '休憩' : '給油';
+  const list = kind === 'break' ? getScheduleBreaks(date) : getScheduleFuelStops(date);
+  const save = l => kind === 'break' ? saveScheduleBreaks(date, l) : saveScheduleFuelStops(date, l);
+
+  const ongoingIdx = list.findIndex(item => !item.end);
+  if (ongoingIdx >= 0) {
+    list[ongoingIdx].end = nowHM();
+    save(list);
+    showToast(`${label}を終了しました ✓`);
+  } else {
+    if (date !== todayStr()) { showToast(`${label}の開始は当日の記録でのみできます`); return; }
+    // 場所は後からタイムラインの記録をタップして入力できる（給油は高岡町で固定）
+    list.push({ start: nowHM(), end: '', place: kind === 'fuel' ? FUEL_PLACE : '' });
+    save(list);
+    showToast(`${label}を開始しました`);
+  }
+  renderSchedule();
+}
+
+// 進行中かどうかに応じてタブの表示を切り替える
+function renderSchedTabs() {
+  const date = schedCurrentDate;
+  [['break', 'schedTabBreak', '休憩'], ['fuel', 'schedTabFuel', '給油']].forEach(([kind, id, label]) => {
+    const list = kind === 'break' ? getScheduleBreaks(date) : getScheduleFuelStops(date);
+    const ongoing = list.some(item => !item.end);
+    const btn = document.getElementById(id);
+    if (!btn) return;
+    btn.textContent = ongoing ? `${label}中` : label;
+    btn.classList.toggle('ongoing', ongoing);
+  });
+}
+
+// ---- 業務終了の記録モーダル ----
+function openSchedAdd() {
   document.getElementById('schedAddEndTime').value = getDayEndTimeValue(schedCurrentDate) || '';
-  document.getElementById('schedAddPlace').value = '';
-  hideLocSuggest('schedAddPlaceSuggest');
-  renderPlaceChips('schedAddPlaceChips', 'schedAddPlace');
   document.getElementById('schedAddModal').classList.add('open');
 }
 function closeSchedAdd() {
   document.getElementById('schedAddModal').classList.remove('open');
-  schedAddKind = null;
 }
 function saveSchedAdd() {
-  const kind = schedAddKind;
-  if (!kind) return;
-  if (kind === 'end') {
-    if (!saveSchedEndTimeValue(document.getElementById('schedAddEndTime').value)) return;
-  } else {
-    const start = document.getElementById('schedAddStart').value;
-    const end = document.getElementById('schedAddEnd').value;
-    const place = kind === 'break' ? document.getElementById('schedAddPlace').value.trim() : FUEL_PLACE;
-    if (!addScheduleStop(kind, start, end, place)) return;
-  }
-  closeSchedAdd();
+  if (saveSchedEndTimeValue(document.getElementById('schedAddEndTime').value)) closeSchedAdd();
 }
 
 // 休憩でよく使う場所をワンタップで入れられるようにする
@@ -2638,55 +2644,6 @@ function saveSchedEndTimeValue(val) {
   if (d < shiftStart) d.setDate(d.getDate() + 1); // 深夜をまたぐ場合は翌日扱い
   saveDayEndTime(date, d);
   showToast('業務終了時刻を保存しました ✓');
-  renderSchedule();
-  return true;
-}
-
-// 休憩・給油を1つの処理でまとめて追加する。
-// 実車時間や既存の休憩・給油と重ならないことを確認してから保存する
-function addScheduleStop(kind, startVal, endVal, place) {
-  const date = schedCurrentDate;
-  const label = kind === 'break' ? '休憩' : '給油';
-  if (!startVal || !endVal) { showToast(`${label}の開始・終了時刻を入力してください`); return false; }
-
-  const shiftStart = new Date(date + 'T07:30:00');
-  const nStart = new Date(date + 'T' + startVal + ':00');
-  if (nStart < shiftStart) nStart.setDate(nStart.getDate() + 1);
-  const nEnd = new Date(date + 'T' + endVal + ':00');
-  if (nEnd <= nStart) nEnd.setDate(nEnd.getDate() + 1);
-
-  let cursor = shiftStart;
-  const toDate = (timeStr) => { const d = new Date(date + 'T' + timeStr + ':00'); while (d < cursor) d.setDate(d.getDate() + 1); return d; };
-  const occupied = getTrips()
-    .filter(t => t.date === date && t.pickupTime && t.dropoffTime)
-    .sort((a, b) => tripSortKey(a) - tripSortKey(b))
-    .map(t => {
-      const p = toDate(t.pickupTime);
-      let d = toDate(t.dropoffTime);
-      if (d < p) d.setDate(d.getDate() + 1);
-      if (d > cursor) cursor = d;
-      return { start: p, end: d };
-    });
-
-  const breaks = getScheduleBreaks(date);
-  const fuelStops = getScheduleFuelStops(date);
-  const overlapsTimeRange = (list) => list.some(item => {
-    const s = new Date(date + 'T' + item.start + ':00');
-    if (s < shiftStart) s.setDate(s.getDate() + 1);
-    const e = new Date(date + 'T' + item.end + ':00');
-    if (e <= s) e.setDate(e.getDate() + 1);
-    return nStart < e && nEnd > s;
-  });
-  if (occupied.some(o => nStart < o.end && nEnd > o.start) ||
-      overlapsTimeRange(breaks) || overlapsTimeRange(fuelStops)) {
-    showToast('実車時間や既存の休憩・給油と重複しています');
-    return false;
-  }
-
-  const entry = { start: startVal, end: endVal, place: place || '' };
-  if (kind === 'break') { breaks.push(entry); saveScheduleBreaks(date, breaks); }
-  else { fuelStops.push(entry); saveScheduleFuelStops(date, fuelStops); }
-  showToast(`${label}時間を保存しました ✓`);
   renderSchedule();
   return true;
 }
@@ -2738,7 +2695,8 @@ function saveSchedItemEdit() {
   const end = document.getElementById('schedItemEditEnd').value;
   // 給油の場所は常に高岡町
   const place = kind === 'break' ? document.getElementById('schedItemEditPlace').value.trim() : FUEL_PLACE;
-  if (!start || !end) { showToast('開始・終了時刻を入力してください'); return; }
+  // 終了時刻は進行中のとき空のままにできる
+  if (!start) { showToast('開始時刻を入力してください'); return; }
   const list = kind === 'break' ? getScheduleBreaks(schedCurrentDate) : getScheduleFuelStops(schedCurrentDate);
   if (!list[index]) return;
   list[index] = { start, end, place };
@@ -2869,7 +2827,7 @@ function computeScheduleSegments(date) {
   scheduleBreaks.forEach((brk, brkIdx) => {
     const bStart = new Date(date + 'T' + brk.start + ':00');
     if (bStart < shiftStart) bStart.setDate(bStart.getDate() + 1);
-    const bEnd = new Date(date + 'T' + brk.end + ':00');
+    const bEnd = new Date(date + 'T' + (brk.end || nowHM()) + ':00');
     if (bEnd < bStart) bEnd.setDate(bEnd.getDate() + 1);
 
     const idx = segments.findIndex(seg => seg.type === 'vacant' && bStart >= seg.start && bEnd <= seg.end);
@@ -2877,7 +2835,7 @@ function computeScheduleSegments(date) {
     const seg = segments[idx];
     const replacement = [];
     if (bStart > seg.start) replacement.push({ type: 'vacant', start: seg.start, end: bStart });
-    replacement.push({ type: 'break', start: bStart, end: bEnd, breakIndex: brkIdx, place: brk.place || '' });
+    replacement.push({ type: 'break', start: bStart, end: bEnd, breakIndex: brkIdx, place: brk.place || '', ongoing: !brk.end });
     if (bEnd < seg.end) replacement.push({ type: 'vacant', start: bEnd, end: seg.end, ongoing: seg.ongoing });
     segments.splice(idx, 1, ...replacement);
   });
@@ -2887,7 +2845,7 @@ function computeScheduleSegments(date) {
   scheduleFuelStops.forEach((fs, fsIdx) => {
     const fStart = new Date(date + 'T' + fs.start + ':00');
     if (fStart < shiftStart) fStart.setDate(fStart.getDate() + 1);
-    const fEnd = new Date(date + 'T' + fs.end + ':00');
+    const fEnd = new Date(date + 'T' + (fs.end || nowHM()) + ':00');
     if (fEnd < fStart) fEnd.setDate(fEnd.getDate() + 1);
 
     const idx = segments.findIndex(seg => seg.type === 'vacant' && fStart >= seg.start && fEnd <= seg.end);
@@ -2896,14 +2854,15 @@ function computeScheduleSegments(date) {
     const replacement = [];
     if (fStart > seg.start) replacement.push({ type: 'vacant', start: seg.start, end: fStart });
     // 給油の場所は常に高岡町（場所が未記録の過去データも同じ扱いにする）
-    replacement.push({ type: 'fuel', start: fStart, end: fEnd, fuelIndex: fsIdx, place: FUEL_PLACE });
+    replacement.push({ type: 'fuel', start: fStart, end: fEnd, fuelIndex: fsIdx, place: FUEL_PLACE, ongoing: !fs.end });
     if (fEnd < seg.end) replacement.push({ type: 'vacant', start: fEnd, end: seg.end, ongoing: seg.ongoing });
     segments.splice(idx, 1, ...replacement);
   });
 
+  // 終了時刻が未記録のもの（進行中）は現在時刻までとして数える
   const sumTimeRangeMin = (list) => list.reduce((s, item) => {
     const [sh, sm] = item.start.split(':').map(Number);
-    const [eh, em] = item.end.split(':').map(Number);
+    const [eh, em] = (item.end || nowHM()).split(':').map(Number);
     let diff = (eh * 60 + em) - (sh * 60 + sm);
     if (diff < 0) diff += 24 * 60;
     return s + diff;
@@ -2913,6 +2872,29 @@ function computeScheduleSegments(date) {
   const allMin = Math.max(0, Math.round((endTime - shiftStart) / 60000));
 
   return { trips, segments, shiftStart, endTime, jisshaMin, breakMin, allMin, isToday };
+}
+
+// その日の時給（営収額（税抜）÷ 実働時間 × 0.5）。実働時間が取れない日は null
+function getDayHourlyWage(date) {
+  const result = computeScheduleSegments(date);
+  if (!result || result.allMin <= 0) return null;
+  const daySales = getTrips().filter(t => t.date === date).reduce((s,t) => s + getTripFare(t), 0);
+  return Math.round(exTax(daySales) / (result.allMin / 60) * 0.5);
+}
+
+// 表示中の日を除いた、過去の稼働日の平均時給。比較対象がなければ null。
+// 実働1時間未満の日は数字が跳ねるため平均から外す
+function getAverageHourlyWage(excludeDate) {
+  const wages = [...new Set(getTrips().map(t => t.date))]
+    .filter(d => d !== excludeDate)
+    .map(d => {
+      const result = computeScheduleSegments(d);
+      if (!result || result.allMin < 60) return null;
+      return getDayHourlyWage(d);
+    })
+    .filter(w => w !== null);
+  if (wages.length === 0) return null;
+  return Math.round(wages.reduce((s,w) => s + w, 0) / wages.length);
 }
 
 function renderSchedule() {
@@ -2946,6 +2928,7 @@ function renderSchedule() {
   // この日の営収額
   const daySales = getTrips().filter(t => t.date === date).reduce((s,t) => s + getTripFare(t), 0);
   document.getElementById('schedDaySales').textContent = `¥${exTax(daySales).toLocaleString()}`;
+  renderSchedTabs();
 
   const result = computeScheduleSegments(date);
 
@@ -2977,8 +2960,17 @@ function renderSchedule() {
   document.getElementById('schedAllTotal').textContent = fmtWait(allMin);
   // 時給 = 営収額（税抜）÷ 実働時間 × 0.5（サマリーと同じ計算）
   const schedHourlyWage = allMin > 0 ? Math.round(exTax(daySales) / (allMin / 60) * 0.5) : null;
-  document.getElementById('schedHourly').textContent =
-    schedHourlyWage !== null ? `¥${schedHourlyWage.toLocaleString()}` : '---';
+  const hourlyEl = document.getElementById('schedHourly');
+  hourlyEl.textContent = schedHourlyWage !== null ? `¥${schedHourlyWage.toLocaleString()}` : '---';
+  // 過去の稼働日の平均と比べて色を変える（−10%未満は赤、±10%は黒、+10%以上は緑）。
+  // 業務開始まもない時間帯は時給が大きく振れるため、実働2時間未満は色を付けない
+  const avgWage = getAverageHourlyWage(date);
+  if (schedHourlyWage === null || avgWage === null || avgWage <= 0 || allMin < 120) {
+    hourlyEl.style.color = '';
+  } else {
+    const ratio = schedHourlyWage / avgWage;
+    hourlyEl.style.color = ratio < 0.9 ? 'var(--danger)' : ratio > 1.1 ? 'var(--success)' : '';
+  }
 
   const typeColors = { '配車': '#ff6b00', 'GO': '#1a73e8', '流し': '#00a152' };
   const fmtHM = d => `${pad(d.getHours())}:${pad(d.getMinutes())}`;
@@ -3040,16 +3032,16 @@ function renderSchedule() {
     if (seg.type === 'break') {
       return `
         <div class="sched-item break" style="cursor:pointer;" onclick="openSchedItemEdit('break',${seg.breakIndex})">
-          <div class="sched-time">${fmtHM(seg.start)}〜${fmtHM(seg.end)} <span class="sched-dur">（${fmtWait(durMin)}）</span></div>
-          <div class="sched-body">休憩${seg.place ? `　<span style="color:var(--muted);">📍 ${seg.place}</span>` : ''}</div>
+          <div class="sched-time">${fmtHM(seg.start)}〜${seg.ongoing ? '現在' : fmtHM(seg.end)} <span class="sched-dur">（${fmtWait(durMin)}${seg.ongoing ? '経過' : ''}）</span></div>
+          <div class="sched-body">${seg.ongoing ? '休憩中' : '休憩'}${seg.place ? `　<span style="color:var(--muted);">${seg.place}</span>` : ''}</div>
         </div>
       `;
     }
     if (seg.type === 'fuel') {
       return `
         <div class="sched-item fuel" style="cursor:pointer;" onclick="openSchedItemEdit('fuel',${seg.fuelIndex})">
-          <div class="sched-time">${fmtHM(seg.start)}〜${fmtHM(seg.end)} <span class="sched-dur">（${fmtWait(durMin)}）</span></div>
-          <div class="sched-body">給油${seg.place ? `　<span style="color:var(--muted);">📍 ${seg.place}</span>` : ''}</div>
+          <div class="sched-time">${fmtHM(seg.start)}〜${seg.ongoing ? '現在' : fmtHM(seg.end)} <span class="sched-dur">（${fmtWait(durMin)}${seg.ongoing ? '経過' : ''}）</span></div>
+          <div class="sched-body">${seg.ongoing ? '給油中' : '給油'}${seg.place ? `　<span style="color:var(--muted);">${seg.place}</span>` : ''}</div>
         </div>
       `;
     }
