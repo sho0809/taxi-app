@@ -390,11 +390,11 @@
       <div class="input-row">
         <div class="input-group">
           <label class="input-label">⏱ 乗車時刻</label>
-          <input class="input-field" data-scroll-up="1" id="pickupTime" type="time" onpointerdown="prepareTimeFieldView('pickupTime')" onblur="releaseLocFocus()">
+          <input class="input-field" id="pickupTime" type="time">
         </div>
         <div class="input-group">
           <label class="input-label">🏁 降車時刻</label>
-          <input class="input-field" data-scroll-up="1" id="dropoffTime" type="time" onpointerdown="prepareTimeFieldView('dropoffTime')" onblur="releaseLocFocus()">
+          <input class="input-field" id="dropoffTime" type="time">
         </div>
       </div>
 
@@ -1313,8 +1313,9 @@ function getLocationSuggestions(query) {
     if (!locationMatchesQuery(name, q)) return;
     if (!freq.has(name)) freq.set(name, { count: 0, lastKey: '' });
   });
+  const hidden = getHiddenPlaces();
   return [...freq.entries()]
-    .filter(([name]) => name !== q)
+    .filter(([name]) => name !== q && !hidden.includes(name))
     .sort((a,b) => b[1].count - a[1].count || b[1].lastKey.localeCompare(a[1].lastKey))
     .map(([name]) => name)
     .slice(0, 6);
@@ -1351,26 +1352,76 @@ const BREAK_PLACE_PRESETS = ['桑原','紅葉町','二番町','大街道'];
 const FUEL_PLACE = '高岡町';
 
 function getBreakPlaceSuggestions(query) {
+  const hidden = getHiddenPlaces();
+  const presets0 = BREAK_PLACE_PRESETS.filter(n => !hidden.includes(n));
   const q = (query || '').trim();
-  if (!q) return BREAK_PLACE_PRESETS.slice();
-  const presets = BREAK_PLACE_PRESETS.filter(n => n !== q && locationMatchesQuery(n, q));
+  if (!q) return presets0;
+  const presets = presets0.filter(n => n !== q && locationMatchesQuery(n, q));
   const rest = getLocationSuggestions(q).filter(n => !presets.includes(n));
   return [...presets, ...rest].slice(0, 6);
 }
+
+// 候補から消した地名。記録そのものは残したまま、候補に出さないようにする
+const HIDDEN_PLACES_KEY = 'taxi_hidden_places';
+function getHiddenPlaces() {
+  try { return JSON.parse(localStorage.getItem(HIDDEN_PLACES_KEY) || '[]'); } catch(e) { return []; }
+}
+function hidePlaceFromSuggestions(name) {
+  const list = getHiddenPlaces();
+  if (!list.includes(name)) list.push(name);
+  try { localStorage.setItem(HIDDEN_PLACES_KEY, JSON.stringify(list)); } catch(e) {}
+}
+
+// 候補の出し方を覚えておき、削除したあと同じ条件で出し直せるようにする
+let locSuggesterCache = {};
 
 // suggester を渡すと候補の出し方を差し替えられる（既定は乗車・降車場所の候補）
 function onLocInput(inputId, suggestId, suggester) {
   const input = document.getElementById(inputId);
   const box = document.getElementById(suggestId);
+  locSuggesterCache[suggestId] = suggester || null;
   const suggestions = (suggester || getLocationSuggestions)(input.value);
   locSuggestCache[suggestId] = suggestions;
   if (suggestions.length === 0) { box.style.display = 'none'; box.innerHTML = ''; return; }
   box.innerHTML = suggestions.map((name, i) =>
-    `<div class="loc-suggest-item" onmousedown="event.preventDefault();selectLocSuggest('${inputId}','${suggestId}',${i})">${name}</div>`
+    `<div class="loc-suggest-item"
+          onmousedown="event.preventDefault();selectLocSuggest('${inputId}','${suggestId}',${i})"
+          ontouchstart="startLocSuggestLongPress('${inputId}','${suggestId}',${i})"
+          ontouchend="cancelLocSuggestLongPress()"
+          ontouchmove="cancelLocSuggestLongPress()"
+          ontouchcancel="cancelLocSuggestLongPress()"
+          oncontextmenu="event.preventDefault();removeLocSuggestion('${inputId}','${suggestId}',${i})">${name}</div>`
   ).join('');
   box.style.display = 'block';
 }
+
+// 候補を長押しすると、その地名を候補から削除できる
+let locLongPressTimer = null;
+let locLongPressFired = false;
+function startLocSuggestLongPress(inputId, suggestId, idx) {
+  locLongPressFired = false;
+  clearTimeout(locLongPressTimer);
+  locLongPressTimer = setTimeout(() => {
+    locLongPressFired = true;
+    removeLocSuggestion(inputId, suggestId, idx);
+  }, 600);
+}
+function cancelLocSuggestLongPress() {
+  clearTimeout(locLongPressTimer);
+}
+function removeLocSuggestion(inputId, suggestId, idx) {
+  clearTimeout(locLongPressTimer);
+  const name = (locSuggestCache[suggestId] || [])[idx];
+  if (name === undefined) return;
+  if (!confirm(`「${name}」を候補から削除しますか？\n（これまでの乗車記録は残ります）`)) return;
+  hidePlaceFromSuggestions(name);
+  showToast(`「${name}」を候補から削除しました`);
+  onLocInput(inputId, suggestId, locSuggesterCache[suggestId]);
+}
+
 function selectLocSuggest(inputId, suggestId, idx) {
+  // 長押しで削除したときは、続けて届くタップを選択として扱わない
+  if (locLongPressFired) { locLongPressFired = false; return; }
   const name = (locSuggestCache[suggestId] || [])[idx];
   if (name === undefined) return;
   document.getElementById(inputId).value = name;
@@ -1405,25 +1456,8 @@ function openNextTimeField(inputId) {
   if (!nextId) return;
   const next = document.getElementById(nextId);
   if (!next) return;
-  prepareTimeFieldView(nextId);
   next.focus();
   try { next.showPicker(); } catch (e) { /* 対応していない環境では何もしない */ }
-}
-
-// 時刻欄は、指が触れた時点（時刻ピッカーが開く前）に一度だけ巻き上げる。
-// ピッカーが開いたあとにスクロールすると選択中の画面が閉じてしまうため、
-// なめらかスクロールや遅らせての再調整はここでは行わない
-function prepareTimeFieldView(inputId) {
-  const input = document.getElementById(inputId);
-  if (!input) return;
-  document.querySelector('.content').classList.add('loc-focus');
-  // 余白を足した直後はページの高さがまだ反映されておらず、
-  // そのままだとスクロールが途中で止まるため、ここで計算し直させる
-  void document.body.offsetHeight;
-  const header = document.querySelector('.header');
-  const headerH = header ? header.offsetHeight : 0;
-  const top = input.getBoundingClientRect().top + window.scrollY - headerH - 12;
-  window.scrollTo({ top: Math.max(0, top), behavior: 'auto' });
 }
 
 // 支払方法選択
