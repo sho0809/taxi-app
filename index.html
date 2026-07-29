@@ -377,12 +377,12 @@
       <div class="input-row">
         <div class="input-group">
           <label class="input-label">🟢 乗車場所</label>
-          <input class="input-field" id="pickupLoc" type="text" placeholder="" autocomplete="off" oninput="onLocInput('pickupLoc','pickupLocSuggest')" onfocus="onLocInput('pickupLoc','pickupLocSuggest');scrollLocFieldToTop('pickupLoc')" onblur="hideLocSuggest('pickupLocSuggest')">
+          <input class="input-field" data-scroll-up="1" id="pickupLoc" type="text" placeholder="" autocomplete="off" oninput="onLocInput('pickupLoc','pickupLocSuggest')" onfocus="onLocInput('pickupLoc','pickupLocSuggest');scrollLocFieldToTop('pickupLoc')" onblur="hideLocSuggest('pickupLocSuggest')">
           <div id="pickupLocSuggest" class="loc-suggest"></div>
         </div>
         <div class="input-group">
           <label class="input-label">🔴 降車場所</label>
-          <input class="input-field" id="dropoffLoc" type="text" placeholder="" autocomplete="off" oninput="onLocInput('dropoffLoc','dropoffLocSuggest')" onfocus="onLocInput('dropoffLoc','dropoffLocSuggest');scrollLocFieldToTop('dropoffLoc')" onblur="hideLocSuggest('dropoffLocSuggest')">
+          <input class="input-field" data-scroll-up="1" id="dropoffLoc" type="text" placeholder="" autocomplete="off" oninput="onLocInput('dropoffLoc','dropoffLocSuggest')" onfocus="onLocInput('dropoffLoc','dropoffLocSuggest');scrollLocFieldToTop('dropoffLoc')" onblur="hideLocSuggest('dropoffLocSuggest')">
           <div id="dropoffLocSuggest" class="loc-suggest"></div>
         </div>
       </div>
@@ -390,11 +390,11 @@
       <div class="input-row">
         <div class="input-group">
           <label class="input-label">⏱ 乗車時刻</label>
-          <input class="input-field" id="pickupTime" type="time" onfocus="scrollLocFieldToTop('pickupTime')" onblur="releaseLocFocus()">
+          <input class="input-field" data-scroll-up="1" id="pickupTime" type="time" onpointerdown="prepareTimeFieldView('pickupTime')" onblur="releaseLocFocus()">
         </div>
         <div class="input-group">
           <label class="input-label">🏁 降車時刻</label>
-          <input class="input-field" id="dropoffTime" type="time" onfocus="scrollLocFieldToTop('dropoffTime')" onblur="releaseLocFocus()">
+          <input class="input-field" data-scroll-up="1" id="dropoffTime" type="time" onpointerdown="prepareTimeFieldView('dropoffTime')" onblur="releaseLocFocus()">
         </div>
       </div>
 
@@ -1382,9 +1382,32 @@ function hideLocSuggest(suggestId) {
   box.innerHTML = '';
   releaseLocFocus();
 }
-// 入力欄を巻き上げるために足していた余白を戻す
+// 入力欄を巻き上げるために足していた余白を戻す。
+// ただし、続けて別の巻き上げ対象の欄へ移ったときは残す。
+// （前の欄の blur は次の欄のスクロールより後に届くため、
+//   ここで消すと移動先のスクロールが巻き戻ってしまう）
 function releaseLocFocus() {
-  document.querySelector('.content').classList.remove('loc-focus');
+  setTimeout(() => {
+    const el = document.activeElement;
+    if (el && el.dataset && el.dataset.scrollUp === '1') return;
+    document.querySelector('.content').classList.remove('loc-focus');
+  }, 0);
+}
+
+// 時刻欄は、指が触れた時点（時刻ピッカーが開く前）に一度だけ巻き上げる。
+// ピッカーが開いたあとにスクロールすると選択中の画面が閉じてしまうため、
+// なめらかスクロールや遅らせての再調整はここでは行わない
+function prepareTimeFieldView(inputId) {
+  const input = document.getElementById(inputId);
+  if (!input) return;
+  document.querySelector('.content').classList.add('loc-focus');
+  // 余白を足した直後はページの高さがまだ反映されておらず、
+  // そのままだとスクロールが途中で止まるため、ここで計算し直させる
+  void document.body.offsetHeight;
+  const header = document.querySelector('.header');
+  const headerH = header ? header.offsetHeight : 0;
+  const top = input.getBoundingClientRect().top + window.scrollY - headerH - 12;
+  window.scrollTo({ top: Math.max(0, top), behavior: 'auto' });
 }
 
 // 支払方法選択
