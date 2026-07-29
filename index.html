@@ -134,11 +134,15 @@
   .tab-item { flex: 1; text-align: center; padding: 8px 6px; border-radius: 10px; font-size: 13px; font-weight: 600; color: var(--muted); cursor: pointer; transition: all 0.15s; }
   .tab-item.active { background: white; color: var(--primary); box-shadow: 0 1px 4px rgba(0,0,0,0.12); }
   /* タイムラインの操作タブ（グラフ・休憩・給油・業務終了） */
-  .sched-tab-bar { display: flex; background: #f0f0f5; border-radius: 12px; padding: 3px; margin-top: 10px; gap: 2px; }
-  .sched-tab { flex: 1; text-align: center; padding: 9px 2px; border-radius: 10px; font-size: 12px; font-weight: 700; color: var(--muted); background: none; border: none; cursor: pointer; white-space: nowrap; transition: all 0.15s; }
-  .sched-tab:active { background: white; color: var(--primary); box-shadow: 0 1px 4px rgba(0,0,0,0.12); }
-  /* 休憩中・給油中はタブを塗りつぶして状態がわかるようにする */
-  .sched-tab.ongoing { background: var(--primary); color: white; box-shadow: 0 1px 4px rgba(0,0,0,0.15); }
+  /* タイムラインの操作タブ。1つずつ独立したボタンとして並べる */
+  .sched-tab-bar { display: flex; margin-top: 10px; gap: 6px; }
+  .sched-tab { flex: 1; text-align: center; padding: 10px 2px; border-radius: 10px; font-size: 12px; font-weight: 700; color: var(--text); background: white; border: 1.5px solid var(--border); cursor: pointer; white-space: nowrap; transition: all 0.15s; }
+  .sched-tab:active { border-color: var(--primary); color: var(--primary); }
+  /* 休憩中・給油中はタイムラインの記録と同じ色で塗り、状態がわかるようにする */
+  .sched-tab.ongoing-break { background: #f5a623; border-color: #f5a623; color: white; }
+  .sched-tab.ongoing-fuel { background: #43a047; border-color: #43a047; color: white; }
+  /* 給油を終えた日は、済んだことがわかるよう控えめな見た目にする（押せば2回目も記録できる） */
+  .sched-tab.done { background: #e8f5e9; border-color: #43a047; color: #1b5e20; }
   /* 休憩場所のよく使う候補 */
   .place-chip-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
   .place-chip { padding: 7px 12px; border-radius: 999px; border: 1.5px solid var(--border); background: white; font-size: 13px; font-weight: 600; color: var(--text); cursor: pointer; }
@@ -2675,6 +2679,12 @@ function toggleSchedStop(kind) {
     list[ongoingIdx].end = nowHM();
     save(list);
     showToast(`${label}を終了しました ✓`);
+    // 休憩は場所を後から入れることが多いため、終了と同時に入力画面を開く
+    if (kind === 'break') {
+      renderSchedule();
+      openSchedItemEdit('break', ongoingIdx);
+      return;
+    }
   } else {
     if (date !== todayStr()) { showToast(`${label}の開始は当日の記録でのみできます`); return; }
     // 場所は後からタイムラインの記録をタップして入力できる（給油は高岡町で固定）
@@ -2691,10 +2701,15 @@ function renderSchedTabs() {
   [['break', 'schedTabBreak', '休憩'], ['fuel', 'schedTabFuel', '給油']].forEach(([kind, id, label]) => {
     const list = kind === 'break' ? getScheduleBreaks(date) : getScheduleFuelStops(date);
     const ongoing = list.some(item => !item.end);
+    const done = !ongoing && list.some(item => item.end);
     const btn = document.getElementById(id);
     if (!btn) return;
-    btn.textContent = ongoing ? `${label}中` : label;
-    btn.classList.toggle('ongoing', ongoing);
+    // 給油は基本1日1回のため、済んだ日はそれとわかるようにする。
+    // それでも押せば2回目を記録できる
+    btn.textContent = ongoing ? `${label}中` : (kind === 'fuel' && done ? '給油済' : label);
+    btn.classList.toggle('ongoing-break', ongoing && kind === 'break');
+    btn.classList.toggle('ongoing-fuel', ongoing && kind === 'fuel');
+    btn.classList.toggle('done', kind === 'fuel' && done);
   });
 }
 
@@ -2915,10 +2930,12 @@ function computeScheduleSegments(date) {
     const idx = segments.findIndex(seg => seg.type === 'vacant' && bStart >= seg.start && bEnd <= seg.end);
     if (idx === -1) return; // 実車時間と重なるなど、空車枠に収まらない場合は反映しない
     const seg = segments[idx];
+    // 進行中は枠の終わり（現在）まで伸ばし、直後にごく短い空車が残らないようにする
+    const bEndFinal = brk.end ? bEnd : seg.end;
     const replacement = [];
     if (bStart > seg.start) replacement.push({ type: 'vacant', start: seg.start, end: bStart });
-    replacement.push({ type: 'break', start: bStart, end: bEnd, breakIndex: brkIdx, place: brk.place || '', ongoing: !brk.end });
-    if (bEnd < seg.end) replacement.push({ type: 'vacant', start: bEnd, end: seg.end, ongoing: seg.ongoing });
+    replacement.push({ type: 'break', start: bStart, end: bEndFinal, breakIndex: brkIdx, place: brk.place || '', ongoing: !brk.end });
+    if (bEndFinal < seg.end) replacement.push({ type: 'vacant', start: bEndFinal, end: seg.end, ongoing: seg.ongoing });
     segments.splice(idx, 1, ...replacement);
   });
 
@@ -2933,11 +2950,13 @@ function computeScheduleSegments(date) {
     const idx = segments.findIndex(seg => seg.type === 'vacant' && fStart >= seg.start && fEnd <= seg.end);
     if (idx === -1) return; // 実車時間や休憩と重なるなど、空車枠に収まらない場合は反映しない
     const seg = segments[idx];
+    // 進行中は枠の終わり（現在）まで伸ばし、直後にごく短い空車が残らないようにする
+    const fEndFinal = fs.end ? fEnd : seg.end;
     const replacement = [];
     if (fStart > seg.start) replacement.push({ type: 'vacant', start: seg.start, end: fStart });
     // 給油の場所は常に高岡町（場所が未記録の過去データも同じ扱いにする）
-    replacement.push({ type: 'fuel', start: fStart, end: fEnd, fuelIndex: fsIdx, place: FUEL_PLACE, ongoing: !fs.end });
-    if (fEnd < seg.end) replacement.push({ type: 'vacant', start: fEnd, end: seg.end, ongoing: seg.ongoing });
+    replacement.push({ type: 'fuel', start: fStart, end: fEndFinal, fuelIndex: fsIdx, place: FUEL_PLACE, ongoing: !fs.end });
+    if (fEndFinal < seg.end) replacement.push({ type: 'vacant', start: fEndFinal, end: seg.end, ongoing: seg.ongoing });
     segments.splice(idx, 1, ...replacement);
   });
 
