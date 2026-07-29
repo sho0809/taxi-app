@@ -377,12 +377,12 @@
       <div class="input-row">
         <div class="input-group">
           <label class="input-label">🟢 乗車場所</label>
-          <input class="input-field" data-scroll-up="1" id="pickupLoc" type="text" placeholder="" autocomplete="off" oninput="onLocInput('pickupLoc','pickupLocSuggest')" onfocus="onLocInput('pickupLoc','pickupLocSuggest');scrollLocFieldToTop('pickupLoc')" onblur="hideLocSuggest('pickupLocSuggest')">
+          <input class="input-field" data-scroll-up="1" id="pickupLoc" type="text" placeholder="" autocomplete="off" oninput="onLocInput('pickupLoc','pickupLocSuggest')" onfocus="onLocInput('pickupLoc','pickupLocSuggest');scrollLocFieldToTop('pickupLoc')" onblur="hideLocSuggest('pickupLocSuggest')" onkeydown="if(event.key==='Enter'){event.preventDefault();hideLocSuggest('pickupLocSuggest');openNextTimeField('pickupLoc');}">
           <div id="pickupLocSuggest" class="loc-suggest"></div>
         </div>
         <div class="input-group">
           <label class="input-label">🔴 降車場所</label>
-          <input class="input-field" data-scroll-up="1" id="dropoffLoc" type="text" placeholder="" autocomplete="off" oninput="onLocInput('dropoffLoc','dropoffLocSuggest')" onfocus="onLocInput('dropoffLoc','dropoffLocSuggest');scrollLocFieldToTop('dropoffLoc')" onblur="hideLocSuggest('dropoffLocSuggest')">
+          <input class="input-field" data-scroll-up="1" id="dropoffLoc" type="text" placeholder="" autocomplete="off" oninput="onLocInput('dropoffLoc','dropoffLocSuggest')" onfocus="onLocInput('dropoffLoc','dropoffLocSuggest');scrollLocFieldToTop('dropoffLoc')" onblur="hideLocSuggest('dropoffLocSuggest')" onkeydown="if(event.key==='Enter'){event.preventDefault();hideLocSuggest('dropoffLocSuggest');openNextTimeField('dropoffLoc');}">
           <div id="dropoffLocSuggest" class="loc-suggest"></div>
         </div>
       </div>
@@ -1375,6 +1375,7 @@ function selectLocSuggest(inputId, suggestId, idx) {
   if (name === undefined) return;
   document.getElementById(inputId).value = name;
   hideLocSuggest(suggestId);
+  openNextTimeField(inputId);
 }
 function hideLocSuggest(suggestId) {
   const box = document.getElementById(suggestId);
@@ -1391,7 +1392,22 @@ function releaseLocFocus() {
     const el = document.activeElement;
     if (el && el.dataset && el.dataset.scrollUp === '1') return;
     document.querySelector('.content').classList.remove('loc-focus');
+    // 余白を外すと画面が中途半端な位置に残るため、フォーム全体を元の位置に戻す
+    if (document.querySelector('#page-record.active')) window.scrollTo({ top: 0, behavior: 'auto' });
   }, 0);
+}
+
+// 場所を選び終えたら、続けて入力する時刻欄を開く。
+// showPicker が使えない環境ではフォーカスのみ当てる
+const NEXT_TIME_FIELD = { pickupLoc: 'pickupTime', dropoffLoc: 'dropoffTime' };
+function openNextTimeField(inputId) {
+  const nextId = NEXT_TIME_FIELD[inputId];
+  if (!nextId) return;
+  const next = document.getElementById(nextId);
+  if (!next) return;
+  prepareTimeFieldView(nextId);
+  next.focus();
+  try { next.showPicker(); } catch (e) { /* 対応していない環境では何もしない */ }
 }
 
 // 時刻欄は、指が触れた時点（時刻ピッカーが開く前）に一度だけ巻き上げる。
