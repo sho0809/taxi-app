@@ -181,6 +181,15 @@
   .stat-card.accent { background: var(--primary); }
   .stat-card.accent .stat-value, .stat-card.accent .stat-label { color: white; }
   .stat-card.accent .stat-label { opacity: 0.8; }
+  /* 時給を過去の平均と比べて3段階の背景色で表す（文字は白）。
+     黄は白文字が読めるよう、やや濃いめの色にしている */
+  .stat-card.wage-low  { background: var(--danger); }
+  .stat-card.wage-mid  { background: #dd9500; }
+  .stat-card.wage-high { background: var(--success); }
+  .stat-card.wage-low .stat-value, .stat-card.wage-low .stat-label,
+  .stat-card.wage-mid .stat-value, .stat-card.wage-mid .stat-label,
+  .stat-card.wage-high .stat-value, .stat-card.wage-high .stat-label { color: white; }
+  .stat-card.wage-low .stat-label, .stat-card.wage-mid .stat-label, .stat-card.wage-high .stat-label { opacity: 0.85; }
 
   /* Modal */
   .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 300; display: flex; align-items: flex-end; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
@@ -570,7 +579,7 @@
         <div class="stat-value" id="schedBreakTotal">0分</div>
         <div class="stat-label">休憩時間</div>
       </div>
-      <div class="stat-card">
+      <div class="stat-card" id="schedHourlyCard">
         <div class="stat-value" id="schedHourly">---</div>
         <div class="stat-label">時給</div>
       </div>
@@ -2962,14 +2971,14 @@ function renderSchedule() {
   const schedHourlyWage = allMin > 0 ? Math.round(exTax(daySales) / (allMin / 60) * 0.5) : null;
   const hourlyEl = document.getElementById('schedHourly');
   hourlyEl.textContent = schedHourlyWage !== null ? `¥${schedHourlyWage.toLocaleString()}` : '---';
-  // 過去の稼働日の平均と比べて色を変える（−10%未満は赤、±10%は黒、+10%以上は緑）。
-  // 業務開始まもない時間帯は時給が大きく振れるため、実働2時間未満は色を付けない
+  // 過去の稼働日の平均と比べ、カードの背景を3段階で塗り分ける
+  // （−10%未満は赤、平均のまわり±10%は黄、+10%以上は緑）
+  const card = document.getElementById('schedHourlyCard');
   const avgWage = getAverageHourlyWage(date);
-  if (schedHourlyWage === null || avgWage === null || avgWage <= 0 || allMin < 120) {
-    hourlyEl.style.color = '';
-  } else {
+  card.classList.remove('wage-low', 'wage-mid', 'wage-high');
+  if (schedHourlyWage !== null && avgWage !== null && avgWage > 0) {
     const ratio = schedHourlyWage / avgWage;
-    hourlyEl.style.color = ratio < 0.9 ? 'var(--danger)' : ratio > 1.1 ? 'var(--success)' : '';
+    card.classList.add(ratio < 0.9 ? 'wage-low' : ratio > 1.1 ? 'wage-high' : 'wage-mid');
   }
 
   const typeColors = { '配車': '#ff6b00', 'GO': '#1a73e8', '流し': '#00a152' };
