@@ -241,6 +241,7 @@
   .pay-btn:active { transform: scale(0.96); }
   .pay-btn.active.dpay { border-color: #b00068; background: #fce4ec; color: #b00068; }
   .pay-btn.active.ticket { border-color: #6200ea; background: #ede7f6; color: #6200ea; }
+  .pay-btn.active.rakuten { border-color: #bf0000; background: #fdeaea; color: #bf0000; }
 
   /* Trip type selector */
   .trip-type-row { display: flex; gap: 8px; }
@@ -342,6 +343,7 @@
           <button class="pay-btn active" id="pay-現金" onclick="selectPay('現金')">現金</button>
           <button class="pay-btn go" id="pay-GO" onclick="selectPay('GO')">GO</button>
           <button class="pay-btn paypay" id="pay-PayPay" onclick="selectPay('PayPay')">PayPay</button>
+          <button class="pay-btn rakuten" id="pay-楽天Pay" onclick="selectPay('楽天Pay')">楽天Pay</button>
           <button class="pay-btn credit" id="pay-クレジット" onclick="selectPay('クレジット')">カード</button>
           <button class="pay-btn dpay" id="pay-d払い" onclick="selectPay('d払い')">d払い</button>
           <button class="pay-btn ticket" id="pay-チケット" onclick="selectPay('チケット')">チケット</button>
@@ -852,6 +854,7 @@
         <button class="pay-btn active" id="editpay-現金" onclick="selectEditPay('現金')">現金</button>
         <button class="pay-btn go" id="editpay-GO" onclick="selectEditPay('GO')">GO</button>
         <button class="pay-btn paypay" id="editpay-PayPay" onclick="selectEditPay('PayPay')">PayPay</button>
+        <button class="pay-btn rakuten" id="editpay-楽天Pay" onclick="selectEditPay('楽天Pay')">楽天Pay</button>
         <button class="pay-btn credit" id="editpay-クレジット" onclick="selectEditPay('クレジット')">カード</button>
         <button class="pay-btn dpay" id="editpay-d払い" onclick="selectEditPay('d払い')">d払い</button>
         <button class="pay-btn ticket" id="editpay-チケット" onclick="selectEditPay('チケット')">チケット</button>
@@ -1467,11 +1470,17 @@ function openNextTimeField(inputId) {
 // 支払方法選択
 let currentPayMethod = '現金';
 
-// 人員（男性・女性ボタンをタップするたびに人数が増える。5でリセットして0に戻る）
+// 人員（男性・女性ボタンをタップするたびに人数が増える。5でリセットして0に戻る）。
+// 合計は必ず4名以下になるよう、増やした側で溢れる分だけもう一方を自動で減らす
 let paxMale = 0, paxFemale = 0;
 function incrementPax(gender) {
-  if (gender === 'male') paxMale = (paxMale + 1) % 5;
-  else paxFemale = (paxFemale + 1) % 5;
+  if (gender === 'male') {
+    paxMale = (paxMale + 1) % 5;
+    if (paxMale + paxFemale > 4) paxFemale = Math.max(0, 4 - paxMale);
+  } else {
+    paxFemale = (paxFemale + 1) % 5;
+    if (paxMale + paxFemale > 4) paxMale = Math.max(0, 4 - paxFemale);
+  }
   updatePaxDisplay();
 }
 function updatePaxDisplay() {
@@ -1487,10 +1496,16 @@ function resetPax() {
   updatePaxDisplay();
 }
 
+// こちらも合計は必ず4名以下になるようにする
 let editPaxMale = 1, editPaxFemale = 0;
 function incrementEditPax(gender) {
-  if (gender === 'male') editPaxMale = (editPaxMale + 1) % 5;
-  else editPaxFemale = (editPaxFemale + 1) % 5;
+  if (gender === 'male') {
+    editPaxMale = (editPaxMale + 1) % 5;
+    if (editPaxMale + editPaxFemale > 4) editPaxFemale = Math.max(0, 4 - editPaxMale);
+  } else {
+    editPaxFemale = (editPaxFemale + 1) % 5;
+    if (editPaxMale + editPaxFemale > 4) editPaxMale = Math.max(0, 4 - editPaxFemale);
+  }
   updateEditPaxDisplay();
 }
 function updateEditPaxDisplay() {
@@ -1515,10 +1530,10 @@ function setEditPaxCounts(male, female) {
 function selectPay(method) {
   currentPayMethod = method;
   document.getElementById('payMethod').value = method;
-  ['現金','GO','PayPay','クレジット','d払い','チケット','その他'].forEach(m => {
+  ['現金','GO','PayPay','楽天Pay','クレジット','d払い','チケット','その他'].forEach(m => {
     const btn = document.getElementById(`pay-${m}`);
     if (!btn) return;
-    btn.className = 'pay-btn' + ({GO:' go', PayPay:' paypay', クレジット:' credit', 'd払い':' dpay', 'チケット':' ticket'}[m]||'');
+    btn.className = 'pay-btn' + ({GO:' go', PayPay:' paypay', '楽天Pay':' rakuten', クレジット:' credit', 'd払い':' dpay', 'チケット':' ticket'}[m]||'');
     if (m === method) btn.className += ' active';
   });
   // 支払方法GOを選んだら種別もGOに
@@ -1942,7 +1957,7 @@ function formatPaxLabel(t) {
 
 function tripCard(t) {
   const duration = t.pickupTime && t.dropoffTime ? calcDuration(t.pickupTime, t.dropoffTime) : '';
-  const payColors = {GO:'#ff6b00', PayPay:'#e00', クレジット:'#34a853', 現金:'#1a73e8', 'd払い':'#b00068', その他:'#888'};
+  const payColors = {GO:'#ff6b00', PayPay:'#e00', '楽天Pay':'#bf0000', クレジット:'#34a853', 現金:'#1a73e8', 'd払い':'#b00068', その他:'#888'};
   const pay = t.payMethod || '現金';
   const payColor = payColors[pay] || '#888';
   const pax = t.passengers || 1;
@@ -2083,10 +2098,10 @@ function buildEditGoMemo() {
 
 function selectEditPay(method) {
   document.getElementById('editPayMethod').value = method;
-  ['現金','GO','PayPay','クレジット','d払い','チケット','その他'].forEach(m => {
+  ['現金','GO','PayPay','楽天Pay','クレジット','d払い','チケット','その他'].forEach(m => {
     const btn = document.getElementById(`editpay-${m}`);
     if (!btn) return;
-    btn.className = 'pay-btn' + ({GO:' go', PayPay:' paypay', クレジット:' credit', 'd払い':' dpay', 'チケット':' ticket'}[m]||'');
+    btn.className = 'pay-btn' + ({GO:' go', PayPay:' paypay', '楽天Pay':' rakuten', クレジット:' credit', 'd払い':' dpay', 'チケット':' ticket'}[m]||'');
     if (m === method) btn.className += ' active';
   });
   if (method === 'GO' && document.getElementById('tripEditModal').dataset.tripType !== 'GO') {
@@ -2975,29 +2990,6 @@ function computeScheduleSegments(date) {
   return { trips, segments, shiftStart, endTime, jisshaMin, breakMin, allMin, isToday };
 }
 
-// その日の時給（営収額（税抜）÷ 実働時間 × 0.5）。実働時間が取れない日は null
-function getDayHourlyWage(date) {
-  const result = computeScheduleSegments(date);
-  if (!result || result.allMin <= 0) return null;
-  const daySales = getTrips().filter(t => t.date === date).reduce((s,t) => s + getTripFare(t), 0);
-  return Math.round(exTax(daySales) / (result.allMin / 60) * 0.5);
-}
-
-// 表示中の日を除いた、過去の稼働日の平均時給。比較対象がなければ null。
-// 実働1時間未満の日は数字が跳ねるため平均から外す
-function getAverageHourlyWage(excludeDate) {
-  const wages = [...new Set(getTrips().map(t => t.date))]
-    .filter(d => d !== excludeDate)
-    .map(d => {
-      const result = computeScheduleSegments(d);
-      if (!result || result.allMin < 60) return null;
-      return getDayHourlyWage(d);
-    })
-    .filter(w => w !== null);
-  if (wages.length === 0) return null;
-  return Math.round(wages.reduce((s,w) => s + w, 0) / wages.length);
-}
-
 function renderSchedule() {
   // 本日の記録がまだない場合は、直近の記録がある日にフォールバックする
   const todayForFallback = todayStr();
@@ -3063,14 +3055,12 @@ function renderSchedule() {
   const schedHourlyWage = allMin > 0 ? Math.round(exTax(daySales) / (allMin / 60) * 0.5) : null;
   const hourlyEl = document.getElementById('schedHourly');
   hourlyEl.textContent = schedHourlyWage !== null ? `¥${schedHourlyWage.toLocaleString()}` : '---';
-  // 過去の稼働日の平均と比べ、カードの背景を3段階で塗り分ける
-  // （−10%未満は赤、平均のまわり±10%は黄、+10%以上は緑）
+  // 時給の金額そのものでカードの背景を3段階に塗り分ける
+  // （¥1,000未満は赤、¥1,000〜¥1,300未満は黄、¥1,300以上は緑）
   const card = document.getElementById('schedHourlyCard');
-  const avgWage = getAverageHourlyWage(date);
   card.classList.remove('wage-low', 'wage-mid', 'wage-high');
-  if (schedHourlyWage !== null && avgWage !== null && avgWage > 0) {
-    const ratio = schedHourlyWage / avgWage;
-    card.classList.add(ratio < 0.9 ? 'wage-low' : ratio > 1.1 ? 'wage-high' : 'wage-mid');
+  if (schedHourlyWage !== null) {
+    card.classList.add(schedHourlyWage < 1000 ? 'wage-low' : schedHourlyWage < 1300 ? 'wage-mid' : 'wage-high');
   }
 
   const typeColors = { '配車': '#ff6b00', 'GO': '#1a73e8', '流し': '#00a152' };
