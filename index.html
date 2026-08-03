@@ -203,6 +203,10 @@
   .modal-handle { width: 40px; height: 4px; background: #ddd; border-radius: 2px; margin: 0 auto 16px; }
   .modal-title { font-size: 18px; font-weight: 700; margin-bottom: 16px; }
   #scheduleGraphModal { align-items: stretch; }
+  /* 休憩・給油の編集モーダルは場所入力時にキーボードで隠れないよう、画面の上側に表示する */
+  #schedItemEditModal { align-items: flex-start; }
+  #schedItemEditModal .modal { border-radius: 0 0 20px 20px; padding-top: calc(20px + env(safe-area-inset-top, 0px)); padding-bottom: 20px; transform: translateY(-100%); }
+  #schedItemEditModal.open .modal { transform: translateY(0); }
   #scheduleGraphModal .modal { height: 100vh; max-height: 100vh; border-radius: 0; display: flex; flex-direction: column; padding-top: calc(16px + env(safe-area-inset-top, 0px)); }
 
   /* Empty state */
@@ -1323,9 +1327,10 @@ function getLocationSuggestions(query) {
   const hidden = getHiddenPlaces();
   return [...freq.entries()]
     .filter(([name]) => name !== q && !hidden.includes(name))
-    .sort((a,b) => b[1].count - a[1].count || b[1].lastKey.localeCompare(a[1].lastKey))
+    // 最近使用した場所を優先し、利用実績がない場合のみ乗車回数で補う
+    .sort((a,b) => b[1].lastKey.localeCompare(a[1].lastKey) || b[1].count - a[1].count)
     .map(([name]) => name)
-    .slice(0, 6);
+    .slice(0, 20);
 }
 // 乗車場所・降車場所をタップしたとき、入力欄を画面の上の方へ巻き上げて
 // 地名の候補リストがキーボードに隠れないようにする
