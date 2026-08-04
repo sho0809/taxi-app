@@ -229,6 +229,9 @@
   /* Fare input with ¥ */
   .fare-wrap { position: relative; }
   .fare-wrap .yen { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); font-size: 16px; color: var(--muted); }
+  /* 障害者割引: 現金払いでも未収額を別途記入できるようにするトグルボタン */
+  .discount-toggle-btn { display:inline-block; margin-left:6px; font-size:11px; font-weight:700; padding:2px 8px; border-radius:10px; border:1.5px solid var(--border); background:white; color:var(--muted); cursor:pointer; vertical-align:middle; touch-action:manipulation; }
+  .discount-toggle-btn.active { background:#fff3e0; border-color:#ff9800; color:#e65100; }
   /* 料金は下2桁の「00」を省略して入力する。入力欄の文字は透明にしておき、
      「入力値＋00」を1つの文字列として重ねて表示することで、数字と00の間隔が
      通常の数字同士の間隔とまったく同じになるようにしている（カーソルは表示したまま） */
@@ -358,7 +361,10 @@
 
       <div class="input-row">
         <div class="input-group" style="flex:1.5;">
-          <label class="input-label" id="fareLabelMain">💴 料金（現金）</label>
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:5px;">
+            <label class="input-label" id="fareLabelMain" style="margin-bottom:0;">💴 料金（現金）</label>
+            <button type="button" class="discount-toggle-btn" id="disabilityToggleBtn" onclick="toggleDisabilityDiscount()">障割</button>
+          </div>
           <div class="fare-wrap">
             <span class="yen">¥</span>
             <input class="input-field fare-masked" id="fareAmount" type="number" placeholder="" inputmode="numeric" oninput="updateFareDisplay()">
@@ -371,6 +377,13 @@
             <span class="yen">¥</span>
             <input class="input-field" id="tipAmount" type="number" placeholder="0" inputmode="numeric">
           </div>
+        </div>
+      </div>
+      <div class="input-group" id="disabilityUncollectedRow" style="display:none;">
+        <label class="input-label">📱 未収（障害者割引）</label>
+        <div class="fare-wrap">
+          <span class="yen">¥</span>
+          <input class="input-field" id="disabilityUncollectedAmount" type="number" placeholder="0" inputmode="numeric">
         </div>
       </div>
 
@@ -412,10 +425,10 @@
         <label class="input-label">📝 メモ（GOアプリ乗客情報）</label>
         <div class="input-row" style="margin-bottom:6px;">
           <div class="input-group" style="flex:1.4;margin-bottom:0;">
-            <input class="input-field" id="goPaxName" type="text" placeholder="" autocomplete="off" oninput="onGoPaxNameInput()">
+            <input class="input-field" data-scroll-up="1" id="goPaxName" type="text" placeholder="" autocomplete="off" oninput="onGoPaxNameInput()" onfocus="scrollLocFieldToTop('goPaxName')" onblur="releaseLocFocus()">
           </div>
           <div class="input-group" style="flex:1;margin-bottom:0;">
-            <select class="input-field" id="goPaxAge" onchange="onGoPaxNameInput()">
+            <select class="input-field" data-scroll-up="1" id="goPaxAge" onchange="onGoPaxNameInput()" onfocus="scrollLocFieldToTop('goPaxAge')" onblur="releaseLocFocus()">
               <option value="">年代</option>
               <option value="10代">10代</option>
               <option value="20代">20代</option>
@@ -1196,10 +1209,11 @@ function onGoPaxNameInput() {
 
   const rows = shown.map(t => {
     const [,mm,dd] = t.date.split('-');
+    const dow = ['日','月','火','水','木','金','土'][new Date(t.date + 'T00:00:00').getDay()];
     const fare = getTripFare(t);
     return `
       <div class="pax-history-item" onclick="applyGoPaxHistory(${t.id})">
-        <span class="ph-date">${parseInt(mm)}/${parseInt(dd)}</span> ${t.paxName} ${t.paxGender||''}${t.paxAge||''}　<b>¥${fare.toLocaleString()}</b>
+        <span class="ph-date">${parseInt(mm)}/${parseInt(dd)}(${dow}) ${t.pickupTime||''}</span> ${t.paxName} ${t.paxGender||''}${t.paxAge||''}　<b>¥${fare.toLocaleString()}</b>
         <div class="ph-route">${t.pickup||'?'} → ${t.dropoff||'?'}</div>
       </div>
     `;
@@ -1475,6 +1489,15 @@ function openNextTimeField(inputId) {
 // 支払方法選択
 let currentPayMethod = '現金';
 
+// 障害者割引: 現金払いでも、別途未収額（後日自治体等から精算される割引分）を記入できるようにする
+let disabilityDiscountOn = false;
+function toggleDisabilityDiscount() {
+  disabilityDiscountOn = !disabilityDiscountOn;
+  document.getElementById('disabilityToggleBtn').classList.toggle('active', disabilityDiscountOn);
+  document.getElementById('disabilityUncollectedRow').style.display = disabilityDiscountOn ? '' : 'none';
+  if (!disabilityDiscountOn) document.getElementById('disabilityUncollectedAmount').value = '';
+}
+
 // 人員（男性・女性ボタンをタップするたびに人数が増える。5でリセットして0に戻る）。
 // 合計は必ず4名以下になるよう、増やした側で溢れる分だけもう一方を自動で減らす
 let paxMale = 0, paxFemale = 0;
@@ -1605,7 +1628,9 @@ function saveTrip() {
   // 料金は必ず100円単位のため、下2桁の「00」は入力不要（例：「15」→1500円）
   const fareAmount = (parseInt(fareRaw) || 0) * 100;
   const cashFare = payMethod === '現金' ? fareAmount : 0;
-  const uncollectedFare = payMethod !== '現金' ? fareAmount : 0;
+  // 障害者割引: 現金払いでも、別途未収額（割引分）を上乗せできる
+  const disabilityAmount = disabilityDiscountOn ? (parseInt(document.getElementById('disabilityUncollectedAmount').value) || 0) : 0;
+  const uncollectedFare = (payMethod !== '現金' ? fareAmount : 0) + disabilityAmount;
 
   const trips = getTrips();
   trips.unshift({
@@ -1635,6 +1660,7 @@ function saveTrip() {
   resetPlainGender();
   selectPay('現金');
   selectType(getDefaultType());
+  if (disabilityDiscountOn) toggleDisabilityDiscount();
 
   updateTodaySummary();
   showToast('乗降記録を保存しました ✓');
