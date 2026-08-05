@@ -425,10 +425,10 @@
         <label class="input-label">📝 メモ（GOアプリ乗客情報）</label>
         <div class="input-row" style="margin-bottom:6px;">
           <div class="input-group" style="flex:1.4;margin-bottom:0;">
-            <input class="input-field" data-scroll-up="1" id="goPaxName" type="text" placeholder="" autocomplete="off" oninput="onGoPaxNameInput()" onfocus="scrollLocFieldToTop('goPaxName')" onblur="releaseLocFocus()">
+            <input class="input-field" data-scroll-up="1" id="goPaxName" type="text" placeholder="" autocomplete="off" oninput="onGoPaxNameInput()" onfocus="scrollLocFieldToTop('goPaxName')">
           </div>
           <div class="input-group" style="flex:1;margin-bottom:0;">
-            <select class="input-field" data-scroll-up="1" id="goPaxAge" onchange="onGoPaxNameInput()" onfocus="scrollLocFieldToTop('goPaxAge')" onblur="releaseLocFocus()">
+            <select class="input-field" data-scroll-up="1" id="goPaxAge" onchange="onGoPaxNameInput()" onfocus="scrollLocFieldToTop('goPaxAge')">
               <option value="">年代</option>
               <option value="10代">10代</option>
               <option value="20代">20代</option>
@@ -1140,6 +1140,8 @@ function selectType(type) {
   // GOの場合のみ乗客情報メモを表示、それ以外は自由記入メモを表示
   document.getElementById('goMemoGroup').style.display = (type === 'GO') ? 'block' : 'none';
   document.getElementById('plainMemoGroup').style.display = (type === 'GO') ? 'none' : 'block';
+  // 種別を切り替えたら、GOメモ欄の巻き上げが残っていても元の位置に戻す
+  resetFormScroll();
 }
 
 // GOアプリ乗客情報（メモ）
@@ -1468,10 +1470,15 @@ function releaseLocFocus() {
   setTimeout(() => {
     const el = document.activeElement;
     if (el && el.dataset && el.dataset.scrollUp === '1') return;
-    document.querySelector('.content').classList.remove('loc-focus');
-    // 余白を外すと画面が中途半端な位置に残るため、フォーム全体を元の位置に戻す
-    if (document.querySelector('#page-record.active')) window.scrollTo({ top: 0, behavior: 'auto' });
+    resetFormScroll();
   }, 0);
+}
+// GOメモの氏名・年代欄は、性別ボタンや保存ボタンを押す一連の操作の間、
+// 画面がその都度元の位置に戻ってしまわないよう blur では巻き戻さない。
+// 保存や種別の切り替えなど、入力が確定したタイミングでまとめて元の位置へ戻す。
+function resetFormScroll() {
+  document.querySelector('.content').classList.remove('loc-focus');
+  if (document.querySelector('#page-record.active')) window.scrollTo({ top: 0, behavior: 'auto' });
 }
 
 // 場所を選び終えたら、続けて入力する時刻欄を開く。
@@ -1571,6 +1578,12 @@ function selectPay(method) {
   if (label) {
     label.textContent = method === '現金' ? '💴 料金（現金）' : `💴 料金（未収 / ${method}）`;
   }
+  // 障害者割引の未収記入は、現金払いのときだけ使う機能のため、現金以外では隠す
+  const discBtn = document.getElementById('disabilityToggleBtn');
+  if (discBtn) {
+    discBtn.style.display = method === '現金' ? '' : 'none';
+    if (method !== '現金' && disabilityDiscountOn) toggleDisabilityDiscount();
+  }
 }
 
 // 料金合計ヘルパー（後方互換）
@@ -1661,7 +1674,9 @@ function saveTrip() {
   selectPay('現金');
   selectType(getDefaultType());
   if (disabilityDiscountOn) toggleDisabilityDiscount();
+  resetFormScroll();
 
+  syncViewDatesToLatest();
   updateTodaySummary();
   showToast('乗降記録を保存しました ✓');
 }
@@ -1683,6 +1698,14 @@ function resolveDefaultViewDate() {
   if (trips.some(t => t.date === today)) return today;
   const pastDates = [...new Set(trips.map(t => t.date))].filter(d => d < today).sort();
   return pastDates.length > 0 ? pastDates[pastDates.length - 1] : today;
+}
+
+// 記録を追加・削除したときに、履歴・統計・サマリーの表示日を
+// 最新の記録がある日に必ず合わせ直す（表示中の日に古いまま取り残さない）
+function syncViewDatesToLatest() {
+  summaryCurrentDate = resolveDefaultViewDate();
+  if (typeof histShowAll !== 'undefined' && !histShowAll) histCurrentDate = resolveDefaultViewDate();
+  if (typeof statPeriodOffset !== 'undefined') statPeriodOffset = 0;
 }
 
 // 待機時間を自動計算（7:30起点 − 乗車時間合計）
@@ -2049,6 +2072,7 @@ function deleteTrip(id) {
   showConfirm('この乗降記録を削除しますか？', '削除すると元に戻せません', () => {
     const trips = getTrips().filter(t => t.id !== id);
     saveTrips(trips);
+    syncViewDatesToLatest();
     renderHistory();
     updateTodaySummary();
     showToast('記録を削除しました');
@@ -2725,18 +2749,18 @@ function toggleSchedStop(kind) {
     list[ongoingIdx].end = nowHM();
     save(list);
     showToast(`${label}を終了しました ✓`);
-    // 休憩は場所を後から入れることが多いため、終了と同時に入力画面を開く
-    if (kind === 'break') {
-      renderSchedule();
-      openSchedItemEdit('break', ongoingIdx);
-      return;
-    }
   } else {
     if (date !== todayStr()) { showToast(`${label}の開始は当日の記録でのみできます`); return; }
-    // 場所は後からタイムラインの記録をタップして入力できる（給油は高岡町で固定）
+    // 給油は高岡町で固定のため場所欄は不要
     list.push({ start: nowHM(), end: '', place: kind === 'fuel' ? FUEL_PLACE : '' });
     save(list);
     showToast(`${label}を開始しました`);
+    // 休憩は開始時にどこにいるか分かっているため、開始と同時に場所の入力画面を開く
+    if (kind === 'break') {
+      renderSchedule();
+      openSchedItemEdit('break', list.length - 1);
+      return;
+    }
   }
   renderSchedule();
 }
@@ -3087,11 +3111,11 @@ function renderSchedule() {
   const hourlyEl = document.getElementById('schedHourly');
   hourlyEl.textContent = schedHourlyWage !== null ? `¥${schedHourlyWage.toLocaleString()}` : '---';
   // 時給の金額そのものでカードの背景を3段階に塗り分ける
-  // （¥1,000未満は赤、¥1,000〜¥1,300未満は黄、¥1,300以上は緑）
+  // （¥1,000未満は赤、¥1,000〜¥1,200未満は黄、¥1,200以上は緑）
   const card = document.getElementById('schedHourlyCard');
   card.classList.remove('wage-low', 'wage-mid', 'wage-high');
   if (schedHourlyWage !== null) {
-    card.classList.add(schedHourlyWage < 1000 ? 'wage-low' : schedHourlyWage < 1300 ? 'wage-mid' : 'wage-high');
+    card.classList.add(schedHourlyWage < 1000 ? 'wage-low' : schedHourlyWage < 1200 ? 'wage-mid' : 'wage-high');
   }
 
   const typeColors = { '配車': '#ff6b00', 'GO': '#1a73e8', '流し': '#00a152' };
