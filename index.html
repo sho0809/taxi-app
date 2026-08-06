@@ -350,9 +350,11 @@
           <button class="pay-btn active" id="pay-現金" onclick="selectPay('現金')">現金</button>
           <button class="pay-btn go" id="pay-GO" onclick="selectPay('GO')">GO</button>
           <button class="pay-btn paypay" id="pay-PayPay" onclick="selectPay('PayPay')">PayPay</button>
-          <button class="pay-btn rakuten" id="pay-楽天Pay" onclick="selectPay('楽天Pay')">楽天Pay</button>
-          <button class="pay-btn credit" id="pay-クレジット" onclick="selectPay('クレジット')">カード</button>
           <button class="pay-btn dpay" id="pay-d払い" onclick="selectPay('d払い')">d払い</button>
+        </div>
+        <div class="pay-btns" style="margin-top:6px;">
+          <button class="pay-btn credit" id="pay-クレジット" onclick="selectPay('クレジット')">クレジット</button>
+          <button class="pay-btn rakuten" id="pay-楽天Pay" onclick="selectPay('楽天Pay')">楽天Pay</button>
           <button class="pay-btn ticket" id="pay-チケット" onclick="selectPay('チケット')">チケット</button>
           <button class="pay-btn" id="pay-その他" onclick="selectPay('その他')">その他</button>
         </div>
@@ -427,24 +429,22 @@
           <div class="input-group" style="flex:1.4;margin-bottom:0;">
             <input class="input-field" data-scroll-up="1" id="goPaxName" type="text" placeholder="" autocomplete="off" oninput="onGoPaxNameInput()" onfocus="scrollLocFieldToTop('goPaxName')">
           </div>
-          <div class="input-group" style="flex:1;margin-bottom:0;">
-            <select class="input-field" data-scroll-up="1" id="goPaxAge" onchange="onGoPaxNameInput()" onfocus="scrollLocFieldToTop('goPaxAge')">
-              <option value="">年代</option>
-              <option value="10代">10代</option>
-              <option value="20代">20代</option>
-              <option value="30代">30代</option>
-              <option value="40代">40代</option>
-              <option value="50代">50代</option>
-              <option value="60代">60代</option>
-              <option value="70代以上">70代以上</option>
-            </select>
+          <div class="input-group" style="flex:1;margin-bottom:0;display:flex;gap:6px;">
+            <button class="pay-btn" id="goGender-男性" onclick="selectGoGender('男性', true)" style="flex:1;">男性</button>
+            <button class="pay-btn" id="goGender-女性" onclick="selectGoGender('女性', true)" style="flex:1;">女性</button>
           </div>
         </div>
-        <div style="display:flex;gap:6px;">
-          <button class="pay-btn" id="goGender-男性" onclick="selectGoGender('男性', true)" style="flex:1;">男性</button>
-          <button class="pay-btn" id="goGender-女性" onclick="selectGoGender('女性', true)" style="flex:1;">女性</button>
+        <div class="pay-btns" style="margin-bottom:6px;">
+          <button class="pay-btn" id="goAge-10代" onclick="selectGoAge('10代')">10代</button>
+          <button class="pay-btn" id="goAge-20代" onclick="selectGoAge('20代')">20代</button>
+          <button class="pay-btn" id="goAge-30代" onclick="selectGoAge('30代')">30代</button>
+          <button class="pay-btn" id="goAge-40代" onclick="selectGoAge('40代')">40代</button>
+          <button class="pay-btn" id="goAge-50代" onclick="selectGoAge('50代')">50代</button>
+          <button class="pay-btn" id="goAge-60代" onclick="selectGoAge('60代')">60代</button>
+          <button class="pay-btn" id="goAge-70代" onclick="selectGoAge('70代')">70代</button>
         </div>
         <input type="hidden" id="goPaxGender" value="">
+        <input type="hidden" id="goPaxAge" value="">
         <div id="goPaxHistory" style="display:none;margin-top:8px;"></div>
       </div>
 
@@ -697,7 +697,7 @@
   <div class="modal">
     <div class="modal-handle"></div>
     <div class="modal-title" id="schedItemEditTitle">休憩を修正</div>
-    <div class="input-row">
+    <div class="input-row" id="schedItemEditTimeRow">
       <div class="input-group">
         <label class="input-label">⏱ 開始</label>
         <input class="input-field" id="schedItemEditStart" type="time">
@@ -712,16 +712,19 @@
       <input class="input-field" id="schedItemEditPlace" type="text" placeholder="" autocomplete="off"
              oninput="onLocInput('schedItemEditPlace','schedItemEditPlaceSuggest',getBreakPlaceSuggestions)"
              onfocus="onLocInput('schedItemEditPlace','schedItemEditPlaceSuggest',getBreakPlaceSuggestions);scrollLocFieldToTop('schedItemEditPlace')"
-             onblur="hideLocSuggest('schedItemEditPlaceSuggest')">
+             onblur="hideLocSuggest('schedItemEditPlaceSuggest');onSchedItemEditPlaceBlur()"
+             onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}">
       <div id="schedItemEditPlaceSuggest" class="loc-suggest"></div>
       <div class="place-chip-row" id="schedItemEditPlaceChips"></div>
     </div>
     <div id="schedItemEditFuelNote" style="display:none;font-size:13px;color:var(--muted);margin-top:4px;">📍 場所は高岡町で記録されます</div>
-    <div class="btn-row">
-      <button class="btn btn-gray" onclick="closeSchedItemEdit()">キャンセル</button>
-      <button class="btn btn-primary" onclick="saveSchedItemEdit()">保存</button>
+    <div id="schedItemEditFooter">
+      <div class="btn-row">
+        <button class="btn btn-gray" onclick="closeSchedItemEdit()">キャンセル</button>
+        <button class="btn btn-primary" onclick="saveSchedItemEdit()">保存</button>
+      </div>
+      <button class="btn btn-danger" style="margin-top:8px;" onclick="deleteSchedItemEdit()">🗑 削除</button>
     </div>
-    <button class="btn btn-danger" style="margin-top:8px;" onclick="deleteSchedItemEdit()">🗑 削除</button>
   </div>
 </div>
 
@@ -872,7 +875,7 @@
         <button class="pay-btn go" id="editpay-GO" onclick="selectEditPay('GO')">GO</button>
         <button class="pay-btn paypay" id="editpay-PayPay" onclick="selectEditPay('PayPay')">PayPay</button>
         <button class="pay-btn rakuten" id="editpay-楽天Pay" onclick="selectEditPay('楽天Pay')">楽天Pay</button>
-        <button class="pay-btn credit" id="editpay-クレジット" onclick="selectEditPay('クレジット')">カード</button>
+        <button class="pay-btn credit" id="editpay-クレジット" onclick="selectEditPay('クレジット')">クレジット</button>
         <button class="pay-btn dpay" id="editpay-d払い" onclick="selectEditPay('d払い')">d払い</button>
         <button class="pay-btn ticket" id="editpay-チケット" onclick="selectEditPay('チケット')">チケット</button>
         <button class="pay-btn" id="editpay-その他" onclick="selectEditPay('その他')">その他</button>
@@ -1157,6 +1160,23 @@ function selectGoGender(g, userChose) {
   // 候補は性別・年代でも絞り込むため、切り替え時に再表示する
   if (document.getElementById('goPaxName').value.trim()) onGoPaxNameInput();
 }
+// タップ数を減らすため、年代もプルダウンではなくボタンで一発選択できるようにしている。
+// 同じボタンをもう一度押すと選択を解除する
+const GO_AGE_OPTIONS = ['10代','20代','30代','40代','50代','60代','70代'];
+function selectGoAge(age) {
+  const current = document.getElementById('goPaxAge').value;
+  const next = current === age ? '' : age;
+  document.getElementById('goPaxAge').value = next;
+  syncGoAgeButtons();
+  if (document.getElementById('goPaxName').value.trim()) onGoPaxNameInput();
+}
+function syncGoAgeButtons() {
+  const age = document.getElementById('goPaxAge').value;
+  GO_AGE_OPTIONS.forEach(a => {
+    const btn = document.getElementById(`goAge-${a}`);
+    if (btn) btn.className = 'pay-btn' + (a === age ? ' active' : '');
+  });
+}
 function buildGoMemo() {
   const name = document.getElementById('goPaxName').value.trim();
   if (!name) return '';
@@ -1170,6 +1190,7 @@ function buildGoMemo() {
 function resetGoMemo() {
   document.getElementById('goPaxName').value = '';
   document.getElementById('goPaxAge').value = '';
+  syncGoAgeButtons();
   goGenderChosen = false;
   selectGoGender('');  // 最初はどちらも選択されていない状態にする
   const hist = document.getElementById('goPaxHistory');
@@ -1197,7 +1218,8 @@ function onGoPaxNameInput() {
   // さらに年代・性別が選択されていれば、それでも絞り込む。
   const allMatches = getTrips()
     .filter(t => t.tripType === 'GO' && t.paxName && t.paxName.startsWith(q))
-    .filter(t => !age || t.paxAge === age)
+    // 「70代以上」は旧ボタン表記の記録のため、現行の「70代」ボタンでも一致させる
+    .filter(t => !age || t.paxAge === age || (age === '70代' && t.paxAge === '70代以上'))
     .filter(t => !goGenderChosen || t.paxGender === gender)
     .sort((a,b) => (b.date + (b.pickupTime||'')).localeCompare(a.date + (a.pickupTime||'')));
 
@@ -1233,7 +1255,9 @@ function applyGoPaxHistory(id) {
   if (!t) return;
   document.getElementById('goPaxName').value = t.paxName || '';
   if (t.paxGender) selectGoGender(t.paxGender, true);
-  if (t.paxAge) document.getElementById('goPaxAge').value = t.paxAge;
+  // 「70代以上」は旧ボタン表記の記録。現行のボタン（70代）に合わせて読み替える
+  if (t.paxAge) document.getElementById('goPaxAge').value = t.paxAge === '70代以上' ? '70代' : t.paxAge;
+  syncGoAgeButtons();
   // 履歴は閉じずに、選んだ内容で絞り込み直して表示したままにする
   onGoPaxNameInput();
   showToast(`前回: ${t.date.split('-').slice(1).map(n=>parseInt(n)).join('/')} ${t.pickup||''} → ${t.dropoff||''}`);
@@ -1454,6 +1478,8 @@ function selectLocSuggest(inputId, suggestId, idx) {
   if (name === undefined) return;
   document.getElementById(inputId).value = name;
   hideLocSuggest(suggestId);
+  // 休憩開始直後の簡易入力中なら、候補を選んだ時点でそのまま保存して閉じる
+  if (schedQuickPlaceMode && inputId === 'schedItemEditPlace') { saveSchedItemEdit(); return; }
   openNextTimeField(inputId);
 }
 function hideLocSuggest(suggestId) {
@@ -2755,10 +2781,10 @@ function toggleSchedStop(kind) {
     list.push({ start: nowHM(), end: '', place: kind === 'fuel' ? FUEL_PLACE : '' });
     save(list);
     showToast(`${label}を開始しました`);
-    // 休憩は開始時にどこにいるか分かっているため、開始と同時に場所の入力画面を開く
+    // 休憩は開始時にどこにいるか分かっているため、開始と同時に場所の入力欄だけを開く
     if (kind === 'break') {
       renderSchedule();
-      openSchedItemEdit('break', list.length - 1);
+      openSchedBreakQuickPlace(list.length - 1);
       return;
     }
   }
@@ -2798,8 +2824,15 @@ function saveSchedAdd() {
 // 休憩でよく使う場所をワンタップで入れられるようにする
 function renderPlaceChips(containerId, inputId) {
   document.getElementById(containerId).innerHTML = BREAK_PLACE_PRESETS.map(name =>
-    `<button type="button" class="place-chip" onclick="document.getElementById('${inputId}').value='${name}';hideLocSuggest('${inputId}Suggest')">${name}</button>`
+    `<button type="button" class="place-chip" onmousedown="event.preventDefault()" onclick="pickPlace('${inputId}','${name}')">${name}</button>`
   ).join('');
+}
+// 場所欄にチップ／候補から選んだ値を入れる。休憩開始直後の簡易入力中なら、
+// 選んだ時点でそのまま保存して閉じる（時刻はワンタップ開始時に自動記録済みのため不要）
+function pickPlace(inputId, name) {
+  document.getElementById(inputId).value = name;
+  hideLocSuggest(`${inputId}Suggest`);
+  if (schedQuickPlaceMode && inputId === 'schedItemEditPlace') saveSchedItemEdit();
 }
 
 // 業務終了時刻を保存（HH:MM形式）
@@ -2833,12 +2866,17 @@ function deleteScheduleFuel(index) {
 
 // ---- 休憩・給油をタップして編集（時刻・場所の修正／削除） ----
 let schedItemEditTarget = null; // { kind: 'break'|'fuel', index: number }
+// true の間は、休憩開始直後の簡易入力モード（場所欄だけを見せ、選んだら即保存して閉じる）
+let schedQuickPlaceMode = false;
 
 function openSchedItemEdit(kind, index) {
   const list = kind === 'break' ? getScheduleBreaks(schedCurrentDate) : getScheduleFuelStops(schedCurrentDate);
   const item = list[index];
   if (!item) return;
   schedItemEditTarget = { kind, index };
+  schedQuickPlaceMode = false;
+  document.getElementById('schedItemEditTimeRow').style.display = '';
+  document.getElementById('schedItemEditFooter').style.display = '';
   document.getElementById('schedItemEditTitle').textContent = kind === 'break' ? '休憩を修正' : '給油を修正';
   document.getElementById('schedItemEditStart').value = item.start || '';
   document.getElementById('schedItemEditEnd').value = item.end || '';
@@ -2851,9 +2889,36 @@ function openSchedItemEdit(kind, index) {
   renderPlaceChips('schedItemEditPlaceChips', 'schedItemEditPlace');
   document.getElementById('schedItemEditModal').classList.add('open');
 }
+// 休憩を開始した直後だけの簡易入力：場所欄（と候補チップ）だけを見せ、
+// 選んだ／入力し終えた時点でそのまま保存して閉じる。開始時刻はワンタップ開始時に記録済みのため触らせない
+function openSchedBreakQuickPlace(index) {
+  const list = getScheduleBreaks(schedCurrentDate);
+  const item = list[index];
+  if (!item) return;
+  schedItemEditTarget = { kind: 'break', index };
+  schedQuickPlaceMode = true;
+  document.getElementById('schedItemEditTimeRow').style.display = 'none';
+  document.getElementById('schedItemEditFooter').style.display = 'none';
+  document.getElementById('schedItemEditTitle').textContent = '休憩の場所を入力';
+  document.getElementById('schedItemEditStart').value = item.start || '';
+  document.getElementById('schedItemEditEnd').value = item.end || '';
+  document.getElementById('schedItemEditPlace').value = '';
+  hideLocSuggest('schedItemEditPlaceSuggest');
+  document.getElementById('schedItemEditPlaceRow').style.display = '';
+  document.getElementById('schedItemEditFuelNote').style.display = 'none';
+  renderPlaceChips('schedItemEditPlaceChips', 'schedItemEditPlace');
+  document.getElementById('schedItemEditModal').classList.add('open');
+  document.getElementById('schedItemEditPlace').focus();
+}
+// 場所欄からフォーカスが外れたとき、候補を選ばず自分で打ち終えた場合はそのまま保存する
+function onSchedItemEditPlaceBlur() {
+  if (!schedQuickPlaceMode) return;
+  if (document.getElementById('schedItemEditPlace').value.trim()) saveSchedItemEdit();
+}
 function closeSchedItemEdit() {
   document.getElementById('schedItemEditModal').classList.remove('open');
   schedItemEditTarget = null;
+  schedQuickPlaceMode = false;
 }
 function saveSchedItemEdit() {
   if (!schedItemEditTarget) return;
@@ -2866,11 +2931,12 @@ function saveSchedItemEdit() {
   if (!start) { showToast('開始時刻を入力してください'); return; }
   const list = kind === 'break' ? getScheduleBreaks(schedCurrentDate) : getScheduleFuelStops(schedCurrentDate);
   if (!list[index]) return;
+  const quick = schedQuickPlaceMode;
   list[index] = { start, end, place };
   if (kind === 'break') saveScheduleBreaks(schedCurrentDate, list);
   else saveScheduleFuelStops(schedCurrentDate, list);
   closeSchedItemEdit();
-  showToast(kind === 'break' ? '休憩を更新しました ✓' : '給油を更新しました ✓');
+  showToast(quick ? '休憩の場所を記録しました ✓' : (kind === 'break' ? '休憩を更新しました ✓' : '給油を更新しました ✓'));
   renderSchedule();
 }
 function deleteSchedItemEdit() {
