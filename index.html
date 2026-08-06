@@ -785,9 +785,19 @@
     </div>
 
     <div id="graphTabSales" style="display:none;flex-direction:column;flex:1;min-height:0;overflow-y:auto;">
+      <div class="dow-tabs" id="salesCompareDowTabs" style="flex-shrink:0;">
+        <div class="dow-tab active" data-dow="all" onclick="switchSalesCompareDow('all')">全体</div>
+        <div class="dow-tab" data-dow="1" onclick="switchSalesCompareDow('1')">月</div>
+        <div class="dow-tab" data-dow="3" onclick="switchSalesCompareDow('3')">水</div>
+        <div class="dow-tab" data-dow="5" onclick="switchSalesCompareDow('5')">金</div>
+      </div>
       <div id="salesCompareHeadline" style="text-align:center;flex-shrink:0;margin-bottom:10px;"></div>
       <div id="salesCompareChartWrap" style="position:relative;flex-shrink:0;touch-action:pan-y;"></div>
       <div id="salesCompareLegend" style="margin-top:10px;text-align:center;flex-shrink:0;"></div>
+      <div style="margin-top:14px;flex-shrink:0;">
+        <div style="font-size:12px;font-weight:700;color:var(--muted);margin-bottom:6px;">日付を選んで重ねて表示（複数選択可）</div>
+        <div class="place-chip-row" id="salesCompareDateChips"></div>
+      </div>
       <div id="salesCompareNote" style="text-align:center;font-size:11px;color:var(--muted);margin-top:10px;flex-shrink:0;"></div>
     </div>
 
@@ -3434,8 +3444,15 @@ function cumAtMinute(points, min) {
   return val;
 }
 const SALES_GRAPH_STEP_MIN = 30;
-function buildAverageCurve(excludeDate) {
-  const allDates = [...new Set(getTrips().map(t => t.date))].filter(d => d !== excludeDate);
+// 曜日で絞り込んで平均の元になる日を選べるようにする（対象は月・水・金のみ。「全体」が既定）
+function filterDatesByDow(dates, dow) {
+  if (!dow || dow === 'all') return dates;
+  const target = parseInt(dow);
+  return dates.filter(d => new Date(d + 'T00:00:00').getDay() === target);
+}
+function buildAverageCurve(excludeDate, dow) {
+  let allDates = [...new Set(getTrips().map(t => t.date))].filter(d => d !== excludeDate);
+  allDates = filterDatesByDow(allDates, dow);
   if (allDates.length === 0) return null;
   const dayCurves = allDates.map(d => buildDayCumulative(d));
   const samples = [];
@@ -3456,6 +3473,51 @@ function buildTodayCurve() {
   if (!last || last.min < nowMin) samples.push({ min: nowMin, val: cumAtMinute(pts, nowMin) });
   return { samples, nowMin, nowVal: cumAtMinute(pts, nowMin) };
 }
+// 選んだ過去1日分を、当日線と同じ刻みで1日ぶんフルに描けるようにする
+function buildDateCurve(date) {
+  const pts = buildDayCumulative(date);
+  const samples = [];
+  for (let min = 0; min <= GRAPH_DAY_SPAN_MIN; min += SALES_GRAPH_STEP_MIN) {
+    samples.push({ min, val: cumAtMinute(pts, min) });
+  }
+  return { samples, total: cumAtMinute(pts, GRAPH_DAY_SPAN_MIN) };
+}
+function shiftDateLabel(date) {
+  const d = new Date(date + 'T00:00:00');
+  return `${d.getMonth() + 1}/${d.getDate()}(${['日','月','火','水','木','金','土'][d.getDay()]})`;
+}
+
+// ---- 曜日フィルター・個別日の重ね表示 ----
+const DATE_LINE_COLORS = ['#ff6b00', '#8e24aa', '#00acc1', '#e91e63', '#43a047', '#fbbc04'];
+let salesCompareDow = 'all';
+let salesCompareSelectedDates = [];
+function switchSalesCompareDow(dow) {
+  salesCompareDow = dow;
+  salesCompareSelectedDates = [];
+  document.querySelectorAll('#salesCompareDowTabs .dow-tab').forEach(el => {
+    el.className = 'dow-tab' + (el.dataset.dow === dow ? ' active' : '');
+  });
+  renderSalesCompareGraph();
+}
+function toggleSalesCompareDate(date) {
+  const idx = salesCompareSelectedDates.indexOf(date);
+  if (idx >= 0) {
+    salesCompareSelectedDates.splice(idx, 1);
+  } else {
+    if (salesCompareSelectedDates.length >= DATE_LINE_COLORS.length) {
+      showToast(`同時に表示できるのは${DATE_LINE_COLORS.length}日までです`);
+      return;
+    }
+    salesCompareSelectedDates.push(date);
+  }
+  renderSalesCompareGraph();
+}
+// 曜日フィルターに一致する、記録のある過去日を新しい順に返す（日付チップの選択肢）
+function getSalesCompareDateOptions() {
+  let dates = [...new Set(getTrips().map(t => t.date))].filter(d => d !== todayStr());
+  dates = filterDatesByDow(dates, salesCompareDow);
+  return dates.sort().reverse();
+}
 // samples配列から任意の分の値を線形補間で読み取る（クロスヘア用）
 function interpAt(samples, min) {
   if (!samples.length) return 0;
@@ -3472,8 +3534,12 @@ function interpAt(samples, min) {
 
 function renderSalesCompareGraph() {
   const today = buildTodayCurve();
-  const avg = buildAverageCurve(todayStr());
+  const avg = buildAverageCurve(todayStr(), salesCompareDow);
   const avgAtNow = avg ? interpAt(avg.samples, today.nowMin) : 0;
+  // 選択中の個別日（曜日フィルターに合わなくなったものは除く）
+  const dateOptions = getSalesCompareDateOptions();
+  salesCompareSelectedDates = salesCompareSelectedDates.filter(d => dateOptions.includes(d));
+  const dateCurves = salesCompareSelectedDates.map((d, i) => ({ date: d, color: DATE_LINE_COLORS[i], ...buildDateCurve(d) }));
 
   // ---- 見出し（現在の実績と平均比） ----
   let diffHTML;
@@ -3492,7 +3558,7 @@ function renderSalesCompareGraph() {
     ${diffHTML}
   `;
   document.getElementById('salesCompareNote').textContent = avg
-    ? `平均は過去${avg.dayCount}日分の記録から算出`
+    ? `平均は${salesCompareDow === 'all' ? '' : DOW_LABELS[parseInt(salesCompareDow)] + '曜日の'}過去${avg.dayCount}日分の記録から算出`
     : '';
 
   // ---- SVGチャート ----
@@ -3500,6 +3566,7 @@ function renderSalesCompareGraph() {
   const plotW = W - padL - padR, plotH = H - padT - padB;
   const maxCandidates = [today.nowVal];
   if (avg) avg.samples.forEach(s => maxCandidates.push(s.val));
+  dateCurves.forEach(dc => dc.samples.forEach(s => maxCandidates.push(s.val)));
   const maxVal = Math.max(...maxCandidates, 1000) * 1.15;
   const x = min => padL + (min / GRAPH_DAY_SPAN_MIN) * plotW;
   const y = val => padT + plotH - (val / maxVal) * plotH;
@@ -3510,6 +3577,9 @@ function renderSalesCompareGraph() {
     ? `${toPath(today.samples)} L${x(today.samples[today.samples.length - 1].min).toFixed(1)},${(padT + plotH).toFixed(1)} L${x(0).toFixed(1)},${(padT + plotH).toFixed(1)} Z`
     : '';
   const avgPath = avg ? toPath(avg.samples) : '';
+  const dateCurvePathsHTML = dateCurves.map(dc =>
+    `<path d="${toPath(dc.samples)}" fill="none" stroke="${dc.color}" stroke-width="2"/>`
+  ).join('');
 
   // 横軸目盛り（3時間おき）と縦軸目盛り（0・中間・最大）
   const axisHours = [8, 11, 14, 17, 20, 23, 2];
@@ -3529,6 +3599,7 @@ function renderSalesCompareGraph() {
       ${yTicksHTML}
       ${xTicksHTML}
       ${avgPath ? `<path d="${avgPath}" fill="none" stroke="var(--muted)" stroke-width="2" stroke-dasharray="5,4"/>` : ''}
+      ${dateCurvePathsHTML}
       ${todayAreaPath ? `<path d="${todayAreaPath}" fill="var(--primary)" fill-opacity="0.12" stroke="none"/>` : ''}
       ${todayPath ? `<path d="${todayPath}" fill="none" stroke="var(--primary)" stroke-width="2.5"/>` : ''}
       ${today.samples.length ? `<circle cx="${nowX.toFixed(1)}" cy="${nowY.toFixed(1)}" r="4" fill="var(--primary)"/>` : ''}
@@ -3542,6 +3613,11 @@ function renderSalesCompareGraph() {
   wrap.innerHTML = svg;
 
   // ---- 凡例 ----
+  const dateLegendHTML = dateCurves.map(dc => `
+    <span style="display:inline-flex;align-items:center;gap:5px;margin-right:14px;margin-top:4px;font-size:12px;color:var(--muted);">
+      <span style="width:16px;height:2.5px;background:${dc.color};display:inline-block;"></span>${shiftDateLabel(dc.date)}
+    </span>
+  `).join('');
   document.getElementById('salesCompareLegend').innerHTML = `
     <span style="display:inline-flex;align-items:center;gap:5px;margin-right:14px;font-size:12px;color:var(--muted);">
       <span style="width:16px;height:2.5px;background:var(--primary);display:inline-block;"></span>今日
@@ -3549,7 +3625,16 @@ function renderSalesCompareGraph() {
     ${avg ? `<span style="display:inline-flex;align-items:center;gap:5px;font-size:12px;color:var(--muted);">
       <span style="width:16px;height:0;border-top:2.5px dashed var(--muted);display:inline-block;"></span>平均
     </span>` : ''}
+    ${dateLegendHTML}
   `;
+
+  // ---- 日付チップ（曜日フィルターに合う過去日を新しい順に。タップで表示ON/OFF） ----
+  document.getElementById('salesCompareDateChips').innerHTML = dateOptions.length ? dateOptions.map(d => {
+    const selIdx = salesCompareSelectedDates.indexOf(d);
+    const color = selIdx >= 0 ? DATE_LINE_COLORS[selIdx] : null;
+    const style = color ? `border-color:${color};background:${color}1a;color:${color};` : '';
+    return `<button type="button" class="place-chip" style="${style}" onclick="toggleSalesCompareDate('${d}')">${shiftDateLabel(d)}</button>`;
+  }).join('') : `<span style="font-size:12px;color:var(--muted);">該当する記録がありません</span>`;
 
   // ---- クロスヘア（タップ／ドラッグで時刻ごとの値を表示） ----
   const svgEl = document.getElementById('salesCompareSvg');
@@ -3566,7 +3651,8 @@ function renderSalesCompareGraph() {
     crosshair.style.display = '';
     const todayVal = min <= today.nowMin ? interpAt(today.samples, min) : null;
     const avgVal = avg ? interpAt(avg.samples, min) : null;
-    tooltip.innerHTML = `${shiftMinToHM(min)}<br>今日: ${todayVal === null ? 'ー' : '¥' + Math.round(todayVal).toLocaleString()}<br>平均: ${avgVal === null ? 'ー' : '¥' + Math.round(avgVal).toLocaleString()}`;
+    const dateLines = dateCurves.map(dc => `${shiftDateLabel(dc.date)}: ¥${Math.round(interpAt(dc.samples, min)).toLocaleString()}`).join('<br>');
+    tooltip.innerHTML = `${shiftMinToHM(min)}<br>今日: ${todayVal === null ? 'ー' : '¥' + Math.round(todayVal).toLocaleString()}<br>平均: ${avgVal === null ? 'ー' : '¥' + Math.round(avgVal).toLocaleString()}${dateLines ? '<br>' + dateLines : ''}`;
     tooltip.style.display = '';
     const wrapRect = wrap.getBoundingClientRect();
     const leftPx = (px / W) * wrapRect.width;
@@ -3574,11 +3660,12 @@ function renderSalesCompareGraph() {
   };
   const hideCrosshair = () => { crosshair.style.display = 'none'; tooltip.style.display = 'none'; };
   let dragging = false;
-  wrap.addEventListener('pointerdown', e => { dragging = true; updateCrosshair(e.clientX); });
-  wrap.addEventListener('pointermove', e => { if (dragging) updateCrosshair(e.clientX); });
-  wrap.addEventListener('pointerup', hideCrosshair);
-  wrap.addEventListener('pointerleave', hideCrosshair);
-  wrap.addEventListener('pointercancel', hideCrosshair);
+  // 再描画のたびに呼ばれるため、addEventListenerでの重複登録を避けてonXXXで1つだけ保持する
+  wrap.onpointerdown = e => { dragging = true; updateCrosshair(e.clientX); };
+  wrap.onpointermove = e => { if (dragging) updateCrosshair(e.clientX); };
+  wrap.onpointerup = hideCrosshair;
+  wrap.onpointerleave = hideCrosshair;
+  wrap.onpointercancel = hideCrosshair;
 }
 
 // カスタム締め日（指定期間）
