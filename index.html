@@ -457,8 +457,9 @@
 
       <div class="input-group" id="plainMemoGroup">
         <label class="input-label">📝 メモ</label>
-        <textarea class="input-field" id="plainMemo" rows="2" placeholder="自由記入" style="resize:vertical;"></textarea>
+        <textarea class="input-field" id="plainMemo" rows="2" placeholder="自由記入" style="resize:vertical;" oninput="onPlainMemoInput()"></textarea>
         <input type="hidden" id="plainPaxGender" value="">
+        <div id="plainMemoHistory" style="display:none;margin-top:8px;"></div>
       </div>
 
       <button class="btn btn-primary" onclick="saveTrip()" style="margin-top:4px;">
@@ -1232,6 +1233,9 @@ function resetGoMemo() {
 // 流し・配車の乗客の性別は入力欄を廃止したため、保存値だけを初期化する
 function resetPlainGender() {
   document.getElementById('plainPaxGender').value = '';
+  const hist = document.getElementById('plainMemoHistory');
+  hist.style.display = 'none';
+  hist.innerHTML = '';
 }
 
 // 名前入力中に過去のGO乗車履歴（日付・乗降場所）を候補表示。
@@ -1294,6 +1298,58 @@ function applyGoPaxHistory(id) {
   showToast(`前回: ${t.date.split('-').slice(1).map(n=>parseInt(n)).join('/')} ${t.pickup||''} → ${t.dropoff||''}`);
 }
 
+// 流し・配車はメモが自由記入のため、括弧書きより前の部分を名前とみなして過去の乗車履歴を探す。
+// GO・流し・配車をまたいで、同じ名前のお客さんの記録を候補に出す
+function onPlainMemoInput() {
+  const q = parsePaxText(document.getElementById('plainMemo').value).name.trim();
+  const hist = document.getElementById('plainMemoHistory');
+  if (!q) { hist.style.display = 'none'; hist.innerHTML = ''; return; }
+
+  const allMatches = getTrips()
+    .filter(t => { const n = getPaxName(t); return n && n.startsWith(q); })
+    .sort((a,b) => (b.date + (b.pickupTime||'')).localeCompare(a.date + (a.pickupTime||'')));
+
+  if (allMatches.length === 0) { hist.style.display = 'none'; hist.innerHTML = ''; return; }
+
+  const totalFare = allMatches.reduce((s,t) => s + getTripFare(t), 0);
+  const shown = allMatches.slice(0, 5);
+  const restCount = allMatches.length - shown.length;
+
+  const summary = `<div style="font-size:12px;font-weight:700;color:var(--primary);margin-bottom:4px;">過去${allMatches.length}回のご利用（合計¥${totalFare.toLocaleString()}）</div>`;
+  const rows = shown.map(t => {
+    const [,mm,dd] = t.date.split('-');
+    const dow = ['日','月','火','水','木','金','土'][new Date(t.date + 'T00:00:00').getDay()];
+    const fare = getTripFare(t);
+    return `
+      <div class="pax-history-item" onclick="applyPlainMemoHistory(${t.id})">
+        <span class="ph-date">${parseInt(mm)}/${parseInt(dd)}(${dow}) ${t.pickupTime||''}</span> ${formatPaxLabel(t)}　<b>¥${fare.toLocaleString()}</b>
+        <div class="ph-route">${t.pickup||'?'} → ${t.dropoff||'?'}</div>
+      </div>
+    `;
+  }).join('');
+  const more = restCount > 0
+    ? `<div style="text-align:center;font-size:11px;color:var(--muted);margin-top:4px;">ほか${restCount}件</div>`
+    : '';
+
+  hist.innerHTML = summary + rows + more;
+  hist.style.display = 'block';
+}
+function applyPlainMemoHistory(id) {
+  const t = getTrips().find(x => x.id === id);
+  if (!t) return;
+  let text;
+  if (t.tripType === 'GO' && t.paxName) {
+    const parts = [t.paxGender, t.paxAge].filter(Boolean).join('　');
+    text = parts ? `${t.paxName}（${parts}）` : t.paxName;
+  } else {
+    text = t.memo || '';
+  }
+  document.getElementById('plainMemo').value = text;
+  // 履歴は閉じずに、選んだ内容で絞り込み直して表示したままにする
+  onPlainMemoInput();
+  showToast(`前回: ${t.date.split('-').slice(1).map(n=>parseInt(n)).join('/')} ${t.pickup||''} → ${t.dropoff||''}`);
+}
+
 // ==================== 乗車/降車場所の予測変換 ====================
 // 過去の乗車場所・降車場所を1つの候補プールとして扱い、一致したものを
 // 使用回数の多い順（同数なら直近利用順）に並べて表示する
@@ -1332,6 +1388,7 @@ const PLACE_NAME_READING_HINT = {
   '勝岡町':'か', '藤原町':'ふ', '藤原':'ふ', '北藤原町':'き', '春日町':'か', '室町':'む',
   '真砂町':'ま', '土橋町':'どばし', '竹原町':'た', '針田町':'は', '若草町':'わ', '木屋町':'き',
   '緑町':'み', '鉄炮町':'て', '清水町':'し', '姫原':'ひ',
+  '東温市牛渕':'と', '別府町':'へ', '祓川':'は', '竹原':'た', '内浜町':'う', '市坪南':'い', '鴨川':'か',
 };
 
 // 特定のひらがな入力に対して誤って候補に出てしまう地名を除外する対応表（ユーザー指摘分）。
@@ -1898,7 +1955,9 @@ function updateTodaySummary() {
   const totalWorkMin = scheduleResult ? scheduleResult.allMin : 0;
   const hourlyWage = totalWorkMin > 0 ? Math.round(totalExTax / (totalWorkMin / 60) * 0.5) : null;
 
-  const totalUncollected = trips.reduce((s,t) => s + (t.uncollectedFare||0), 0);
+  // 未収額に含めるのは支払方法が現金以外の記録のみ。障害者割引で現金払いの記録に
+  // 付いた未収額（自治体等への後日精算分）はここには含めない
+  const totalUncollected = trips.filter(t => (t.payMethod||'現金') !== '現金').reduce((s,t) => s + (t.uncollectedFare||0), 0);
   const totalTip = trips.reduce((s,t) => s + (t.tip||0), 0);
   const goCount = trips.filter(t => (t.tripType||'流し') === 'GO').length;
   const totalPax = trips.reduce((s,t) => s + (t.passengers||1), 0);
@@ -3424,16 +3483,20 @@ function shiftMinToHM(min) {
 }
 // 1日分の乗降記録を「降車時刻ごとの累計営収額（税抜）」の階段グラフの折れ点にする
 function buildDayCumulative(date) {
+  // exTaxは10円単位への切り捨てのため、1件ごとに丸めてから足すと合計が本来の
+  // 「その日の営収額」（税込合計をまとめて丸めたもの）とずれてしまう。
+  // そのため税込のまま累計し、各時点でまとめて丸めることで、最終値が
+  // タイムラインの「この日の営収額」と必ず一致するようにする。
   const sorted = getTrips().filter(t => t.date === date && t.dropoffTime)
-    .map(t => ({ min: Math.min(minutesFromShiftStart(t.dropoffTime), GRAPH_DAY_SPAN_MIN), amt: exTax(getTripFare(t)) }))
+    .map(t => ({ min: Math.min(minutesFromShiftStart(t.dropoffTime), GRAPH_DAY_SPAN_MIN), amt: getTripFare(t) }))
     .sort((a, b) => a.min - b.min);
   const points = [];
-  let running = 0;
+  let runningRaw = 0;
   sorted.forEach(p => {
-    running += p.amt;
+    runningRaw += p.amt;
     const lastPt = points[points.length - 1];
-    if (lastPt && lastPt.min === p.min) lastPt.cum = running;
-    else points.push({ min: p.min, cum: running });
+    if (lastPt && lastPt.min === p.min) lastPt.cum = exTax(runningRaw);
+    else points.push({ min: p.min, cum: exTax(runningRaw) });
   });
   return points;
 }
@@ -3499,10 +3562,16 @@ let salesCompareDow = 'all';
 let salesCompareSelectedDates = [];
 function switchSalesCompareDow(dow) {
   salesCompareDow = dow;
-  salesCompareSelectedDates = [];
   document.querySelectorAll('#salesCompareDowTabs .dow-tab').forEach(el => {
     el.className = 'dow-tab' + (el.dataset.dow === dow ? ' active' : '');
   });
+  // 月・水・金を選んだときは、直近のその曜日を自動でグラフに重ねて表示する（全体では選択を外す）
+  if (dow === 'all') {
+    salesCompareSelectedDates = [];
+  } else {
+    const options = getSalesCompareDateOptions();
+    salesCompareSelectedDates = options.length ? [options[0]] : [];
+  }
   renderSalesCompareGraph();
 }
 function toggleSalesCompareDate(date) {
