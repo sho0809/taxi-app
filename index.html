@@ -1624,6 +1624,7 @@ function toggleDisabilityDiscount() {
   document.getElementById('disabilityUncollectedRow').style.display = disabilityDiscountOn ? '' : 'none';
   if (!disabilityDiscountOn) document.getElementById('disabilityUncollectedAmount').value = '';
   updateDisabilityFareDisplay();
+  updateFareDisplay();
 }
 
 // 人員（男性・女性ボタンをタップするたびに人数が増える。5でリセットして0に戻る）。
@@ -1724,8 +1725,9 @@ function updateMaskedFareDisplay(inputId, dispId, suffix) {
   disp.style.top = `${input.offsetTop + parseFloat(cs.borderTopWidth) + parseFloat(cs.paddingTop)}px`;
   disp.style.height = `${input.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom)}px`;
 }
-// 料金（現金）は下2桁「00」を固定
-function updateFareDisplay() { updateMaskedFareDisplay('fareAmount', 'fareDisplay', '00'); }
+// 料金（現金）は下2桁「00」を固定。ただし障害者割引（障割）を使うときは、
+// 割引後の端数が10円単位になることが多いため、下1桁「0」のみ固定に切り替える
+function updateFareDisplay() { updateMaskedFareDisplay('fareAmount', 'fareDisplay', disabilityDiscountOn ? '0' : '00'); }
 // 障害者割引の未収額は下1桁「0」のみ固定（料金より細かい単位で記入することが多いため）
 function updateDisabilityFareDisplay() { updateMaskedFareDisplay('disabilityUncollectedAmount', 'disabilityFareDisplay', '0'); }
 
@@ -1763,8 +1765,9 @@ function saveTrip() {
     return;
   }
 
-  // 料金は必ず100円単位のため、下2桁の「00」は入力不要（例：「15」→1500円）
-  const fareAmount = (parseInt(fareRaw) || 0) * 100;
+  // 料金は通常100円単位のため下2桁の「00」は入力不要（例：「15」→1500円）。
+  // 障割使用時は10円単位になることが多いため下1桁の「0」のみ固定（例：「150」→1500円）
+  const fareAmount = (parseInt(fareRaw) || 0) * (disabilityDiscountOn ? 10 : 100);
   const cashFare = payMethod === '現金' ? fareAmount : 0;
   // 障害者割引: 現金払いでも、別途未収額（割引分）を上乗せできる。下1桁「0」を固定にしているため×10する
   const disabilityAmount = disabilityDiscountOn ? (parseInt(document.getElementById('disabilityUncollectedAmount').value) || 0) * 10 : 0;
