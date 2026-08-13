@@ -50,7 +50,7 @@
 
   /* Bottom nav */
   .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: white; border-top: 1px solid var(--border); display: flex; z-index: 200; padding-bottom: var(--safe-bottom); box-shadow: 0 -2px 12px rgba(0,0,0,0.1); }
-  .nav-btn { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 14px 2px 10px; gap: 4px; background: none; border: none; color: var(--muted); font-size: 9.5px; font-weight: 500; cursor: pointer; transition: color 0.15s; white-space: nowrap; }
+  .nav-btn { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 10px 2px 18px; gap: 4px; background: none; border: none; color: var(--muted); font-size: 9.5px; font-weight: 500; cursor: pointer; transition: color 0.15s; white-space: nowrap; }
   .nav-btn.active { color: var(--primary); }
   .nav-btn svg { width: 24px; height: 24px; }
 
@@ -330,7 +330,10 @@
   <div class="date" id="headerDate"></div>
   <div class="header-row">
     <h1 id="headerSales">¥0</h1>
-    <button class="reload-btn" id="reloadBtn" onclick="triggerReload()">↻ 更新</button>
+    <div style="display:flex;gap:6px;align-items:center;">
+      <button class="reload-btn" id="adviceBtn" onclick="openAdviceModal()">💡 アドバイス</button>
+      <button class="reload-btn" id="reloadBtn" onclick="triggerReload()">↻ 更新</button>
+    </div>
   </div>
 </div>
 
@@ -512,7 +515,7 @@
     <div id="statMain">
       <div style="display:flex;gap:6px;align-items:center;margin-bottom:8px;">
         <button class="btn btn-gray btn-sm" id="statPeriodPrevBtn" onclick="statPeriodPrev()" style="padding:10px 16px;font-size:20px;line-height:1;">‹</button>
-        <div style="flex:1;text-align:center;font-size:15px;font-weight:700;color:var(--text);" id="statPeriodLabel"></div>
+        <div style="flex:1;text-align:center;font-size:15px;font-weight:700;color:var(--text);" id="statPeriodLabel" onclick="openPeriodEditModal()"></div>
         <button class="btn btn-gray btn-sm" id="statPeriodNextBtn" onclick="statPeriodNext()" style="padding:10px 16px;font-size:20px;line-height:1;">›</button>
       </div>
       <div class="stat-grid">
@@ -595,9 +598,9 @@
         </div>
         <button class="btn btn-gray btn-sm" onclick="schedNavNext()" id="schedNavNextBtn" style="padding:10px 16px;font-size:20px;line-height:1;">›</button>
       </div>
-      <div style="text-align:center;margin-top:10px;">
+      <div style="text-align:center;margin-top:10px;cursor:pointer;" onclick="openDaySalesEditModal()">
         <div style="font-size:26px;font-weight:800;color:var(--success);" id="schedDaySales">¥0</div>
-        <div style="font-size:12px;color:var(--muted);margin-top:2px;">この日の営収額</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:2px;">この日の営収額 ✏️<span id="schedDaySalesEdited" style="display:none;color:var(--primary);font-weight:700;">（修正済み）</span></div>
       </div>
       <div class="sched-tab-bar">
         <button class="sched-tab" onclick="openScheduleGraph()">グラフ</button>
@@ -737,6 +740,63 @@
         <button class="btn btn-primary" onclick="saveSchedItemEdit()">保存</button>
       </div>
       <button class="btn btn-danger" style="margin-top:8px;" onclick="deleteSchedItemEdit()">🗑 削除</button>
+    </div>
+  </div>
+</div>
+
+<!-- この日の営収額 手動修正モーダル -->
+<div class="modal-overlay" id="daySalesEditModal" onclick="if(event.target===this) closeDaySalesEditModal()">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">この日の営収額を修正</div>
+    <div id="daySalesEditDateLabel" style="text-align:center;font-size:13px;color:var(--muted);margin-top:-8px;margin-bottom:10px;"></div>
+    <div class="input-group">
+      <label class="input-label">💴 営収額（税抜）</label>
+      <div class="fare-wrap">
+        <span class="yen">¥</span>
+        <input class="input-field" id="daySalesEditAmount" type="number" inputmode="numeric" placeholder="0">
+      </div>
+    </div>
+    <div id="daySalesEditAutoNote" style="font-size:12px;color:var(--muted);margin-top:6px;"></div>
+    <div class="btn-row" style="margin-top:14px;">
+      <button class="btn btn-gray" onclick="closeDaySalesEditModal()">キャンセル</button>
+      <button class="btn btn-primary" onclick="saveDaySalesEdit()">保存</button>
+    </div>
+    <button class="btn" style="margin-top:8px;background:var(--bg);color:var(--muted);" id="daySalesEditResetBtn" onclick="resetDaySalesEdit()">自動計算に戻す</button>
+  </div>
+</div>
+
+<!-- 統計「月」タブの期間 手動調整モーダル -->
+<div class="modal-overlay" id="periodEditModal" onclick="if(event.target===this) closePeriodEditModal()">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">集計期間を修正</div>
+    <div class="input-row">
+      <div class="input-group">
+        <label class="input-label">開始日</label>
+        <input class="input-field" id="periodEditStart" type="date">
+      </div>
+      <div class="input-group">
+        <label class="input-label">終了日</label>
+        <input class="input-field" id="periodEditEnd" type="date">
+      </div>
+    </div>
+    <div style="font-size:12px;color:var(--muted);margin-top:6px;">前後の期間の境目もあわせて自動調整されます</div>
+    <div class="btn-row" style="margin-top:14px;">
+      <button class="btn btn-gray" onclick="closePeriodEditModal()">キャンセル</button>
+      <button class="btn btn-primary" onclick="savePeriodEdit()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- アドバイス モーダル -->
+<div class="modal-overlay" id="adviceModal" onclick="if(event.target===this) closeAdviceModal()">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">💡 今日のアドバイス</div>
+    <div id="adviceContent" style="display:flex;flex-direction:column;gap:10px;"></div>
+    <div class="btn-row" style="margin-top:16px;">
+      <button class="btn btn-primary" onclick="closeAdviceModal()">閉じる</button>
     </div>
   </div>
 </div>
@@ -1052,11 +1112,19 @@ function triggerReload() {
   });
 }
 
+// 非負整数の割り算を、浮動小数点誤差を一切出さずに切り捨てる。
+// a % b と (a - r) は整数同士の演算なので誤差が出ず、割り切れる数だけを
+// 11で割るため IEEE754 の除算も必ず厳密な整数になる
+function floorDivInt(a, b) {
+  const r = a % b;
+  return (a - r) / b;
+}
 // 消費税抜き（10円単位切り捨て）
-// amount/1.1 は浮動小数点誤差で1499.9999...のようにわずかに小さくなることがあり、
-// そのままfloorすると10円単位で本来より少なく表示されるためepsilonで補正する
+// amount/1.1/10 = amount/11 のため、floorDivIntで整数演算のみで計算し、
+// amount/1.1のような浮動小数点の割り算を経由しないことで、数回に1回程度発生していた
+// 10円のずれ（連続する2回の浮動小数点除算がそれぞれ誤差を持ちうるために起きていた）を無くす
 function exTax(amount) {
-  return Math.floor((amount / 1.1 + 1e-6) / 10) * 10;
+  return floorDivInt(amount, 11) * 10;
 }
 
 // ==================== GPS / LOCATION ====================
@@ -1956,8 +2024,9 @@ function updateTodaySummary() {
   const sumF   = arr => arr.reduce((s,t) => s + getTripFare(t), 0);
 
   const totalSales = sumF(trips);
-  const totalExTax = exTax(totalSales);
-  const avgExTax = trips.length ? Math.floor(totalExTax / trips.length / 10) * 10 : 0;
+  // 営収額はタイムラインでの手動修正（dayTotalExTax）を優先して使い、常に一致させる
+  const totalExTax = dayTotalExTax(today);
+  const avgExTax = trips.length ? floorDivInt(totalExTax, trips.length * 10) * 10 : 0;
   const waitMin = trips.length === 0 ? 0 : calcWaitMinutes(today, getScheduleEndTime(today));
 
   // 実車時間（乗車〜降車の合計）
@@ -2058,9 +2127,8 @@ function renderHistory() {
 
   const dayTrips = trips.filter(t => t.date === histCurrentDate)
                         .sort((a,b)=>tripSortKey(b) - tripSortKey(a));
-  const dayTotal = dayTrips.reduce((s,t)=>s+(t.cashFare!==undefined?t.cashFare+(t.uncollectedFare||0):(t.fare||0)),0);
   document.getElementById('histNavSub').textContent = dayTrips.length > 0
-    ? `${dayTrips.length}件 ／ ¥${exTax(dayTotal).toLocaleString()}`
+    ? `${dayTrips.length}件 ／ ¥${dayTotalExTax(histCurrentDate).toLocaleString()}`
     : '記録なし';
 
   // 前後ナビ ボタン状態
@@ -2410,6 +2478,7 @@ function fmtDate(str) {
 // ==================== STATS ====================
 let currentStatTab = 'day';
 let statPeriodOffset = 0; // 0=現在の期間、1つ戻るごとに+1
+let currentStatPeriod = null; // 月別タブで現在表示中の締め期間（期間タップでの編集用）
 
 function switchStatTab(tab) {
   currentStatTab = tab;
@@ -3042,6 +3111,8 @@ function closeSchedItemEdit() {
   document.getElementById('schedItemEditModal').classList.remove('open');
   schedItemEditTarget = null;
   schedQuickPlaceMode = false;
+  // 地名を選んで自動保存・自動で閉じたときに、キーボードが開いたまま残らないようにする
+  if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
 }
 function saveSchedItemEdit() {
   if (!schedItemEditTarget) return;
@@ -3068,6 +3139,43 @@ function deleteSchedItemEdit() {
   closeSchedItemEdit();
   if (kind === 'break') deleteScheduleBreak(index);
   else deleteScheduleFuel(index);
+}
+
+// この日の営収額を手動で修正する（運行記録では説明のつかない端数差などを補正するため）。
+// 保存した修正値はヘッダー・サマリー・統計・履歴すべてでdayTotalExTax経由で使われる
+function openDaySalesEditModal() {
+  const date = schedCurrentDate;
+  const d = new Date(date + 'T00:00:00');
+  const dow = ['日','月','火','水','木','金','土'][d.getDay()];
+  document.getElementById('daySalesEditDateLabel').textContent = `${d.getMonth()+1}月${d.getDate()}日（${dow}）`;
+  document.getElementById('daySalesEditAmount').value = dayTotalExTax(date);
+  const override = getDaySalesOverride(date);
+  document.getElementById('daySalesEditAutoNote').textContent = override !== null
+    ? `運行記録からの自動計算：¥${calcDayTotalExTax(date).toLocaleString()}`
+    : '運行記録から自動計算した金額です';
+  document.getElementById('daySalesEditResetBtn').style.display = override !== null ? '' : 'none';
+  document.getElementById('daySalesEditModal').classList.add('open');
+}
+function closeDaySalesEditModal() {
+  document.getElementById('daySalesEditModal').classList.remove('open');
+}
+function saveDaySalesEdit() {
+  const date = schedCurrentDate;
+  const val = parseInt(document.getElementById('daySalesEditAmount').value);
+  if (isNaN(val) || val < 0) { showToast('正しい金額を入力してください'); return; }
+  setDaySalesOverride(date, val);
+  closeDaySalesEditModal();
+  showToast('この日の営収額を修正しました ✓');
+  renderSchedule();
+  updateHeader();
+}
+function resetDaySalesEdit() {
+  const date = schedCurrentDate;
+  setDaySalesOverride(date, null);
+  closeDaySalesEditModal();
+  showToast('自動計算の金額に戻しました ✓');
+  renderSchedule();
+  updateHeader();
 }
 
 // 同じGO乗客の過去の乗車回数・履歴を取得（名前が完全一致するもの）
@@ -3270,9 +3378,11 @@ function renderSchedule() {
   document.getElementById('schedNavPrevBtn').disabled = !allDates.some(dt => dt < date);
   document.getElementById('schedNavNextBtn').disabled = date >= todayStr();
 
-  // この日の営収額
+  // この日の営収額（タップして手動修正できる。修正済みならその値を優先）
   const daySales = getTrips().filter(t => t.date === date).reduce((s,t) => s + getTripFare(t), 0);
-  document.getElementById('schedDaySales').textContent = `¥${exTax(daySales).toLocaleString()}`;
+  const daySalesEx = dayTotalExTax(date);
+  document.getElementById('schedDaySales').textContent = `¥${daySalesEx.toLocaleString()}`;
+  document.getElementById('schedDaySalesEdited').style.display = getDaySalesOverride(date) !== null ? '' : 'none';
   renderSchedTabs();
 
   const result = computeScheduleSegments(date);
@@ -3439,8 +3549,7 @@ function renderScheduleGraph() {
     const label = `${d.getMonth()+1}/${d.getDate()}(${dow})`;
     const labelStyle = isToday ? 'color:var(--primary);font-weight:800;' : 'color:var(--muted);';
 
-    const daySalesRaw = getTrips().filter(t => t.date === date).reduce((s,t) => s + getTripFare(t), 0);
-    const daySalesLabel = `¥${exTax(daySalesRaw).toLocaleString()}`;
+    const daySalesLabel = `¥${dayTotalExTax(date).toLocaleString()}`;
 
     const result = computeScheduleSegments(date);
     const barsHTML = result ? result.segments.map(seg => {
@@ -3592,9 +3701,37 @@ function shiftDateLabel(date) {
   const d = new Date(date + 'T00:00:00');
   return `${d.getMonth() + 1}/${d.getDate()}(${['日','月','火','水','木','金','土'][d.getDay()]})`;
 }
-// その日の営収額（税抜）合計。日付チップに日付とあわせて表示する
-function dayTotalExTax(date) {
+// その日の営収額（税抜）合計を、運行記録から自動計算する（手動修正前の本来の値）
+function calcDayTotalExTax(date) {
   return exTax(getTrips().filter(t => t.date === date).reduce((s, t) => s + getTripFare(t), 0));
+}
+// タイムラインで「この日の営収額」を手動で調整できるようにするための修正値。
+// 日付ごとに保存し、以後この日の営収額はヘッダー・サマリー・統計・履歴すべてで
+// この値を優先して使う（未設定ならcalcDayTotalExTaxの自動計算どおり）
+const DAY_SALES_OVERRIDE_KEY = 'taxi_day_sales_override';
+function getDaySalesOverrides() {
+  try { return JSON.parse(localStorage.getItem(DAY_SALES_OVERRIDE_KEY) || '{}'); } catch(e) { return {}; }
+}
+function getDaySalesOverride(date) {
+  const v = getDaySalesOverrides()[date];
+  return (v === undefined || v === null) ? null : v;
+}
+function setDaySalesOverride(date, value) {
+  const data = getDaySalesOverrides();
+  if (value === null) delete data[date];
+  else data[date] = value;
+  localStorage.setItem(DAY_SALES_OVERRIDE_KEY, JSON.stringify(data));
+}
+// その日の営収額（税抜）合計。日付チップ・ヘッダー・サマリー・統計・履歴すべてで
+// 共通して使う。手動修正済みならその値、なければ自動計算した値を返す
+function dayTotalExTax(date) {
+  const override = getDaySalesOverride(date);
+  return override !== null ? override : calcDayTotalExTax(date);
+}
+// 複数日をまたぐ合計（週・月の統計）でも、日ごとの手動修正を正しく反映するため、
+// 税込合計をまとめて丸めるのではなく、1日ずつdayTotalExTaxを求めてから合計する
+function sumDayTotalExTax(dates) {
+  return [...new Set(dates)].reduce((s, d) => s + dayTotalExTax(d), 0);
 }
 
 // ---- 曜日フィルター・個別日の重ね表示 ----
@@ -3646,6 +3783,99 @@ function interpAt(samples, min) {
     }
   }
   return samples[samples.length - 1].val;
+}
+
+// ==================== アドバイス ====================
+// 過去の休憩開始時刻（当日以外）を、シフト開始からの経過分の配列で返す
+function getHistoricalBreakStartMinutes() {
+  let data;
+  try { data = JSON.parse(localStorage.getItem(BREAKS_KEY) || '{}'); } catch(e) { data = {}; }
+  const today = todayStr();
+  const mins = [];
+  Object.keys(data).forEach(date => {
+    if (date === today) return;
+    (data[date] || []).forEach(b => { if (b.start) mins.push(minutesFromShiftStart(b.start)); });
+  });
+  return mins;
+}
+// 過去の統計から、今の時点でのペース・時給・休憩タイミングを踏まえた簡単なアドバイスを組み立てる
+function generateAdvice() {
+  const lines = [];
+  const today = todayStr();
+  const nowMin = nowMinutesIntoShift();
+  const tripsToday = getTrips().filter(t => t.date === today).length;
+
+  if (tripsToday === 0 && nowMin === 0) {
+    lines.push({ icon: '👋', text: 'まだ本日の記録がありません。今日も安全運転で頑張りましょう！' });
+    return lines;
+  }
+
+  // ペース比較（営収額比較グラフと同じ計算）
+  const todayCurve = buildTodayCurve();
+  const avgCurve = buildAverageCurve(today, 'all');
+  if (avgCurve) {
+    const avgAtNow = interpAt(avgCurve.samples, todayCurve.nowMin);
+    if (avgAtNow > 0) {
+      const diffPct = Math.round((todayCurve.nowVal - avgAtNow) / avgAtNow * 100);
+      if (diffPct >= 15) lines.push({ icon: '🎉', text: `いつもよりペースが${diffPct}%速いです！とても順調です、素晴らしい調子です👏` });
+      else if (diffPct >= 0) lines.push({ icon: '👍', text: 'いつも通り、またはそれ以上の良いペースです。この調子で頑張りましょう！' });
+      else if (diffPct >= -15) lines.push({ icon: '💪', text: `いつもより少しペースが控えめです（平均比${diffPct}%）。焦らず確実な乗車を積み重ねていきましょう。` });
+      else lines.push({ icon: '🙂', text: `今日はペースがゆっくりめです（平均比${diffPct}%）。無理せず、実車率の高いエリアを意識してみるのも良いかもしれません。` });
+    }
+  } else {
+    lines.push({ icon: '📊', text: '比較できる過去の記録がまだ少ないため、データが増えるとより詳しいアドバイスができます。' });
+  }
+
+  // 時給（サマリー・タイムラインと同じ計算式）
+  const hourlyDaySales = getTrips().filter(t => t.date === today).reduce((s,t) => s + getTripFare(t), 0);
+  const scheduleResult = computeScheduleSegments(today);
+  const totalWorkMin = scheduleResult ? scheduleResult.allMin : 0;
+  const hourlyWage = totalWorkMin > 0 ? Math.round(exTax(hourlyDaySales) / (totalWorkMin / 60) * 0.5) : null;
+  if (hourlyWage !== null) {
+    if (hourlyWage >= 1200) lines.push({ icon: '💰', text: `現在の時給は¥${hourlyWage.toLocaleString()}と好調です！` });
+    else if (hourlyWage >= 1000) lines.push({ icon: '💰', text: `現在の時給は¥${hourlyWage.toLocaleString()}です。` });
+    else lines.push({ icon: '💰', text: `現在の時給は¥${hourlyWage.toLocaleString()}です。待機場所や時間帯を少し変えてみるのも一つの手です。` });
+  }
+
+  // 休憩タイミング
+  const todayBreaks = getScheduleBreaks(today);
+  const hasOngoingBreak = todayBreaks.some(b => !b.end);
+  if (hasOngoingBreak) {
+    lines.push({ icon: '☕', text: 'ただいま休憩中です。ゆっくり休んで、リフレッシュしてから再開しましょう。' });
+  } else {
+    const finishedBreaks = todayBreaks.filter(b => b.end);
+    const lastBreakEndMin = finishedBreaks.length ? Math.max(...finishedBreaks.map(b => minutesFromShiftStart(b.end))) : null;
+    const sinceMin = lastBreakEndMin !== null ? (nowMin - lastBreakEndMin) : nowMin;
+    const histMins = getHistoricalBreakStartMinutes().sort((a,b) => a - b);
+    const typicalBreakMin = histMins.length ? histMins[Math.floor(histMins.length / 2)] : null;
+
+    if (todayBreaks.length === 0 && typicalBreakMin !== null && nowMin >= typicalBreakMin) {
+      lines.push({ icon: '☕', text: `いつもは${shiftMinToHM(typicalBreakMin)}頃に休憩を取っています。まだ今日は休憩していないので、そろそろひと休みしてはいかがですか？` });
+    } else if (sinceMin >= 240) {
+      lines.push({ icon: '☕', text: `休憩なしで${Math.floor(sinceMin/60)}時間ほど経過しています。無理せず、休憩を取ってリフレッシュしましょう。` });
+    } else if (todayBreaks.length > 0) {
+      lines.push({ icon: '✅', text: '休憩もしっかり取れています。良いペース配分です。' });
+    }
+  }
+
+  // ねぎらい
+  if (tripsToday >= 10) lines.push({ icon: '🌟', text: `本日はすでに${tripsToday}件の乗車、お疲れさまです！` });
+  else if (tripsToday > 0) lines.push({ icon: '🚕', text: `本日${tripsToday}件の乗車、お疲れさまです。安全運転でいきましょう。` });
+
+  return lines;
+}
+function openAdviceModal() {
+  const lines = generateAdvice();
+  document.getElementById('adviceContent').innerHTML = lines.map(l => `
+    <div style="display:flex;gap:10px;align-items:flex-start;background:var(--bg);border-radius:10px;padding:10px 12px;">
+      <div style="font-size:20px;flex-shrink:0;">${l.icon}</div>
+      <div style="font-size:14px;line-height:1.5;color:var(--text);">${l.text}</div>
+    </div>
+  `).join('');
+  document.getElementById('adviceModal').classList.add('open');
+}
+function closeAdviceModal() {
+  document.getElementById('adviceModal').classList.remove('open');
 }
 
 function renderSalesCompareGraph() {
@@ -3808,9 +4038,31 @@ const CUSTOM_PERIODS = [
   ['2026-11-16','2026-12-15'],
 ];
 
-function getBillingPeriod(dateStr) {
+// 統計「月」タブの期間ラベル（例：7/19〜8/17）をタップして手動調整した結果を保存する。
+// 実際の締め日はカレンダー通りにいかないことがあるための補正用
+const USER_PERIODS_KEY = 'taxi_user_periods';
+function getUserPeriods() {
+  try { return JSON.parse(localStorage.getItem(USER_PERIODS_KEY) || '[]'); } catch(e) { return []; }
+}
+function saveUserPeriods(periods) {
+  localStorage.setItem(USER_PERIODS_KEY, JSON.stringify(periods));
+}
+function addDaysStr(dateStr, delta) {
+  const d = new Date(dateStr + 'T00:00:00');
+  d.setDate(d.getDate() + delta);
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+}
+
+function getBillingPeriod(dateStr, overridePeriods) {
   const fmt   = str => { const d = new Date(str+'T00:00:00'); return `${d.getMonth()+1}/${d.getDate()}`; };
   const toStr = dt  => dt.toISOString().slice(0, 10);
+
+  // 手動調整した期間を最優先
+  for (const p of (overridePeriods || getUserPeriods())) {
+    if (dateStr >= p.startStr && dateStr <= p.endStr) {
+      return { startStr: p.startStr, endStr: p.endStr, label: `${fmt(p.startStr)}〜${fmt(p.endStr)}` };
+    }
+  }
 
   // カスタム期間を優先
   for (const [s, e] of CUSTOM_PERIODS) {
@@ -3836,6 +4088,47 @@ function getBillingPeriod(dateStr) {
     end   = new Date(sy, sm - 1, 15);
   }
   return { startStr: toStr(start), endStr: toStr(end), label: `${fmt(toStr(start))}〜${fmt(toStr(end))}` };
+}
+
+// 統計「月」タブの期間ラベルをタップして開始日・終了日を手動調整する
+function openPeriodEditModal() {
+  if (currentStatTab !== 'month' || !currentStatPeriod) return;
+  document.getElementById('periodEditStart').value = currentStatPeriod.startStr;
+  document.getElementById('periodEditEnd').value = currentStatPeriod.endStr;
+  document.getElementById('periodEditModal').classList.add('open');
+}
+function closePeriodEditModal() {
+  document.getElementById('periodEditModal').classList.remove('open');
+}
+function savePeriodEdit() {
+  const s = document.getElementById('periodEditStart').value;
+  const e = document.getElementById('periodEditEnd').value;
+  if (!s || !e || s > e) { showToast('開始日は終了日より前にしてください'); return; }
+  if (!currentStatPeriod) return;
+  const old = currentStatPeriod;
+  // 再編集のときは、今表示中の期間そのもの（前回の調整結果）をまず取り除いておく
+  let periods = getUserPeriods().filter(p => !(p.startStr === old.startStr && p.endStr === old.endStr));
+  const upsert = (startStr, endStr) => {
+    periods = periods.filter(p => p.startStr !== startStr);
+    periods.push({ startStr, endStr });
+  };
+  // 開始日を変えた場合、前の期間（今回の変更前の境目のすぐ前日で特定する）の終了日を
+  // 新しい開始日の前日にそろえ、隙間や重複を防ぐ
+  if (s !== old.startStr) {
+    const prevPeriod = getBillingPeriod(addDaysStr(old.startStr, -1), periods);
+    upsert(prevPeriod.startStr, addDaysStr(s, -1));
+  }
+  // 終了日を変えた場合、次の期間（変更前の境目のすぐ翌日で特定する）の開始日を
+  // 新しい終了日の翌日にそろえる
+  if (e !== old.endStr) {
+    const nextPeriod = getBillingPeriod(addDaysStr(old.endStr, 1), periods);
+    upsert(addDaysStr(e, 1), nextPeriod.endStr);
+  }
+  upsert(s, e);
+  saveUserPeriods(periods);
+  closePeriodEditModal();
+  showToast('集計期間を修正しました ✓');
+  renderStats();
 }
 
 function renderStats() {
@@ -3880,10 +4173,12 @@ function renderStats() {
     document.getElementById('statPeriodNextBtn').disabled = statPeriodOffset <= 0;
   }
 
+  let viewedDate = null;
+  currentStatPeriod = null;
   if (currentStatTab === 'day') {
     const d = new Date(today + 'T00:00:00');
     d.setDate(d.getDate() - statPeriodOffset);
-    const viewedDate = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+    viewedDate = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
     trips = allTrips.filter(t => t.date === viewedDate);
     waits = allWaits.filter(w => w.date === viewedDate);
     label = statPeriodOffset === 0 ? '本日の営収額' : fmtDate(viewedDate);
@@ -3901,14 +4196,19 @@ function renderStats() {
     document.getElementById('statPeriodLabel').textContent = `${wStartDate.getMonth()+1}/${wStartDate.getDate()}〜${wEndDate.getMonth()+1}/${wEndDate.getDate()}`;
   } else {
     const period = getShiftedBillingPeriod(statPeriodOffset);
+    currentStatPeriod = period;
     trips = allTrips.filter(t => t.date >= period.startStr && t.date <= period.endStr);
     waits = allWaits.filter(w => w.date >= period.startStr && w.date <= period.endStr);
     label = `${period.label} 売上`;
     document.getElementById('statPeriodLabel').textContent = period.label;
   }
 
-  const totalSales = trips.reduce((s,t)=>s+(t.fare||0),0);
-  const avgFare = trips.length ? Math.floor(exTax(totalSales) / trips.length / 10) * 10 : 0;
+  // 営収額は日ごとの手動修正（タイムラインでの調整）を反映するため、
+  // 税込合計をまとめて丸めるのではなく1日ずつdayTotalExTaxを合計する
+  const totalExTaxStat = currentStatTab === 'day'
+    ? dayTotalExTax(viewedDate)
+    : sumDayTotalExTax(trips.map(t => t.date));
+  const avgFare = trips.length ? floorDivInt(totalExTaxStat, trips.length * 10) * 10 : 0;
 
   // 実車時間（乗車〜降車の合計）
   const jisshaMin = trips.reduce((s,t) => {
@@ -3922,7 +4222,7 @@ function renderStats() {
     return s;
   },0);
 
-  document.getElementById('statSales').textContent = `¥${exTax(totalSales).toLocaleString()}`;
+  document.getElementById('statSales').textContent = `¥${totalExTaxStat.toLocaleString()}`;
   document.getElementById('statSalesLabel').textContent = label;
   document.getElementById('statTrips').textContent = trips.length;
   document.getElementById('statAvg').textContent = `¥${avgFare.toLocaleString()}`;
@@ -3948,14 +4248,15 @@ function renderStats() {
     allTrips.forEach(t => {
       const period = getBillingPeriod(t.date);
       const key = period.startStr;
-      if (!byGroup[key]) byGroup[key] = { total: 0, count: 0, label: period.label };
+      if (!byGroup[key]) byGroup[key] = { total: 0, count: 0, label: period.label, dates: new Set() };
       byGroup[key].total += (t.fare||0);
       byGroup[key].count++;
+      byGroup[key].dates.add(t.date);
     });
   } else {
     document.getElementById('rankingLabel').textContent = '売上ランキング（日別）';
     allTrips.forEach(t => {
-      if (!byGroup[t.date]) byGroup[t.date] = { total: 0, count: 0, label: fmtDate(t.date) };
+      if (!byGroup[t.date]) byGroup[t.date] = { total: 0, count: 0, label: fmtDate(t.date), dates: new Set([t.date]) };
       byGroup[t.date].total += (t.fare||0);
       byGroup[t.date].count++;
     });
@@ -3974,8 +4275,8 @@ function renderStats() {
   const ranked = Object.entries(byGroup).sort((a,b)=>b[1].total-a[1].total);
   const medalClasses = ['gold','silver','bronze'];
   document.getElementById('rankingList').innerHTML = ranked.length ? ranked.map(([key,r],i)=>{
-    const vEx = exTax(r.total);
-    const avgEx = Math.floor(vEx / r.count / 10) * 10;
+    const vEx = sumDayTotalExTax([...r.dates]);
+    const avgEx = floorDivInt(vEx, r.count * 10) * 10;
     const isCurrent = key === currentKey;
     // どのタブでもタップするとその日・週・月の記録を一覧できる（見た目は変えない）
     const onTap = currentStatTab === 'day'
