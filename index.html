@@ -34,8 +34,8 @@
   /* Header */
   .header { background: var(--primary); color: white; padding: 14px 18px 12px; padding-top: calc(14px + env(safe-area-inset-top, 0px)); position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
   .header-row { display: flex; justify-content: space-between; align-items: center; }
-  .header h1 { font-size: 18px; font-weight: 700; letter-spacing: -0.3px; }
-  .header .date { font-size: 12px; opacity: 0.85; margin-top: 2px; }
+  .header h1 { font-size: 22px; font-weight: 800; letter-spacing: -0.3px; }
+  .header .date { font-size: 12px; opacity: 0.85; margin-bottom: 2px; }
   .reload-btn { background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.4); border-radius: 8px; color: white; font-size: 12px; font-weight: 700; padding: 6px 10px; cursor: pointer; white-space: nowrap; transition: all 0.15s; }
   .reload-btn:active { background: rgba(255,255,255,0.35); }
   .reload-btn.loading { background: rgba(255,255,255,0.9); color: var(--primary); border-color: white; }
@@ -239,6 +239,8 @@
   /* 障害者割引: 現金払いでも未収額を別途記入できるようにするトグルボタン */
   .discount-toggle-btn { display:inline-block; margin-left:6px; font-size:11px; font-weight:700; padding:2px 8px; border-radius:10px; border:1.5px solid var(--border); background:white; color:var(--muted); cursor:pointer; vertical-align:middle; touch-action:manipulation; }
   .discount-toggle-btn.active { background:#fff3e0; border-color:#ff9800; color:#e65100; }
+  /* 料金・チップのラベル行の高さをそろえ、障割ボタンの表示有無で横のfare-wrapがずれないようにする */
+  .fare-label-row { display:flex; align-items:center; gap:6px; margin-bottom:5px; min-height:20px; }
   /* 料金は下2桁の「00」を省略して入力する。入力欄の文字は透明にしておき、
      「入力値＋00」を1つの文字列として重ねて表示することで、数字と00の間隔が
      通常の数字同士の間隔とまったく同じになるようにしている（カーソルは表示したまま） */
@@ -325,11 +327,11 @@
 
 <!-- Header -->
 <div class="header">
+  <div class="date" id="headerDate"></div>
   <div class="header-row">
-    <h1>タクシー業務管理</h1>
+    <h1 id="headerSales">¥0</h1>
     <button class="reload-btn" id="reloadBtn" onclick="triggerReload()">↻ 更新</button>
   </div>
-  <div class="date" id="headerDate"></div>
 </div>
 
 <!-- Pages -->
@@ -370,7 +372,7 @@
 
       <div class="input-row">
         <div class="input-group" style="flex:1.5;">
-          <div style="display:flex;align-items:center;gap:6px;margin-bottom:5px;">
+          <div class="fare-label-row">
             <label class="input-label" id="fareLabelMain" style="margin-bottom:0;">💴 料金（現金）</label>
             <button type="button" class="discount-toggle-btn" id="disabilityToggleBtn" onclick="toggleDisabilityDiscount()">障割</button>
           </div>
@@ -381,7 +383,9 @@
           </div>
         </div>
         <div class="input-group" style="flex:1;">
-          <label class="input-label">🎁 チップ</label>
+          <div class="fare-label-row">
+            <label class="input-label" style="margin-bottom:0;">🎁 チップ</label>
+          </div>
           <div class="fare-wrap">
             <span class="yen">¥</span>
             <input class="input-field" id="tipAmount" type="number" placeholder="0" inputmode="numeric">
@@ -392,7 +396,8 @@
         <label class="input-label">📱 未収（障害者割引）</label>
         <div class="fare-wrap">
           <span class="yen">¥</span>
-          <input class="input-field" id="disabilityUncollectedAmount" type="number" placeholder="0" inputmode="numeric">
+          <input class="input-field fare-masked" id="disabilityUncollectedAmount" type="number" placeholder="" inputmode="numeric" oninput="updateDisabilityFareDisplay()">
+          <span class="fare-display" id="disabilityFareDisplay">0</span>
         </div>
       </div>
 
@@ -1389,6 +1394,7 @@ const PLACE_NAME_READING_HINT = {
   '真砂町':'ま', '土橋町':'どばし', '竹原町':'た', '針田町':'は', '若草町':'わ', '木屋町':'き',
   '緑町':'み', '鉄炮町':'て', '清水町':'し', '姫原':'ひ',
   '東温市牛渕':'と', '別府町':'へ', '祓川':'は', '竹原':'た', '内浜町':'う', '市坪南':'い', '鴨川':'か',
+  '北井門':'き', '久万ノ台':'く', '市坪北':'い', '宮田町':'み',
 };
 
 // 特定のひらがな入力に対して誤って候補に出てしまう地名を除外する対応表（ユーザー指摘分）。
@@ -1617,6 +1623,7 @@ function toggleDisabilityDiscount() {
   document.getElementById('disabilityToggleBtn').classList.toggle('active', disabilityDiscountOn);
   document.getElementById('disabilityUncollectedRow').style.display = disabilityDiscountOn ? '' : 'none';
   if (!disabilityDiscountOn) document.getElementById('disabilityUncollectedAmount').value = '';
+  updateDisabilityFareDisplay();
 }
 
 // 人員（男性・女性ボタンをタップするたびに人数が増える。5でリセットして0に戻る）。
@@ -1701,14 +1708,14 @@ function selectPay(method) {
 }
 
 // 料金合計ヘルパー（後方互換）
-// 料金欄の表示を「入力値＋00」の1つの文字列として描画する。
-// 数字と00を同じ文字列として描くことで、間隔が通常の数字同士と完全に同じになる。
-function updateFareDisplay() {
-  const input = document.getElementById('fareAmount');
-  const disp = document.getElementById('fareDisplay');
+// 料金欄の表示を「入力値＋固定の末尾」の1つの文字列として描画する。
+// 数字と末尾を同じ文字列として描くことで、間隔が通常の数字同士と完全に同じになる。
+function updateMaskedFareDisplay(inputId, dispId, suffix) {
+  const input = document.getElementById(inputId);
+  const disp = document.getElementById(dispId);
   if (!input || !disp) return;
   const cs = getComputedStyle(input);
-  disp.textContent = `${input.value}00`;
+  disp.textContent = `${input.value}${suffix}`;
   disp.style.font = cs.font;
   disp.style.letterSpacing = cs.letterSpacing;
   // 入力欄の文字と同じ位置・高さに重ねる
@@ -1717,6 +1724,10 @@ function updateFareDisplay() {
   disp.style.top = `${input.offsetTop + parseFloat(cs.borderTopWidth) + parseFloat(cs.paddingTop)}px`;
   disp.style.height = `${input.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom)}px`;
 }
+// 料金（現金）は下2桁「00」を固定
+function updateFareDisplay() { updateMaskedFareDisplay('fareAmount', 'fareDisplay', '00'); }
+// 障害者割引の未収額は下1桁「0」のみ固定（料金より細かい単位で記入することが多いため）
+function updateDisabilityFareDisplay() { updateMaskedFareDisplay('disabilityUncollectedAmount', 'disabilityFareDisplay', '0'); }
 
 function getTripFare(t) {
   if (t.cashFare !== undefined || t.uncollectedFare !== undefined) {
@@ -1755,8 +1766,8 @@ function saveTrip() {
   // 料金は必ず100円単位のため、下2桁の「00」は入力不要（例：「15」→1500円）
   const fareAmount = (parseInt(fareRaw) || 0) * 100;
   const cashFare = payMethod === '現金' ? fareAmount : 0;
-  // 障害者割引: 現金払いでも、別途未収額（割引分）を上乗せできる
-  const disabilityAmount = disabilityDiscountOn ? (parseInt(document.getElementById('disabilityUncollectedAmount').value) || 0) : 0;
+  // 障害者割引: 現金払いでも、別途未収額（割引分）を上乗せできる。下1桁「0」を固定にしているため×10する
+  const disabilityAmount = disabilityDiscountOn ? (parseInt(document.getElementById('disabilityUncollectedAmount').value) || 0) * 10 : 0;
   const uncollectedFare = (payMethod !== '現金' ? fareAmount : 0) + disabilityAmount;
 
   const trips = getTrips();
@@ -1820,6 +1831,12 @@ function syncViewDatesToLatest() {
   summaryCurrentDate = resolveDefaultViewDate();
   if (typeof histShowAll !== 'undefined' && !histShowAll) histCurrentDate = resolveDefaultViewDate();
   if (typeof statPeriodOffset !== 'undefined') statPeriodOffset = 0;
+  // タイムラインが「本日の記録なし」で前回分に自動フォールバック中だった場合、
+  // 本日の記録ができた時点で自動的に本日表示に戻す（手動選択中の過去日はそのまま維持）
+  if (typeof schedAutoFallback !== 'undefined' && schedAutoFallback && getTrips().some(t => t.date === todayStr())) {
+    schedCurrentDate = todayStr();
+    schedAutoFallback = false;
+  }
 }
 
 // 待機時間を自動計算（7:30起点 − 乗車時間合計）
@@ -1911,6 +1928,7 @@ function summaryPickDate(v) {
 }
 
 function updateTodaySummary() {
+  updateHeader();
   const today = summaryCurrentDate;
   const isToday = today === todayStr();
 
@@ -1929,7 +1947,7 @@ function updateTodaySummary() {
   document.getElementById('summaryNavNextBtn').disabled = today >= todayStr();
   document.getElementById('summaryTitle').textContent = isToday ? '本日サマリー' : 'サマリー';
   document.getElementById('todaySalesLabel').textContent = isToday ? '本日営収額' : '営収額';
-  document.getElementById('todayHourlyLabel').textContent = isToday ? '現在の時給' : '時給';
+  document.getElementById('todayHourlyLabel').textContent = '現在の時給';
 
   const trips = getTrips().filter(t => t.date === today);
   const sumF   = arr => arr.reduce((s,t) => s + getTripFare(t), 0);
@@ -1951,9 +1969,14 @@ function updateTodaySummary() {
 
   // 時給 = 営収額（税抜） ÷ 実働時間（タイムラインの合計時間） × 0.5
   // （スプレッドシートの計算式 =IF(AND(ISNUMBER(F40),ISNUMBER(H34),H34<>0),F40/(H34*24)*0.5,"") に準拠）
-  const scheduleResult = computeScheduleSegments(today);
-  const totalWorkMin = scheduleResult ? scheduleResult.allMin : 0;
-  const hourlyWage = totalWorkMin > 0 ? Math.round(totalExTax / (totalWorkMin / 60) * 0.5) : null;
+  // サマリーの他の項目は閲覧中の日付（today）に従うが、時給だけはタイムライン画面と
+  // 常に完全一致させるため、タイムラインが表示している日付（schedCurrentDate）と
+  // 全く同じ計算方法で求める
+  const hourlyDate = schedCurrentDate;
+  const hourlyDaySales = getTrips().filter(t => t.date === hourlyDate).reduce((s,t) => s + getTripFare(t), 0);
+  const hourlyScheduleResult = computeScheduleSegments(hourlyDate);
+  const totalWorkMin = hourlyScheduleResult ? hourlyScheduleResult.allMin : 0;
+  const hourlyWage = totalWorkMin > 0 ? Math.round(exTax(hourlyDaySales) / (totalWorkMin / 60) * 0.5) : null;
 
   // 未収額に含めるのは支払方法が現金以外の記録のみ。障害者割引で現金払いの記録に
   // 付いた未収額（自治体等への後日精算分）はここには含めない
@@ -2826,23 +2849,30 @@ function renderRecommend() {
 
 // ==================== タイムライン（実車・空車） ====================
 let schedCurrentDate = todayStr();
+// 本日の記録がまだ無いために自動で前回分にさかのぼって表示している状態かどうか。
+// この状態のときだけ、本日の記録ができ次第、自動で本日表示に戻す（手動で過去日を
+// 選んで閲覧している場合は勝手に戻さない）
+let schedAutoFallback = false;
 
 // 記録がある日だけを対象に前後移動する（記録のない日は表示しない）
 function schedNavPrev() {
   const allDates = [...new Set(getTrips().map(t=>t.date))].filter(d => d < schedCurrentDate).sort();
   if (allDates.length === 0) return;
   schedCurrentDate = allDates[allDates.length - 1];
+  schedAutoFallback = false;
   renderSchedule();
 }
 function schedNavNext() {
   if (schedCurrentDate >= todayStr()) return;
   const allDates = [...new Set(getTrips().map(t=>t.date))].filter(d => d > schedCurrentDate && d < todayStr()).sort();
   schedCurrentDate = allDates.length > 0 ? allDates[0] : todayStr();
+  schedAutoFallback = false;
   renderSchedule();
 }
 function schedPickDate(v) {
   if (!v) return;
   schedCurrentDate = v;
+  schedAutoFallback = false;
   renderSchedule();
 }
 
@@ -3204,9 +3234,17 @@ function computeScheduleSegments(date) {
 function renderSchedule() {
   // 本日の記録がまだない場合は、直近の記録がある日にフォールバックする
   const todayForFallback = todayStr();
+  // 自動フォールバック中に本日の記録ができたら、自動で本日表示に戻す
+  if (schedAutoFallback && getTrips().some(t => t.date === todayForFallback)) {
+    schedCurrentDate = todayForFallback;
+    schedAutoFallback = false;
+  }
   if (schedCurrentDate === todayForFallback && !getTrips().some(t => t.date === todayForFallback)) {
     const pastDates = [...new Set(getTrips().map(t => t.date))].filter(d => d < todayForFallback).sort();
-    if (pastDates.length > 0) schedCurrentDate = pastDates[pastDates.length - 1];
+    if (pastDates.length > 0) {
+      schedCurrentDate = pastDates[pastDates.length - 1];
+      schedAutoFallback = true;
+    }
   }
 
   const date = schedCurrentDate;
@@ -3627,10 +3665,21 @@ function renderSalesCompareGraph() {
     const positive = diffPct >= 0;
     diffHTML = `<div style="font-size:15px;font-weight:800;color:${positive ? 'var(--success)' : 'var(--danger)'};margin-top:2px;">平均 ¥${Math.round(avgAtNow).toLocaleString()} 比 ${positive ? '+' : ''}${diffPct}%</div>`;
   }
+  // 選んだ個別日それぞれとも、同じ時刻同士で何%違うかを表示する
+  const dateDiffHTML = dateCurves.map(dc => {
+    const dateAtNow = interpAt(dc.samples, today.nowMin);
+    if (dateAtNow <= 0) {
+      return `<div style="font-size:12px;margin-top:2px;"><span style="color:${dc.color};font-weight:700;">${shiftDateLabel(dc.date)}</span> <span style="color:var(--muted);">比 この時間帯はまだ実績が少ないです</span></div>`;
+    }
+    const diffPct = Math.round((today.nowVal - dateAtNow) / dateAtNow * 100);
+    const positive = diffPct >= 0;
+    return `<div style="font-size:13px;font-weight:700;margin-top:2px;"><span style="color:${dc.color};">${shiftDateLabel(dc.date)}</span> <span style="color:${positive ? 'var(--success)' : 'var(--danger)'};">比 ${positive ? '+' : ''}${diffPct}%</span></div>`;
+  }).join('');
   document.getElementById('salesCompareHeadline').innerHTML = `
     <div style="font-size:12px;color:var(--muted);">現在（${shiftMinToHM(today.nowMin)}）の営収額</div>
     <div style="font-size:30px;font-weight:800;color:var(--text);line-height:1.3;">¥${Math.round(today.nowVal).toLocaleString()}</div>
     ${diffHTML}
+    ${dateDiffHTML}
   `;
   document.getElementById('salesCompareNote').textContent = avg
     ? `平均は${salesCompareDow === 'all' ? '' : DOW_LABELS[parseInt(salesCompareDow)] + '曜日の'}過去${avg.dayCount}日分の記録から算出`
@@ -4072,12 +4121,15 @@ function showToast(msg) {
 
 // ==================== INIT ====================
 function updateHeader() {
-  const d = new Date();
+  const date = resolveDefaultViewDate();
+  const d = new Date(date + 'T00:00:00');
   const days = ['日曜日','月曜日','火曜日','水曜日','木曜日','金曜日','土曜日'];
-  document.getElementById('headerDate').textContent = `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日（${days[d.getDay()]}）`;
+  const isToday = date === todayStr();
+  const suffix = isToday ? '' : '（前回）';
+  document.getElementById('headerDate').textContent = `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日（${days[d.getDay()]}）${suffix}`;
+  document.getElementById('headerSales').textContent = `¥${dayTotalExTax(date).toLocaleString()}`;
 }
 
-updateHeader();
 updateTodaySummary();
 updateFareDisplay();
 setInterval(() => {
