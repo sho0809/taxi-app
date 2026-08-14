@@ -215,6 +215,8 @@
   #schedItemEditModal .modal { border-radius: 0 0 20px 20px; padding-top: calc(20px + env(safe-area-inset-top, 0px)); padding-bottom: 20px; transform: translateY(-100%); }
   #schedItemEditModal.open .modal { transform: translateY(0); }
   #scheduleGraphModal .modal { height: 100vh; max-height: 100vh; border-radius: 0; display: flex; flex-direction: column; padding-top: calc(16px + env(safe-area-inset-top, 0px)); }
+  /* 休憩開始直後の場所入力は、候補地をスクロールなしで一覧できるよう大きく表示する */
+  #schedItemEditPlaceSuggest { max-height: 62vh; }
 
   /* Empty state */
   .empty { text-align: center; padding: 48px 24px; color: var(--muted); }
@@ -600,7 +602,7 @@
       </div>
       <div style="text-align:center;margin-top:10px;cursor:pointer;" onclick="openDaySalesEditModal()">
         <div style="font-size:26px;font-weight:800;color:var(--success);" id="schedDaySales">¥0</div>
-        <div style="font-size:12px;color:var(--muted);margin-top:2px;">この日の営収額 ✏️<span id="schedDaySalesEdited" style="display:none;color:var(--primary);font-weight:700;">（修正済み）</span></div>
+        <div style="font-size:12px;color:var(--muted);margin-top:2px;">この日の営収額<span id="schedDaySalesEdited" style="display:none;color:var(--primary);font-weight:700;">（修正済み）</span></div>
       </div>
       <div class="sched-tab-bar">
         <button class="sched-tab" onclick="openScheduleGraph()">グラフ</button>
@@ -1119,12 +1121,12 @@ function floorDivInt(a, b) {
   const r = a % b;
   return (a - r) / b;
 }
-// 消費税抜き（10円単位切り捨て）
-// amount/1.1/10 = amount/11 のため、floorDivIntで整数演算のみで計算し、
-// amount/1.1のような浮動小数点の割り算を経由しないことで、数回に1回程度発生していた
-// 10円のずれ（連続する2回の浮動小数点除算がそれぞれ誤差を持ちうるために起きていた）を無くす
+// 消費税抜き（10円単位で四捨五入）。例：税込1000円 → 1000/1.1=909.09... → 910円
+// amount/1.1/10 = amount/11 のため、四捨五入 round(amount/11) を
+// floor((amount*2+11)/22) という整数演算だけで求め、浮動小数点の割り算を経由しないことで
+// 数回に1回程度発生していた10円のずれを無くす
 function exTax(amount) {
-  return floorDivInt(amount, 11) * 10;
+  return floorDivInt(amount * 2 + 11, 22) * 10;
 }
 
 // ==================== GPS / LOCATION ====================
@@ -1256,11 +1258,14 @@ function selectType(type) {
 // goGenderChosen: 利用者が自分で性別を選んだかどうか。既定値（男性）のままの状態で
 // 候補を性別で絞り込むと、まだ何も選んでいないのに女性の履歴が消えてしまうため区別する
 let goGenderChosen = false;
+// 同じ性別ボタンをもう一度押すと選択を解除できる（誤タップの取り消し用）
 function selectGoGender(g, userChose) {
-  if (userChose) goGenderChosen = true;
-  document.getElementById('goPaxGender').value = g;
+  const current = document.getElementById('goPaxGender').value;
+  const next = (userChose && current === g) ? '' : g;
+  if (userChose) goGenderChosen = next !== '';
+  document.getElementById('goPaxGender').value = next;
   ['男性','女性'].forEach(x => {
-    document.getElementById(`goGender-${x}`).className = 'pay-btn' + (x === g ? ' active' : '');
+    document.getElementById(`goGender-${x}`).className = 'pay-btn' + (x === next ? ' active' : '');
   });
   // 候補は性別・年代でも絞り込むため、切り替え時に再表示する
   if (document.getElementById('goPaxName').value.trim()) onGoPaxNameInput();
@@ -1311,12 +1316,28 @@ function resetPlainGender() {
   hist.innerHTML = '';
 }
 
+// GOメモ欄の定型文の予測変換（読みの頭文字 → 実際に入力する文字列）。
+// 名前の代わりに「待ち合わせ番号」等をメモしたいときに使う
+const GO_MEMO_HINTS = {
+  'まち': 'マチアワセバンゴウ',
+};
+function applyGoMemoHint(val) {
+  document.getElementById('goPaxName').value = val;
+  onGoPaxNameInput();
+}
 // 名前入力中に過去のGO乗車履歴（日付・乗降場所）を候補表示。
 // 名前の頭文字が一致し、かつ現在選択中の性別・年代が一致する履歴のみを候補にする。
 function onGoPaxNameInput() {
   const q = document.getElementById('goPaxName').value.trim();
   const hist = document.getElementById('goPaxHistory');
   if (!q) { hist.style.display = 'none'; hist.innerHTML = ''; return; }
+
+  const hintMatches = Object.entries(GO_MEMO_HINTS).filter(([hint]) => hint.startsWith(q));
+  const hintHTML = hintMatches.length
+    ? `<div class="place-chip-row" style="margin-bottom:6px;">${hintMatches.map(([,val]) =>
+        `<button type="button" class="place-chip" onmousedown="event.preventDefault()" onclick="applyGoMemoHint('${val}')">${val}</button>`
+      ).join('')}</div>`
+    : '';
 
   const gender = document.getElementById('goPaxGender').value;
   const age = document.getElementById('goPaxAge').value;
@@ -1331,7 +1352,12 @@ function onGoPaxNameInput() {
     .filter(t => !goGenderChosen || t.paxGender === gender)
     .sort((a,b) => (b.date + (b.pickupTime||'')).localeCompare(a.date + (a.pickupTime||'')));
 
-  if (allMatches.length === 0) { hist.style.display = 'none'; hist.innerHTML = ''; return; }
+  if (allMatches.length === 0) {
+    if (!hintHTML) { hist.style.display = 'none'; hist.innerHTML = ''; return; }
+    hist.innerHTML = hintHTML;
+    hist.style.display = 'block';
+    return;
+  }
 
   const totalFare = allMatches.reduce((s,t) => s + getTripFare(t), 0);
   const shown = allMatches.slice(0, 5);
@@ -1355,7 +1381,7 @@ function onGoPaxNameInput() {
     ? `<div style="text-align:center;font-size:11px;color:var(--muted);margin-top:4px;">ほか${restCount}件</div>`
     : '';
 
-  hist.innerHTML = summary + rows + more;
+  hist.innerHTML = hintHTML + summary + rows + more;
   hist.style.display = 'block';
 }
 function applyGoPaxHistory(id) {
@@ -3633,7 +3659,7 @@ function shiftMinToHM(min) {
 }
 // 1日分の乗降記録を「降車時刻ごとの累計営収額（税抜）」の階段グラフの折れ点にする
 function buildDayCumulative(date) {
-  // exTaxは10円単位への切り捨てのため、1件ごとに丸めてから足すと合計が本来の
+  // exTaxは10円単位への四捨五入のため、1件ごとに丸めてから足すと合計が本来の
   // 「その日の営収額」（税込合計をまとめて丸めたもの）とずれてしまう。
   // そのため税込のまま累計し、各時点でまとめて丸めることで、最終値が
   // タイムラインの「この日の営収額」と必ず一致するようにする。
