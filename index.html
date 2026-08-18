@@ -668,7 +668,7 @@
           <div class="stat-value" id="todayWait">0分</div>
           <div class="stat-label">空車時間</div>
         </div>
-        <div class="stat-card">
+        <div class="stat-card" style="cursor:pointer;" onclick="showSummaryDetail('uncollected')">
           <div class="stat-value" id="todayUncollected">¥0</div>
           <div class="stat-label">未収額</div>
         </div>
@@ -680,7 +680,7 @@
           <div class="stat-value" id="todayGoCount">0件</div>
           <div class="stat-label">GO回数</div>
         </div>
-        <div class="stat-card">
+        <div class="stat-card" style="cursor:pointer;" onclick="showSummaryDetail('nashi')">
           <div class="stat-value" id="todayNashiTotal">¥0</div>
           <div class="stat-label">流し合計金額</div>
         </div>
@@ -895,6 +895,18 @@
     <div id="custHistoryContent"></div>
     <div style="margin-top:16px;">
       <button class="btn btn-primary" onclick="closeCustHistoryModal()">閉じる</button>
+    </div>
+  </div>
+</div>
+
+<!-- サマリー詳細（未収額・流し合計）モーダル -->
+<div class="modal-overlay" id="summaryDetailModal" onclick="if(event.target===this) closeSummaryDetailModal()">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title" style="text-align:center;" id="summaryDetailTitle"></div>
+    <div id="summaryDetailContent"></div>
+    <div style="margin-top:16px;">
+      <button class="btn btn-primary" onclick="closeSummaryDetailModal()">閉じる</button>
     </div>
   </div>
 </div>
@@ -1489,6 +1501,7 @@ const PLACE_NAME_READING_HINT = {
   '緑町':'み', '鉄炮町':'て', '清水町':'し', '姫原':'ひ',
   '東温市牛渕':'と', '別府町':'へ', '祓川':'は', '竹原':'た', '内浜町':'う', '市坪南':'い', '鴨川':'か',
   '北井門':'き', '久万ノ台':'く', '市坪北':'い', '宮田町':'み',
+  '山西町':'や', '東長戸':'ひ', '吉藤':'よ',
 };
 
 // 特定のひらがな入力に対して誤って候補に出てしまう地名を除外する対応表（ユーザー指摘分）。
@@ -3265,6 +3278,29 @@ function closeCustHistoryModal() {
   document.getElementById('custHistoryModal').classList.remove('open');
 }
 
+// サマリーの「未収額」「流し合計金額」をタップすると、閲覧中の日の該当する記録を一覧表示する
+function showSummaryDetail(kind) {
+  const date = summaryCurrentDate;
+  const trips = getTrips().filter(t => t.date === date);
+  let filtered, title;
+  if (kind === 'uncollected') {
+    filtered = trips.filter(t => (t.payMethod||'現金') !== '現金');
+    title = '未収額の内訳';
+  } else {
+    filtered = trips.filter(t => (t.tripType||'流し') === '流し');
+    title = '流しの内訳';
+  }
+  filtered.sort((a,b) => tripSortKey(b) - tripSortKey(a));
+  document.getElementById('summaryDetailTitle').textContent = title;
+  document.getElementById('summaryDetailContent').innerHTML = filtered.length
+    ? filtered.map(t => tripCard(t)).join('')
+    : emptyState('該当する記録がありません');
+  document.getElementById('summaryDetailModal').classList.add('open');
+}
+function closeSummaryDetailModal() {
+  document.getElementById('summaryDetailModal').classList.remove('open');
+}
+
 // 指定日のタイムライン（実車・空車・休憩・給油）のセグメントを計算する。記録がない日は null を返す
 function computeScheduleSegments(date) {
   const isToday = date === todayStr();
@@ -3704,15 +3740,30 @@ function buildAverageCurve(excludeDate, dow) {
   return { samples, dayCount: allDates.length };
 }
 function buildTodayCurve() {
-  const pts = buildDayCumulative(todayStr());
-  const nowMin = nowMinutesIntoShift();
+  const today = todayStr();
+  if (getTrips().some(t => t.date === today)) {
+    const pts = buildDayCumulative(today);
+    const nowMin = nowMinutesIntoShift();
+    const samples = [];
+    for (let min = 0; min <= nowMin; min += SALES_GRAPH_STEP_MIN) {
+      samples.push({ min, val: cumAtMinute(pts, min) });
+    }
+    const last = samples[samples.length - 1];
+    if (!last || last.min < nowMin) samples.push({ min: nowMin, val: cumAtMinute(pts, nowMin) });
+    return { samples, nowMin, nowVal: cumAtMinute(pts, nowMin), date: today, isFallback: false };
+  }
+  // 当日の記録がまだなければ、記録がある直近の日を代わりに1日分フルで表示する
+  const fallbackDate = resolveDefaultViewDate();
+  if (fallbackDate === today) {
+    // 記録が1件もない場合
+    return { samples: [{ min: 0, val: 0 }], nowMin: 0, nowVal: 0, date: today, isFallback: false };
+  }
+  const pts = buildDayCumulative(fallbackDate);
   const samples = [];
-  for (let min = 0; min <= nowMin; min += SALES_GRAPH_STEP_MIN) {
+  for (let min = 0; min <= GRAPH_DAY_SPAN_MIN; min += SALES_GRAPH_STEP_MIN) {
     samples.push({ min, val: cumAtMinute(pts, min) });
   }
-  const last = samples[samples.length - 1];
-  if (!last || last.min < nowMin) samples.push({ min: nowMin, val: cumAtMinute(pts, nowMin) });
-  return { samples, nowMin, nowVal: cumAtMinute(pts, nowMin) };
+  return { samples, nowMin: GRAPH_DAY_SPAN_MIN, nowVal: cumAtMinute(pts, GRAPH_DAY_SPAN_MIN), date: fallbackDate, isFallback: true };
 }
 // 選んだ過去1日分を、当日線と同じ刻みで1日ぶんフルに描けるようにする
 function buildDateCurve(date) {
@@ -3824,15 +3875,78 @@ function getHistoricalBreakStartMinutes() {
   });
   return mins;
 }
-// 過去の統計から、今の時点でのペース・時給・休憩タイミングを踏まえた簡単なアドバイスを組み立てる
+// 指定した曜日（0=日〜6=土）に乗車実績が多いエリアのトップ3を返す。
+// dowを省略すると、現在時刻から1時間以内に乗車実績が多いエリア（おすすめエリアと同じロジック）
+function getAreaRecommendation(dow) {
+  const trips = getTrips().filter(t => t.pickup && t.pickup.trim() !== '' && t.pickupTime && t.tripType !== '配車');
+  let pool;
+  if (dow === undefined || dow === null) {
+    const now = new Date();
+    const nowKey = now.getHours() * 60 + now.getMinutes();
+    const minutesFromNow = t => {
+      const [h, m] = t.pickupTime.split(':').map(Number);
+      let diff = (h * 60 + m) - nowKey;
+      if (diff < 0) diff += 1440;
+      return diff;
+    };
+    pool = trips.filter(t => minutesFromNow(t) < 60);
+  } else {
+    pool = trips.filter(t => new Date(t.date + 'T00:00:00').getDay() === dow);
+  }
+  const areaMap = {};
+  pool.forEach(t => {
+    const loc = t.pickup.trim();
+    areaMap[loc] = (areaMap[loc] || 0) + 1;
+  });
+  return Object.entries(areaMap).map(([loc, count]) => ({ loc, count })).sort((a,b) => b.count - a.count).slice(0, 3);
+}
+// 月・水・金（このアプリでの「勤務日」）のうち、直近の未来の勤務日（当日を含まない）を返す
+function getNextWorkDate() {
+  for (let i = 1; i <= 7; i++) {
+    const d = new Date(todayStr() + 'T00:00:00');
+    d.setDate(d.getDate() + i);
+    if ([1, 3, 5].includes(d.getDay())) {
+      return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+    }
+  }
+  return null;
+}
+// 過去の統計から、今の時点でのペース・時給・休憩タイミング・おすすめエリアを踏まえた簡単なアドバイスを組み立てる
 function generateAdvice() {
   const lines = [];
   const today = todayStr();
   const nowMin = nowMinutesIntoShift();
   const tripsToday = getTrips().filter(t => t.date === today).length;
 
-  if (tripsToday === 0 && nowMin === 0) {
-    lines.push({ icon: '👋', text: 'まだ本日の記録がありません。今日も安全運転で頑張りましょう！' });
+  if (tripsToday === 0) {
+    // 本日の記録がまだない場合は、次回の勤務日（月・水・金）に向けたアドバイスを表示する
+    const nextDate = getNextWorkDate();
+    if (!nextDate) {
+      lines.push({ icon: '👋', text: '今日も安全運転で頑張りましょう！' });
+      return lines;
+    }
+    const d = new Date(nextDate + 'T00:00:00');
+    const dow = d.getDay();
+    const label = `${d.getMonth()+1}月${d.getDate()}日（${DOW_LABELS[dow]}）`;
+    lines.push({ icon: '📅', text: `次回の勤務日は${label}の予定です。今日はゆっくり休んでください！` });
+
+    const areas = getAreaRecommendation(dow);
+    if (areas.length) {
+      const areaText = areas.map((a,i) => `${i+1}位 ${a.loc}（${a.count}回）`).join('　');
+      lines.push({ icon: '📍', text: `${DOW_LABELS[dow]}曜日によく乗車があるのは：${areaText}` });
+    }
+
+    let breakData; try { breakData = JSON.parse(localStorage.getItem(BREAKS_KEY) || '{}'); } catch(e) { breakData = {}; }
+    const dowBreakMins = [];
+    Object.keys(breakData).forEach(date => {
+      if (new Date(date + 'T00:00:00').getDay() !== dow) return;
+      (breakData[date] || []).forEach(b => { if (b.start) dowBreakMins.push(minutesFromShiftStart(b.start)); });
+    });
+    dowBreakMins.sort((a,b) => a - b);
+    if (dowBreakMins.length) {
+      const typical = dowBreakMins[Math.floor(dowBreakMins.length / 2)];
+      lines.push({ icon: '☕', text: `${DOW_LABELS[dow]}曜日はいつも${shiftMinToHM(typical)}頃に休憩を取っています。参考にしてみてください。` });
+    }
     return lines;
   }
 
@@ -3850,6 +3964,13 @@ function generateAdvice() {
     }
   } else {
     lines.push({ icon: '📊', text: '比較できる過去の記録がまだ少ないため、データが増えるとより詳しいアドバイスができます。' });
+  }
+
+  // おすすめエリア（これから1時間で乗車実績が多い場所）
+  const areasNow = getAreaRecommendation();
+  if (areasNow.length) {
+    const areaText = areasNow.map((a,i) => `${i+1}位 ${a.loc}`).join('　');
+    lines.push({ icon: '📍', text: `これから1時間はこのあたりが狙い目です：${areaText}` });
   }
 
   // 時給（サマリー・タイムラインと同じ計算式）
@@ -3906,7 +4027,7 @@ function closeAdviceModal() {
 
 function renderSalesCompareGraph() {
   const today = buildTodayCurve();
-  const avg = buildAverageCurve(todayStr(), salesCompareDow);
+  const avg = buildAverageCurve(today.date, salesCompareDow);
   const avgAtNow = avg ? interpAt(avg.samples, today.nowMin) : 0;
   // 選択中の個別日（曜日フィルターに合わなくなったものは除く）
   const dateOptions = getSalesCompareDateOptions();
@@ -3934,8 +4055,11 @@ function renderSalesCompareGraph() {
     const positive = diffPct >= 0;
     return `<div style="font-size:13px;font-weight:700;margin-top:2px;"><span style="color:${dc.color};">${shiftDateLabel(dc.date)}</span> <span style="color:${positive ? 'var(--success)' : 'var(--danger)'};">比 ${positive ? '+' : ''}${diffPct}%</span></div>`;
   }).join('');
+  const headlineLabel = today.isFallback
+    ? `前回（${shiftDateLabel(today.date)}）の営収額`
+    : `現在（${shiftMinToHM(today.nowMin)}）の営収額`;
   document.getElementById('salesCompareHeadline').innerHTML = `
-    <div style="font-size:12px;color:var(--muted);">現在（${shiftMinToHM(today.nowMin)}）の営収額</div>
+    <div style="font-size:12px;color:var(--muted);">${headlineLabel}</div>
     <div style="font-size:30px;font-weight:800;color:var(--text);line-height:1.3;">¥${Math.round(today.nowVal).toLocaleString()}</div>
     ${diffHTML}
     ${dateDiffHTML}
@@ -4034,7 +4158,8 @@ function renderSalesCompareGraph() {
     const todayVal = min <= today.nowMin ? interpAt(today.samples, min) : null;
     const avgVal = avg ? interpAt(avg.samples, min) : null;
     const dateLines = dateCurves.map(dc => `${shiftDateLabel(dc.date)}: ¥${Math.round(interpAt(dc.samples, min)).toLocaleString()}`).join('<br>');
-    tooltip.innerHTML = `${shiftMinToHM(min)}<br>今日: ${todayVal === null ? 'ー' : '¥' + Math.round(todayVal).toLocaleString()}<br>平均: ${avgVal === null ? 'ー' : '¥' + Math.round(avgVal).toLocaleString()}${dateLines ? '<br>' + dateLines : ''}`;
+    const todayLineLabel = today.isFallback ? shiftDateLabel(today.date) : '今日';
+    tooltip.innerHTML = `${shiftMinToHM(min)}<br>${todayLineLabel}: ${todayVal === null ? 'ー' : '¥' + Math.round(todayVal).toLocaleString()}<br>平均: ${avgVal === null ? 'ー' : '¥' + Math.round(avgVal).toLocaleString()}${dateLines ? '<br>' + dateLines : ''}`;
     tooltip.style.display = '';
     const wrapRect = wrap.getBoundingClientRect();
     const leftPx = (px / W) * wrapRect.width;
@@ -4292,8 +4417,8 @@ function renderStats() {
     : currentStatTab === 'month' ? getBillingPeriod(today).startStr
     : today;
 
-  // 日別タブで本日の記録がまだない場合は、直近の記録がある日を代わりにハイライトする
-  if (currentStatTab === 'day' && !byGroup[currentKey]) {
+  // 今日／今週／今月にまだ記録がない場合は、直近の記録がある日・週・月を代わりにハイライトする
+  if (!byGroup[currentKey]) {
     const pastKeys = Object.keys(byGroup).filter(k => k < currentKey).sort();
     if (pastKeys.length > 0) currentKey = pastKeys[pastKeys.length - 1];
   }
