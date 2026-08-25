@@ -217,6 +217,8 @@
   #scheduleGraphModal .modal { height: 100vh; max-height: 100vh; border-radius: 0; display: flex; flex-direction: column; padding-top: calc(16px + env(safe-area-inset-top, 0px)); }
   /* 休憩開始直後の場所入力は、候補地をスクロールなしで一覧できるよう大きく表示する */
   #schedItemEditPlaceSuggest { max-height: 62vh; }
+  /* 休憩開始直後の場所選択チップは、画面の半分くらいまで大きく表示する */
+  #schedItemEditPlaceChips.quick-mode { min-height: 50vh; align-content: flex-start; }
 
   /* Empty state */
   .empty { text-align: center; padding: 48px 24px; color: var(--muted); }
@@ -727,13 +729,16 @@
     </div>
     <div class="input-group" id="schedItemEditPlaceRow">
       <label class="input-label">📍 場所</label>
-      <input class="input-field" id="schedItemEditPlace" type="text" placeholder="" autocomplete="off"
-             oninput="onLocInput('schedItemEditPlace','schedItemEditPlaceSuggest',getBreakPlaceSuggestions)"
-             onfocus="onLocInput('schedItemEditPlace','schedItemEditPlaceSuggest',getBreakPlaceSuggestions);scrollLocFieldToTop('schedItemEditPlace')"
-             onblur="hideLocSuggest('schedItemEditPlaceSuggest');onSchedItemEditPlaceBlur()"
-             onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}">
-      <div id="schedItemEditPlaceSuggest" class="loc-suggest"></div>
       <div class="place-chip-row" id="schedItemEditPlaceChips"></div>
+      <button type="button" class="place-chip" id="schedItemEditPlaceMoreBtn" style="display:none;margin-top:8px;" onclick="revealSchedItemEditPlaceInput()">✏️ 他の場所を入力</button>
+      <div id="schedItemEditPlaceInputWrap">
+        <input class="input-field" id="schedItemEditPlace" type="text" placeholder="" autocomplete="off" style="margin-top:8px;"
+               oninput="onLocInput('schedItemEditPlace','schedItemEditPlaceSuggest',getBreakPlaceSuggestions)"
+               onfocus="onLocInput('schedItemEditPlace','schedItemEditPlaceSuggest',getBreakPlaceSuggestions);scrollLocFieldToTop('schedItemEditPlace')"
+               onblur="hideLocSuggest('schedItemEditPlaceSuggest');onSchedItemEditPlaceBlur()"
+               onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}">
+        <div id="schedItemEditPlaceSuggest" class="loc-suggest"></div>
+      </div>
     </div>
     <div id="schedItemEditFuelNote" style="display:none;font-size:13px;color:var(--muted);margin-top:4px;">📍 場所は高岡町で記録されます</div>
     <div id="schedItemEditFooter">
@@ -1501,7 +1506,7 @@ const PLACE_NAME_READING_HINT = {
   '緑町':'み', '鉄炮町':'て', '清水町':'し', '姫原':'ひ',
   '東温市牛渕':'と', '別府町':'へ', '祓川':'は', '竹原':'た', '内浜町':'う', '市坪南':'い', '鴨川':'か',
   '北井門':'き', '久万ノ台':'く', '市坪北':'い', '宮田町':'み',
-  '山西町':'や', '東長戸':'ひ', '吉藤':'よ',
+  '山西町':'や', '東長戸':'ひ', '吉藤':'よ', '南江戸':'み',
 };
 
 // 特定のひらがな入力に対して誤って候補に出てしまう地名を除外する対応表（ユーザー指摘分）。
@@ -3052,9 +3057,26 @@ function saveSchedAdd() {
   if (saveSchedEndTimeValue(document.getElementById('schedAddEndTime').value)) closeSchedAdd();
 }
 
-// 休憩でよく使う場所をワンタップで入れられるようにする
+// 過去に休憩の場所として選んだ地名を、使った日が新しい順に返す
+function getRecentBreakPlaces() {
+  let data;
+  try { data = JSON.parse(localStorage.getItem(BREAKS_KEY) || '{}'); } catch(e) { data = {}; }
+  const hidden = getHiddenPlaces();
+  const lastUsed = {};
+  Object.keys(data).forEach(date => {
+    (data[date] || []).forEach(b => {
+      if (!b.place || hidden.includes(b.place)) return;
+      if (!lastUsed[b.place] || date > lastUsed[b.place]) lastUsed[b.place] = date;
+    });
+  });
+  return Object.entries(lastUsed).sort((a,b) => b[1].localeCompare(a[1])).map(([place]) => place);
+}
+// 休憩でよく使う場所をワンタップで入れられるようにする。
+// 過去に選んだ地名があればそれを新しい順に、まだ無ければ既定の候補を表示する
 function renderPlaceChips(containerId, inputId) {
-  document.getElementById(containerId).innerHTML = BREAK_PLACE_PRESETS.map(name =>
+  const recent = getRecentBreakPlaces();
+  const names = recent.length ? recent : BREAK_PLACE_PRESETS.filter(n => !getHiddenPlaces().includes(n));
+  document.getElementById(containerId).innerHTML = names.map(name =>
     `<button type="button" class="place-chip" onmousedown="event.preventDefault()" onclick="pickPlace('${inputId}','${name}')">${name}</button>`
   ).join('');
 }
@@ -3100,6 +3122,17 @@ let schedItemEditTarget = null; // { kind: 'break'|'fuel', index: number }
 // true の間は、休憩開始直後の簡易入力モード（場所欄だけを見せ、選んだら即保存して閉じる）
 let schedQuickPlaceMode = false;
 
+// 場所欄の「他の場所を入力」欄の表示・非表示を切り替える。
+// visible=falseのときはチップから選ぶことだけを想定し、入力欄自体を隠してキーボードが出ないようにする
+function setSchedItemEditPlaceInputVisible(visible) {
+  document.getElementById('schedItemEditPlaceInputWrap').style.display = visible ? '' : 'none';
+  document.getElementById('schedItemEditPlaceMoreBtn').style.display = visible ? 'none' : '';
+  document.getElementById('schedItemEditPlaceChips').classList.toggle('quick-mode', !visible);
+}
+function revealSchedItemEditPlaceInput() {
+  setSchedItemEditPlaceInputVisible(true);
+  document.getElementById('schedItemEditPlace').focus();
+}
 function openSchedItemEdit(kind, index) {
   const list = kind === 'break' ? getScheduleBreaks(schedCurrentDate) : getScheduleFuelStops(schedCurrentDate);
   const item = list[index];
@@ -3118,10 +3151,12 @@ function openSchedItemEdit(kind, index) {
   document.getElementById('schedItemEditPlaceRow').style.display = isBreak ? '' : 'none';
   document.getElementById('schedItemEditFuelNote').style.display = isBreak ? 'none' : '';
   renderPlaceChips('schedItemEditPlaceChips', 'schedItemEditPlace');
+  setSchedItemEditPlaceInputVisible(true);
   document.getElementById('schedItemEditModal').classList.add('open');
 }
-// 休憩を開始した直後だけの簡易入力：場所欄（と候補チップ）だけを見せ、
-// 選んだ／入力し終えた時点でそのまま保存して閉じる。開始時刻はワンタップ開始時に記録済みのため触らせない
+// 休憩を開始した直後だけの簡易入力：候補チップだけを見せ、キーボードは出さない。
+// チップを選ぶか「他の場所を入力」を自分でタップしたときだけ入力欄を出す。
+// 選んだ／入力し終えた時点でそのまま保存して閉じる（開始時刻はワンタップ開始時に記録済みのため触らせない）
 function openSchedBreakQuickPlace(index) {
   const list = getScheduleBreaks(schedCurrentDate);
   const item = list[index];
@@ -3138,8 +3173,8 @@ function openSchedBreakQuickPlace(index) {
   document.getElementById('schedItemEditPlaceRow').style.display = '';
   document.getElementById('schedItemEditFuelNote').style.display = 'none';
   renderPlaceChips('schedItemEditPlaceChips', 'schedItemEditPlace');
+  setSchedItemEditPlaceInputVisible(false);
   document.getElementById('schedItemEditModal').classList.add('open');
-  document.getElementById('schedItemEditPlace').focus();
 }
 // 場所欄からフォーカスが外れたとき、候補を選ばず自分で打ち終えた場合はそのまま保存する
 function onSchedItemEditPlaceBlur() {
@@ -3580,7 +3615,15 @@ const GRAPH_OTHER_COLORS = { break: '#f5a623', fuel: '#00acc1', vacant: '#ddd' }
 function openScheduleGraph() {
   renderScheduleGraph();
   switchGraphTab('sales');
+  applySalesCompareDowDefault();
   document.getElementById('scheduleGraphModal').classList.add('open');
+}
+// グラフを開いたとき、今日の曜日に合わせて曜日タブを自動選択する
+// （月・水・金ならその曜日、火・木・土・日は「全体」）
+function applySalesCompareDowDefault() {
+  const dow = new Date(todayStr() + 'T00:00:00').getDay();
+  const target = [1, 3, 5].includes(dow) ? String(dow) : 'all';
+  switchSalesCompareDow(target);
 }
 function closeScheduleGraphModal() {
   document.getElementById('scheduleGraphModal').classList.remove('open');
@@ -3932,8 +3975,7 @@ function generateAdvice() {
 
     const areas = getAreaRecommendation(dow);
     if (areas.length) {
-      const areaText = areas.map((a,i) => `${i+1}位 ${a.loc}（${a.count}回）`).join('　');
-      lines.push({ icon: '📍', text: `${DOW_LABELS[dow]}曜日によく乗車があるのは：${areaText}` });
+      lines.push({ icon: '📍', text: `${DOW_LABELS[dow]}曜日は「${areas[0].loc}」が狙い目です（実績${areas[0].count}回）。まずはこのあたりへ向かってみましょう。` });
     }
 
     let breakData; try { breakData = JSON.parse(localStorage.getItem(BREAKS_KEY) || '{}'); } catch(e) { breakData = {}; }
@@ -3966,11 +4008,10 @@ function generateAdvice() {
     lines.push({ icon: '📊', text: '比較できる過去の記録がまだ少ないため、データが増えるとより詳しいアドバイスができます。' });
   }
 
-  // おすすめエリア（これから1時間で乗車実績が多い場所）
+  // おすすめエリア（これから1時間で乗車実績が多い場所を1つだけピンポイントで示す）
   const areasNow = getAreaRecommendation();
   if (areasNow.length) {
-    const areaText = areasNow.map((a,i) => `${i+1}位 ${a.loc}`).join('　');
-    lines.push({ icon: '📍', text: `これから1時間はこのあたりが狙い目です：${areaText}` });
+    lines.push({ icon: '📍', text: `次はここへ：「${areasNow[0].loc}」がおすすめです（この時間帯の実績${areasNow[0].count}回）` });
   }
 
   // 時給（サマリー・タイムラインと同じ計算式）
