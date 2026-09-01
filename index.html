@@ -217,8 +217,11 @@
   #scheduleGraphModal .modal { height: 100vh; max-height: 100vh; border-radius: 0; display: flex; flex-direction: column; padding-top: calc(16px + env(safe-area-inset-top, 0px)); }
   /* 休憩開始直後の場所入力は、候補地をスクロールなしで一覧できるよう大きく表示する */
   #schedItemEditPlaceSuggest { max-height: 62vh; }
-  /* 休憩開始直後の場所選択チップは、画面の半分くらいまで大きく表示する */
-  #schedItemEditPlaceChips.quick-mode { min-height: 50vh; align-content: flex-start; }
+  /* 休憩の場所ランキングは1行1件の縦並びにし、10件くらいまではスクロールなしで見えるようにする。
+     .place-chip-rowのflex-wrap:wrapのままだと縦にあふれた分が新しい列として横に折り返されて
+     しまうため明示的にnowrapへ、また各行にflex-shrink:0を付けないと縮んでスクロールが働かない */
+  #schedItemEditPlaceChips { display: flex; flex-direction: column; flex-wrap: nowrap; gap: 0; max-height: 490px; overflow-y: auto; }
+  #schedItemEditPlaceChips .loc-rank-item { flex-shrink: 0; }
 
   /* Empty state */
   .empty { text-align: center; padding: 48px 24px; color: var(--muted); }
@@ -334,10 +337,7 @@
   <div class="date" id="headerDate"></div>
   <div class="header-row">
     <h1 id="headerSales">¥0</h1>
-    <div style="display:flex;gap:6px;align-items:center;">
-      <button class="reload-btn" id="adviceBtn" onclick="openAdviceModal()">💡 アドバイス</button>
-      <button class="reload-btn" id="reloadBtn" onclick="triggerReload()">↻ 更新</button>
-    </div>
+    <button class="reload-btn" id="reloadBtn" onclick="triggerReload()">↻ 更新</button>
   </div>
 </div>
 
@@ -792,18 +792,6 @@
     <div class="btn-row" style="margin-top:14px;">
       <button class="btn btn-gray" onclick="closePeriodEditModal()">キャンセル</button>
       <button class="btn btn-primary" onclick="savePeriodEdit()">保存</button>
-    </div>
-  </div>
-</div>
-
-<!-- アドバイス モーダル -->
-<div class="modal-overlay" id="adviceModal" onclick="if(event.target===this) closeAdviceModal()">
-  <div class="modal">
-    <div class="modal-handle"></div>
-    <div class="modal-title">💡 今日のアドバイス</div>
-    <div id="adviceContent" style="display:flex;flex-direction:column;gap:10px;"></div>
-    <div class="btn-row" style="margin-top:16px;">
-      <button class="btn btn-primary" onclick="closeAdviceModal()">閉じる</button>
     </div>
   </div>
 </div>
@@ -1506,7 +1494,7 @@ const PLACE_NAME_READING_HINT = {
   '緑町':'み', '鉄炮町':'て', '清水町':'し', '姫原':'ひ',
   '東温市牛渕':'と', '別府町':'へ', '祓川':'は', '竹原':'た', '内浜町':'う', '市坪南':'い', '鴨川':'か',
   '北井門':'き', '久万ノ台':'く', '市坪北':'い', '宮田町':'み',
-  '山西町':'や', '東長戸':'ひ', '吉藤':'よ', '南江戸':'み',
+  '山西町':'や', '東長戸':'ひ', '吉藤':'よ', '南江戸':'み', '東石井':'ひ', '高浜町':'た',
 };
 
 // 特定のひらがな入力に対して誤って候補に出てしまう地名を除外する対応表（ユーザー指摘分）。
@@ -2441,10 +2429,12 @@ function openTripEditModal(id) {
   document.getElementById('editPlainMemo').value = (trip.tripType !== 'GO') ? (trip.memo || '') : '';
   selectEditGoGender((trip.tripType === 'GO' && trip.paxGender) ? trip.paxGender : '男性');
   setEditPlainGender((trip.tripType !== 'GO' && trip.paxGender) ? trip.paxGender : '');
-  selectEditPay(trip.payMethod || '現金');
   // 開いた時点の種別を先に記録しておき、引き継ぎ処理が誤って走らないようにする
   document.getElementById('tripEditModal').dataset.tripType = trip.tripType || '流し';
   selectEditType(trip.tripType || '流し');
+  // selectEditTypeはGOのとき支払方法を自動でGOにする副作用があるため、
+  // 記録時の実際の支払方法を必ず最後に上書きする
+  selectEditPay(trip.payMethod || '現金');
   document.getElementById('tripEditModal').classList.add('open');
 }
 
@@ -3057,28 +3047,51 @@ function saveSchedAdd() {
   if (saveSchedEndTimeValue(document.getElementById('schedAddEndTime').value)) closeSchedAdd();
 }
 
-// 過去に休憩の場所として選んだ地名を、使った日が新しい順に返す
-function getRecentBreakPlaces() {
+// 休憩の場所ごとに、これまでの利用回数と合計時間を集計し、回数が多い順に返す
+// （進行中で終了時刻が無いものは集計に含めない）
+function getBreakPlaceRanking() {
   let data;
   try { data = JSON.parse(localStorage.getItem(BREAKS_KEY) || '{}'); } catch(e) { data = {}; }
   const hidden = getHiddenPlaces();
-  const lastUsed = {};
-  Object.keys(data).forEach(date => {
-    (data[date] || []).forEach(b => {
-      if (!b.place || hidden.includes(b.place)) return;
-      if (!lastUsed[b.place] || date > lastUsed[b.place]) lastUsed[b.place] = date;
+  const map = {};
+  Object.values(data).forEach(list => {
+    (list || []).forEach(b => {
+      if (!b.place || !b.end || hidden.includes(b.place)) return;
+      const [sh,sm] = b.start.split(':').map(Number);
+      const [eh,em] = b.end.split(':').map(Number);
+      let min = (eh*60+em) - (sh*60+sm);
+      if (min < 0) min += 24*60;
+      if (!map[b.place]) map[b.place] = { count: 0, totalMin: 0 };
+      map[b.place].count++;
+      map[b.place].totalMin += min;
     });
   });
-  return Object.entries(lastUsed).sort((a,b) => b[1].localeCompare(a[1])).map(([place]) => place);
+  return Object.entries(map)
+    .map(([place, d]) => ({ place, count: d.count, totalMin: d.totalMin }))
+    .sort((a,b) => b.count - a.count);
 }
-// 休憩でよく使う場所をワンタップで入れられるようにする。
-// 過去に選んだ地名があればそれを新しい順に、まだ無ければ既定の候補を表示する
+// 休憩でよく使う場所を、利用回数が多い順に1行1件のランキング形式で表示する。
+// 過去の記録がまだ無ければ既定の候補を表示する
 function renderPlaceChips(containerId, inputId) {
-  const recent = getRecentBreakPlaces();
-  const names = recent.length ? recent : BREAK_PLACE_PRESETS.filter(n => !getHiddenPlaces().includes(n));
-  document.getElementById(containerId).innerHTML = names.map(name =>
-    `<button type="button" class="place-chip" onmousedown="event.preventDefault()" onclick="pickPlace('${inputId}','${name}')">${name}</button>`
-  ).join('');
+  const hidden = getHiddenPlaces();
+  const ranking = getBreakPlaceRanking();
+  const container = document.getElementById(containerId);
+  if (ranking.length === 0) {
+    const names = BREAK_PLACE_PRESETS.filter(n => !hidden.includes(n));
+    container.innerHTML = names.map(name =>
+      `<button type="button" class="place-chip" onmousedown="event.preventDefault()" onclick="pickPlace('${inputId}','${name}')">${name}</button>`
+    ).join('');
+    return;
+  }
+  const medals = ['gold','silver','bronze'];
+  container.innerHTML = ranking.map((r, i) => `
+    <div class="loc-rank-item" style="padding:10px 14px;cursor:pointer;" onmousedown="event.preventDefault()" onclick="pickPlace('${inputId}','${r.place}')">
+      <div class="loc-rank-num ${medals[i]||''}">${i+1}</div>
+      <div style="flex:1;font-size:14px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${r.place}</div>
+      <div style="font-size:13px;color:var(--muted);flex-shrink:0;text-align:right;min-width:38px;">${r.count}回</div>
+      <div style="font-size:13px;color:var(--muted);flex-shrink:0;text-align:right;min-width:56px;">${fmtWait(r.totalMin)}</div>
+    </div>
+  `).join('');
 }
 // 場所欄にチップ／候補から選んだ値を入れる。休憩開始直後の簡易入力中なら、
 // 選んだ時点でそのまま保存して閉じる（時刻はワンタップ開始時に自動記録済みのため不要）
@@ -3127,7 +3140,6 @@ let schedQuickPlaceMode = false;
 function setSchedItemEditPlaceInputVisible(visible) {
   document.getElementById('schedItemEditPlaceInputWrap').style.display = visible ? '' : 'none';
   document.getElementById('schedItemEditPlaceMoreBtn').style.display = visible ? 'none' : '';
-  document.getElementById('schedItemEditPlaceChips').classList.toggle('quick-mode', !visible);
 }
 function revealSchedItemEditPlaceInput() {
   setSchedItemEditPlaceInputVisible(true);
@@ -3903,167 +3915,6 @@ function interpAt(samples, min) {
     }
   }
   return samples[samples.length - 1].val;
-}
-
-// ==================== アドバイス ====================
-// 過去の休憩開始時刻（当日以外）を、シフト開始からの経過分の配列で返す
-function getHistoricalBreakStartMinutes() {
-  let data;
-  try { data = JSON.parse(localStorage.getItem(BREAKS_KEY) || '{}'); } catch(e) { data = {}; }
-  const today = todayStr();
-  const mins = [];
-  Object.keys(data).forEach(date => {
-    if (date === today) return;
-    (data[date] || []).forEach(b => { if (b.start) mins.push(minutesFromShiftStart(b.start)); });
-  });
-  return mins;
-}
-// 指定した曜日（0=日〜6=土）に乗車実績が多いエリアのトップ3を返す。
-// dowを省略すると、現在時刻から1時間以内に乗車実績が多いエリア（おすすめエリアと同じロジック）
-function getAreaRecommendation(dow) {
-  const trips = getTrips().filter(t => t.pickup && t.pickup.trim() !== '' && t.pickupTime && t.tripType !== '配車');
-  let pool;
-  if (dow === undefined || dow === null) {
-    const now = new Date();
-    const nowKey = now.getHours() * 60 + now.getMinutes();
-    const minutesFromNow = t => {
-      const [h, m] = t.pickupTime.split(':').map(Number);
-      let diff = (h * 60 + m) - nowKey;
-      if (diff < 0) diff += 1440;
-      return diff;
-    };
-    pool = trips.filter(t => minutesFromNow(t) < 60);
-  } else {
-    pool = trips.filter(t => new Date(t.date + 'T00:00:00').getDay() === dow);
-  }
-  const areaMap = {};
-  pool.forEach(t => {
-    const loc = t.pickup.trim();
-    areaMap[loc] = (areaMap[loc] || 0) + 1;
-  });
-  return Object.entries(areaMap).map(([loc, count]) => ({ loc, count })).sort((a,b) => b.count - a.count).slice(0, 3);
-}
-// 月・水・金（このアプリでの「勤務日」）のうち、直近の未来の勤務日（当日を含まない）を返す
-function getNextWorkDate() {
-  for (let i = 1; i <= 7; i++) {
-    const d = new Date(todayStr() + 'T00:00:00');
-    d.setDate(d.getDate() + i);
-    if ([1, 3, 5].includes(d.getDay())) {
-      return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
-    }
-  }
-  return null;
-}
-// 過去の統計から、今の時点でのペース・時給・休憩タイミング・おすすめエリアを踏まえた簡単なアドバイスを組み立てる
-function generateAdvice() {
-  const lines = [];
-  const today = todayStr();
-  const nowMin = nowMinutesIntoShift();
-  const tripsToday = getTrips().filter(t => t.date === today).length;
-
-  if (tripsToday === 0) {
-    // 本日の記録がまだない場合は、次回の勤務日（月・水・金）に向けたアドバイスを表示する
-    const nextDate = getNextWorkDate();
-    if (!nextDate) {
-      lines.push({ icon: '👋', text: '今日も安全運転で頑張りましょう！' });
-      return lines;
-    }
-    const d = new Date(nextDate + 'T00:00:00');
-    const dow = d.getDay();
-    const label = `${d.getMonth()+1}月${d.getDate()}日（${DOW_LABELS[dow]}）`;
-    lines.push({ icon: '📅', text: `次回の勤務日は${label}の予定です。今日はゆっくり休んでください！` });
-
-    const areas = getAreaRecommendation(dow);
-    if (areas.length) {
-      lines.push({ icon: '📍', text: `${DOW_LABELS[dow]}曜日は「${areas[0].loc}」が狙い目です（実績${areas[0].count}回）。まずはこのあたりへ向かってみましょう。` });
-    }
-
-    let breakData; try { breakData = JSON.parse(localStorage.getItem(BREAKS_KEY) || '{}'); } catch(e) { breakData = {}; }
-    const dowBreakMins = [];
-    Object.keys(breakData).forEach(date => {
-      if (new Date(date + 'T00:00:00').getDay() !== dow) return;
-      (breakData[date] || []).forEach(b => { if (b.start) dowBreakMins.push(minutesFromShiftStart(b.start)); });
-    });
-    dowBreakMins.sort((a,b) => a - b);
-    if (dowBreakMins.length) {
-      const typical = dowBreakMins[Math.floor(dowBreakMins.length / 2)];
-      lines.push({ icon: '☕', text: `${DOW_LABELS[dow]}曜日はいつも${shiftMinToHM(typical)}頃に休憩を取っています。参考にしてみてください。` });
-    }
-    return lines;
-  }
-
-  // ペース比較（営収額比較グラフと同じ計算）
-  const todayCurve = buildTodayCurve();
-  const avgCurve = buildAverageCurve(today, 'all');
-  if (avgCurve) {
-    const avgAtNow = interpAt(avgCurve.samples, todayCurve.nowMin);
-    if (avgAtNow > 0) {
-      const diffPct = Math.round((todayCurve.nowVal - avgAtNow) / avgAtNow * 100);
-      if (diffPct >= 15) lines.push({ icon: '🎉', text: `いつもよりペースが${diffPct}%速いです！とても順調です、素晴らしい調子です👏` });
-      else if (diffPct >= 0) lines.push({ icon: '👍', text: 'いつも通り、またはそれ以上の良いペースです。この調子で頑張りましょう！' });
-      else if (diffPct >= -15) lines.push({ icon: '💪', text: `いつもより少しペースが控えめです（平均比${diffPct}%）。焦らず確実な乗車を積み重ねていきましょう。` });
-      else lines.push({ icon: '🙂', text: `今日はペースがゆっくりめです（平均比${diffPct}%）。無理せず、実車率の高いエリアを意識してみるのも良いかもしれません。` });
-    }
-  } else {
-    lines.push({ icon: '📊', text: '比較できる過去の記録がまだ少ないため、データが増えるとより詳しいアドバイスができます。' });
-  }
-
-  // おすすめエリア（これから1時間で乗車実績が多い場所を1つだけピンポイントで示す）
-  const areasNow = getAreaRecommendation();
-  if (areasNow.length) {
-    lines.push({ icon: '📍', text: `次はここへ：「${areasNow[0].loc}」がおすすめです（この時間帯の実績${areasNow[0].count}回）` });
-  }
-
-  // 時給（サマリー・タイムラインと同じ計算式）
-  const hourlyDaySales = getTrips().filter(t => t.date === today).reduce((s,t) => s + getTripFare(t), 0);
-  const scheduleResult = computeScheduleSegments(today);
-  const totalWorkMin = scheduleResult ? scheduleResult.allMin : 0;
-  const hourlyWage = totalWorkMin > 0 ? Math.round(exTax(hourlyDaySales) / (totalWorkMin / 60) * 0.5) : null;
-  if (hourlyWage !== null) {
-    if (hourlyWage >= 1200) lines.push({ icon: '💰', text: `現在の時給は¥${hourlyWage.toLocaleString()}と好調です！` });
-    else if (hourlyWage >= 1000) lines.push({ icon: '💰', text: `現在の時給は¥${hourlyWage.toLocaleString()}です。` });
-    else lines.push({ icon: '💰', text: `現在の時給は¥${hourlyWage.toLocaleString()}です。待機場所や時間帯を少し変えてみるのも一つの手です。` });
-  }
-
-  // 休憩タイミング
-  const todayBreaks = getScheduleBreaks(today);
-  const hasOngoingBreak = todayBreaks.some(b => !b.end);
-  if (hasOngoingBreak) {
-    lines.push({ icon: '☕', text: 'ただいま休憩中です。ゆっくり休んで、リフレッシュしてから再開しましょう。' });
-  } else {
-    const finishedBreaks = todayBreaks.filter(b => b.end);
-    const lastBreakEndMin = finishedBreaks.length ? Math.max(...finishedBreaks.map(b => minutesFromShiftStart(b.end))) : null;
-    const sinceMin = lastBreakEndMin !== null ? (nowMin - lastBreakEndMin) : nowMin;
-    const histMins = getHistoricalBreakStartMinutes().sort((a,b) => a - b);
-    const typicalBreakMin = histMins.length ? histMins[Math.floor(histMins.length / 2)] : null;
-
-    if (todayBreaks.length === 0 && typicalBreakMin !== null && nowMin >= typicalBreakMin) {
-      lines.push({ icon: '☕', text: `いつもは${shiftMinToHM(typicalBreakMin)}頃に休憩を取っています。まだ今日は休憩していないので、そろそろひと休みしてはいかがですか？` });
-    } else if (sinceMin >= 240) {
-      lines.push({ icon: '☕', text: `休憩なしで${Math.floor(sinceMin/60)}時間ほど経過しています。無理せず、休憩を取ってリフレッシュしましょう。` });
-    } else if (todayBreaks.length > 0) {
-      lines.push({ icon: '✅', text: '休憩もしっかり取れています。良いペース配分です。' });
-    }
-  }
-
-  // ねぎらい
-  if (tripsToday >= 10) lines.push({ icon: '🌟', text: `本日はすでに${tripsToday}件の乗車、お疲れさまです！` });
-  else if (tripsToday > 0) lines.push({ icon: '🚕', text: `本日${tripsToday}件の乗車、お疲れさまです。安全運転でいきましょう。` });
-
-  return lines;
-}
-function openAdviceModal() {
-  const lines = generateAdvice();
-  document.getElementById('adviceContent').innerHTML = lines.map(l => `
-    <div style="display:flex;gap:10px;align-items:flex-start;background:var(--bg);border-radius:10px;padding:10px 12px;">
-      <div style="font-size:20px;flex-shrink:0;">${l.icon}</div>
-      <div style="font-size:14px;line-height:1.5;color:var(--text);">${l.text}</div>
-    </div>
-  `).join('');
-  document.getElementById('adviceModal').classList.add('open');
-}
-function closeAdviceModal() {
-  document.getElementById('adviceModal').classList.remove('open');
 }
 
 function renderSalesCompareGraph() {
