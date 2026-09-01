@@ -727,7 +727,14 @@
         <input class="input-field" id="schedItemEditEnd" type="time">
       </div>
     </div>
-    <div class="input-group" id="schedItemEditPlaceRow">
+    <div id="schedItemEditFooter">
+      <div class="btn-row">
+        <button class="btn btn-gray" onclick="closeSchedItemEdit()">キャンセル</button>
+        <button class="btn btn-primary" onclick="saveSchedItemEdit()">保存</button>
+      </div>
+      <button class="btn btn-danger" style="margin-top:8px;" onclick="deleteSchedItemEdit()">🗑 削除</button>
+    </div>
+    <div class="input-group" id="schedItemEditPlaceRow" style="margin-top:14px;">
       <label class="input-label">📍 場所</label>
       <div class="place-chip-row" id="schedItemEditPlaceChips"></div>
       <button type="button" class="place-chip" id="schedItemEditPlaceMoreBtn" style="display:none;margin-top:8px;" onclick="revealSchedItemEditPlaceInput()">✏️ 他の場所を入力</button>
@@ -741,13 +748,6 @@
       </div>
     </div>
     <div id="schedItemEditFuelNote" style="display:none;font-size:13px;color:var(--muted);margin-top:4px;">📍 場所は高岡町で記録されます</div>
-    <div id="schedItemEditFooter">
-      <div class="btn-row">
-        <button class="btn btn-gray" onclick="closeSchedItemEdit()">キャンセル</button>
-        <button class="btn btn-primary" onclick="saveSchedItemEdit()">保存</button>
-      </div>
-      <button class="btn btn-danger" style="margin-top:8px;" onclick="deleteSchedItemEdit()">🗑 削除</button>
-    </div>
   </div>
 </div>
 
@@ -3088,8 +3088,8 @@ function renderPlaceChips(containerId, inputId) {
     <div class="loc-rank-item" style="padding:10px 14px;cursor:pointer;" onmousedown="event.preventDefault()" onclick="pickPlace('${inputId}','${r.place}')">
       <div class="loc-rank-num ${medals[i]||''}">${i+1}</div>
       <div style="flex:1;font-size:14px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${r.place}</div>
-      <div style="font-size:13px;color:var(--muted);flex-shrink:0;text-align:right;min-width:38px;">${r.count}回</div>
-      <div style="font-size:13px;color:var(--muted);flex-shrink:0;text-align:right;min-width:56px;">${fmtWait(r.totalMin)}</div>
+      <div style="font-size:13px;color:var(--muted);flex-shrink:0;text-align:left;width:34px;">${r.count}回</div>
+      <div style="font-size:13px;color:var(--muted);flex-shrink:0;text-align:right;width:68px;">${fmtWait(r.totalMin)}</div>
     </div>
   `).join('');
 }
