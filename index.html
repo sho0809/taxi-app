@@ -3087,9 +3087,9 @@ function renderPlaceChips(containerId, inputId) {
   container.innerHTML = ranking.map((r, i) => `
     <div class="loc-rank-item" style="padding:10px 14px;cursor:pointer;" onmousedown="event.preventDefault()" onclick="pickPlace('${inputId}','${r.place}')">
       <div class="loc-rank-num ${medals[i]||''}">${i+1}</div>
-      <div style="flex:1;font-size:14px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${r.place}</div>
+      <div style="flex-shrink:0;width:90px;font-size:14px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${r.place}</div>
       <div style="font-size:13px;color:var(--muted);flex-shrink:0;text-align:left;width:34px;">${r.count}回</div>
-      <div style="font-size:13px;color:var(--muted);flex-shrink:0;text-align:right;width:68px;">${fmtWait(r.totalMin)}</div>
+      <div style="font-size:13px;color:var(--muted);flex-shrink:0;text-align:right;width:68px;white-space:nowrap;">${fmtWait(r.totalMin)}</div>
     </div>
   `).join('');
 }
