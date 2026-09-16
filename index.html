@@ -248,7 +248,7 @@
   .discount-toggle-btn { display:inline-block; margin-left:6px; font-size:11px; font-weight:700; padding:2px 8px; border-radius:10px; border:1.5px solid var(--border); background:white; color:var(--muted); cursor:pointer; vertical-align:middle; touch-action:manipulation; }
   .discount-toggle-btn.active { background:#fff3e0; border-color:#ff9800; color:#e65100; }
   /* 料金・チップのラベル行の高さをそろえ、障割ボタンの表示有無で横のfare-wrapがずれないようにする */
-  .fare-label-row { display:flex; align-items:center; gap:6px; margin-bottom:5px; min-height:20px; }
+  .fare-label-row { display:flex; align-items:center; gap:6px; margin-bottom:5px; min-height:22px; }
   /* 料金は下2桁の「00」を省略して入力する。入力欄の文字は透明にしておき、
      「入力値＋00」を1つの文字列として重ねて表示することで、数字と00の間隔が
      通常の数字同士の間隔とまったく同じになるようにしている（カーソルは表示したまま） */
@@ -421,17 +421,19 @@
 
       <div class="input-row">
         <div class="input-group">
-          <label class="input-label">🟢 乗車場所</label>
+          <div class="fare-label-row">
+            <label class="input-label" style="margin-bottom:0;">🟢 乗車場所</label>
+          </div>
           <input class="input-field" data-scroll-up="1" id="pickupLoc" type="text" placeholder="" autocomplete="off" oninput="onLocInput('pickupLoc','pickupLocSuggest')" onfocus="onLocInput('pickupLoc','pickupLocSuggest');scrollLocFieldToTop('pickupLoc')" onblur="hideLocSuggest('pickupLocSuggest')" onkeydown="if(event.key==='Enter'){event.preventDefault();hideLocSuggest('pickupLocSuggest');openNextTimeField('pickupLoc');}">
           <div id="pickupLocSuggest" class="loc-suggest"></div>
         </div>
         <div class="input-group">
-          <label class="input-label">🔴 降車場所</label>
+          <div class="fare-label-row">
+            <label class="input-label" style="margin-bottom:0;">🔴 降車場所</label>
+            <button type="button" class="discount-toggle-btn" id="viaPointAddBtn" onclick="addViaPoint()">経由地を追加</button>
+          </div>
           <input class="input-field" data-scroll-up="1" id="dropoffLoc" type="text" placeholder="" autocomplete="off" oninput="onLocInput('dropoffLoc','dropoffLocSuggest')" onfocus="onLocInput('dropoffLoc','dropoffLocSuggest');scrollLocFieldToTop('dropoffLoc')" onblur="hideLocSuggest('dropoffLocSuggest')" onkeydown="if(event.key==='Enter'){event.preventDefault();hideLocSuggest('dropoffLocSuggest');openNextTimeField('dropoffLoc');}">
           <div id="dropoffLocSuggest" class="loc-suggest"></div>
-        </div>
-        <div style="display:flex;align-items:flex-end;padding-bottom:1px;">
-          <button type="button" class="place-chip" id="viaPointAddBtn" onclick="addViaPoint()" style="white-space:nowrap;">経由地を追加</button>
         </div>
       </div>
 
