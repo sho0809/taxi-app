@@ -426,23 +426,20 @@
           <div id="pickupLocSuggest" class="loc-suggest"></div>
         </div>
         <div class="input-group">
-          <label class="input-label">🔴 降車場所</label>
+          <div class="fare-label-row">
+            <button type="button" class="discount-toggle-btn" id="viaPointAddBtn" onclick="addViaPoint()">経由地を追加</button>
+            <label class="input-label" style="margin-bottom:0;">🔴 降車場所</label>
+          </div>
           <input class="input-field" data-scroll-up="1" id="dropoffLoc" type="text" placeholder="" autocomplete="off" oninput="onLocInput('dropoffLoc','dropoffLocSuggest')" onfocus="onLocInput('dropoffLoc','dropoffLocSuggest');scrollLocFieldToTop('dropoffLoc')" onblur="hideLocSuggest('dropoffLocSuggest')" onkeydown="if(event.key==='Enter'){event.preventDefault();hideLocSuggest('dropoffLocSuggest');openNextTimeField('dropoffLoc');}">
           <div id="dropoffLocSuggest" class="loc-suggest"></div>
         </div>
       </div>
 
-      <div class="input-group" id="viaPointRow">
-        <button type="button" class="place-chip" id="viaPointToggleBtn" onclick="toggleViaPoint()">🚏 経由地を追加</button>
-        <div id="viaPointInputWrap" style="display:none;margin-top:8px;">
-          <label class="input-label">🚏 経由地</label>
-          <input class="input-field" data-scroll-up="1" id="viaPointLoc" type="text" placeholder="" autocomplete="off"
-                 oninput="onLocInput('viaPointLoc','viaPointLocSuggest')"
-                 onfocus="onLocInput('viaPointLoc','viaPointLocSuggest');scrollLocFieldToTop('viaPointLoc')"
-                 onblur="hideLocSuggest('viaPointLocSuggest')"
-                 onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}">
-          <div id="viaPointLocSuggest" class="loc-suggest"></div>
-        </div>
+      <div id="viaPointsContainer"></div>
+
+      <div class="input-group">
+        <label class="input-label">🏢 降車場所詳細（店名・施設名など／空欄可）</label>
+        <input class="input-field" id="dropoffDetail" type="text" placeholder="">
       </div>
 
       <div class="input-row">
@@ -478,10 +475,6 @@
         </div>
         <input type="hidden" id="goPaxGender" value="">
         <input type="hidden" id="goPaxAge" value="">
-        <div class="input-group" style="margin-top:6px;margin-bottom:0;">
-          <label class="input-label">🏢 降車場所詳細（店名・施設名など／空欄可）</label>
-          <input class="input-field" id="goDropoffDetail" type="text" placeholder="">
-        </div>
         <div id="goPaxHistory" style="display:none;margin-top:8px;"></div>
       </div>
 
@@ -934,20 +927,17 @@
       <div id="editPickupLocSuggest" class="loc-suggest"></div>
     </div>
     <div class="input-group">
-      <label class="input-label">🔴 降車場所</label>
+      <div class="fare-label-row">
+        <button type="button" class="discount-toggle-btn" id="editViaPointAddBtn" onclick="addEditViaPoint()">経由地を追加</button>
+        <label class="input-label" style="margin-bottom:0;">🔴 降車場所</label>
+      </div>
       <input class="input-field" id="editDropoffLoc" type="text" placeholder="例：新宿三丁目" autocomplete="off" oninput="onLocInput('editDropoffLoc','editDropoffLocSuggest')" onfocus="onLocInput('editDropoffLoc','editDropoffLocSuggest');scrollLocFieldToTop('editDropoffLoc')" onblur="hideLocSuggest('editDropoffLocSuggest')">
       <div id="editDropoffLocSuggest" class="loc-suggest"></div>
     </div>
-    <div class="input-group" id="editViaPointRow">
-      <button type="button" class="place-chip" id="editViaPointToggleBtn" onclick="toggleEditViaPoint()">🚏 経由地を追加</button>
-      <div id="editViaPointInputWrap" style="display:none;margin-top:8px;">
-        <label class="input-label">🚏 経由地</label>
-        <input class="input-field" id="editViaPointLoc" type="text" placeholder="" autocomplete="off"
-               oninput="onLocInput('editViaPointLoc','editViaPointLocSuggest')"
-               onfocus="onLocInput('editViaPointLoc','editViaPointLocSuggest');scrollLocFieldToTop('editViaPointLoc')"
-               onblur="hideLocSuggest('editViaPointLocSuggest')">
-        <div id="editViaPointLocSuggest" class="loc-suggest"></div>
-      </div>
+    <div id="editViaPointsContainer"></div>
+    <div class="input-group">
+      <label class="input-label">🏢 降車場所詳細（店名・施設名など／空欄可）</label>
+      <input class="input-field" id="editDropoffDetail" type="text" placeholder="">
     </div>
     <div class="input-row">
       <div class="input-group">
@@ -1039,10 +1029,6 @@
         <button class="pay-btn" id="editGoGender-女性" onclick="selectEditGoGender('女性')" style="flex:1;">女性</button>
       </div>
       <input type="hidden" id="editGoPaxGender" value="男性">
-      <div class="input-group" style="margin-top:6px;margin-bottom:0;">
-        <label class="input-label">🏢 降車場所詳細（店名・施設名など／空欄可）</label>
-        <input class="input-field" id="editGoDropoffDetail" type="text" placeholder="">
-      </div>
     </div>
     <div class="input-group" id="editPlainMemoGroup">
       <label class="input-label">📝 メモ</label>
@@ -1527,7 +1513,7 @@ const PLACE_NAME_READING_HINT = {
   '緑町':'み', '鉄炮町':'て', '清水町':'し', '姫原':'ひ',
   '東温市牛渕':'と', '別府町':'へ', '祓川':'は', '竹原':'た', '内浜町':'う', '市坪南':'い', '鴨川':'か',
   '北井門':'き', '久万ノ台':'く', '市坪北':'い', '宮田町':'み',
-  '山西町':'や', '東長戸':'ひ', '吉藤':'よ', '南江戸':'み', '東石井':'ひ', '高浜町':'た', '南白水':'み', '泉町':'い',
+  '山西町':'や', '東長戸':'ひ', '吉藤':'よ', '南江戸':'み', '東石井':'ひ', '高浜町':'た', '南白水':'み', '泉町':'い', '内宮町':'う', '堀江町':'ほ', '西長戸町':'に',
 };
 
 // 特定のひらがな入力に対して誤って候補に出てしまう地名を除外する対応表（ユーザー指摘分）。
@@ -1760,25 +1746,42 @@ function toggleDisabilityDiscount() {
   updateFareDisplay();
 }
 
-// 経由地欄はボタンを押したときだけ表示する（多くの乗車では不要なため）
-function toggleViaPoint() {
-  const wrap = document.getElementById('viaPointInputWrap');
-  const show = wrap.style.display === 'none';
-  wrap.style.display = show ? '' : 'none';
-  document.getElementById('viaPointToggleBtn').textContent = show ? '🚏 経由地を削除' : '🚏 経由地を追加';
-  document.getElementById('viaPointToggleBtn').classList.toggle('active', show);
-  if (show) {
-    document.getElementById('viaPointLoc').focus();
-  } else {
-    document.getElementById('viaPointLoc').value = '';
-    hideLocSuggest('viaPointLocSuggest');
-  }
+// 経由地：ボタンを押すたびに入力欄を1つ追加する（2ヶ所・3ヶ所など複数箇所に対応）。
+// 各欄には乗車場所・降車場所と同じ地名の予測候補を表示する
+let viaPointCount = 0;
+function addViaPoint() {
+  const idx = viaPointCount++;
+  const row = document.createElement('div');
+  row.className = 'input-group';
+  row.id = `viaPointRow_${idx}`;
+  row.innerHTML = `
+    <div class="fare-label-row">
+      <label class="input-label" style="margin-bottom:0;">🚏 経由地</label>
+      <button type="button" class="discount-toggle-btn" onclick="removeViaPoint(${idx})">削除</button>
+    </div>
+    <input class="input-field" data-scroll-up="1" id="viaPointLoc_${idx}" type="text" placeholder="" autocomplete="off"
+           oninput="onLocInput('viaPointLoc_${idx}','viaPointLocSuggest_${idx}')"
+           onfocus="onLocInput('viaPointLoc_${idx}','viaPointLocSuggest_${idx}');scrollLocFieldToTop('viaPointLoc_${idx}')"
+           onblur="hideLocSuggest('viaPointLocSuggest_${idx}')"
+           onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}">
+    <div id="viaPointLocSuggest_${idx}" class="loc-suggest"></div>
+  `;
+  document.getElementById('viaPointsContainer').appendChild(row);
+  document.getElementById(`viaPointLoc_${idx}`).focus();
 }
-function resetViaPoint() {
-  document.getElementById('viaPointInputWrap').style.display = 'none';
-  document.getElementById('viaPointToggleBtn').textContent = '🚏 経由地を追加';
-  document.getElementById('viaPointToggleBtn').classList.remove('active');
-  document.getElementById('viaPointLoc').value = '';
+function removeViaPoint(idx) {
+  const row = document.getElementById(`viaPointRow_${idx}`);
+  if (row) row.remove();
+}
+function resetViaPoints() {
+  document.getElementById('viaPointsContainer').innerHTML = '';
+  viaPointCount = 0;
+}
+// 乗車場所→経由地(複数可)→降車場所の順で並ぶよう、追加した順番のまま値を取り出す
+function getViaPointValues() {
+  return [...document.querySelectorAll('#viaPointsContainer input[id^="viaPointLoc_"]')]
+    .map(el => el.value.trim())
+    .filter(v => v);
 }
 
 // 人員（男性・女性ボタンをタップするたびに人数が増える。5でリセットして0に戻る）。
@@ -1891,11 +1894,18 @@ function getTripFare(t) {
   }
   return t.fare || 0;
 }
+// 経由地の配列を返す（複数箇所対応前の旧データはviaPointという単一の文字列だったため、
+// その場合も配列に読み替える）
+function getTripViaPoints(t) {
+  if (Array.isArray(t.viaPoints)) return t.viaPoints.filter(v => v && v.trim());
+  if (t.viaPoint) return [t.viaPoint];
+  return [];
+}
 
 function saveTrip() {
   const pickup = document.getElementById('pickupLoc').value.trim();
   const dropoff = document.getElementById('dropoffLoc').value.trim();
-  const viaPoint = document.getElementById('viaPointLoc').value.trim();
+  const viaPoints = getViaPointValues();
   const fareRaw = document.getElementById('fareAmount').value.trim();
   const payMethod = document.getElementById('payMethod').value || '現金';
   const tip = parseInt(document.getElementById('tipAmount').value) || 0;
@@ -1907,7 +1917,7 @@ function saveTrip() {
   const paxName = tripType === 'GO' ? document.getElementById('goPaxName').value.trim() : '';
   const paxGender = tripType === 'GO' ? document.getElementById('goPaxGender').value : document.getElementById('plainPaxGender').value;
   const paxAge = tripType === 'GO' ? document.getElementById('goPaxAge').value : '';
-  const dropoffDetail = tripType === 'GO' ? document.getElementById('goDropoffDetail').value.trim() : '';
+  const dropoffDetail = document.getElementById('dropoffDetail').value.trim();
 
   const missing = [];
   if (!fareRaw) missing.push('料金');
@@ -1933,7 +1943,7 @@ function saveTrip() {
   trips.unshift({
     id: Date.now(),
     date: todayStr(),
-    pickup, dropoff, viaPoint,
+    pickup, dropoff, viaPoints,
     cashFare, uncollectedFare, tip,
     fare: cashFare + uncollectedFare, // 後方互換
     pickupTime, dropoffTime,
@@ -1945,7 +1955,7 @@ function saveTrip() {
   saveTrips(trips);
 
   // フォームリセット
-  ['pickupLoc','dropoffLoc','fareAmount','tipAmount','plainMemo','goDropoffDetail'].forEach(id => {
+  ['pickupLoc','dropoffLoc','fareAmount','tipAmount','plainMemo','dropoffDetail'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.value = '';
   });
@@ -1955,7 +1965,7 @@ function saveTrip() {
   resetPax();
   resetGoMemo();
   resetPlainGender();
-  resetViaPoint();
+  resetViaPoints();
   selectPay('現金');
   selectType(getDefaultType());
   if (disabilityDiscountOn) toggleDisabilityDiscount();
@@ -2343,10 +2353,10 @@ function tripCard(t) {
       <div class="trip-route">
         <div class="route-item"><span class="route-dot route-dot-start"></span>${t.pickup||'（乗車場所未設定）'}</div>
         <div style="margin-left:3.25px"><div class="route-line"></div></div>
-        ${t.viaPoint ? `
-        <div class="route-item"><span class="route-dot" style="background:var(--muted);"></span>${t.viaPoint}（経由）</div>
+        ${getTripViaPoints(t).map(v => `
+        <div class="route-item"><span class="route-dot" style="background:var(--muted);"></span>${v}（経由）</div>
         <div style="margin-left:3.25px"><div class="route-line"></div></div>
-        ` : ''}
+        `).join('')}
         <div class="route-item"><span class="route-dot route-dot-end"></span>${t.dropoff||'（降車場所未設定）'}</div>
       </div>
       <div class="trip-meta">
@@ -2476,9 +2486,9 @@ function openTripEditModal(id) {
   document.getElementById('editDropoffLoc').value = trip.dropoff || '';
   document.getElementById('editPickupTime').value = trip.pickupTime || '';
   document.getElementById('editDropoffTime').value = trip.dropoffTime || '';
-  // 経由地は使った記録のときだけ入力欄を開いた状態にする
-  document.getElementById('editViaPointLoc').value = trip.viaPoint || '';
-  setEditViaPointVisible(!!trip.viaPoint);
+  // 記録済みの経由地（複数可）をそのまま入力欄として並べる
+  resetEditViaPoints();
+  getTripViaPoints(trip).forEach(v => addEditViaPoint(v));
   // 後方互換: 旧データは fare フィールドのみ
   const cf = trip.cashFare !== undefined ? trip.cashFare : (trip.fare||0);
   document.getElementById('editCashFare').value = cf || '';
@@ -2491,7 +2501,7 @@ function openTripEditModal(id) {
   }
   document.getElementById('editGoPaxName').value = (trip.tripType === 'GO') ? (trip.paxName || trip.memo || '') : '';
   document.getElementById('editGoPaxAge').value = (trip.tripType === 'GO') ? (trip.paxAge || '') : '';
-  document.getElementById('editGoDropoffDetail').value = (trip.tripType === 'GO') ? (trip.dropoffDetail || '') : '';
+  document.getElementById('editDropoffDetail').value = trip.dropoffDetail || '';
   document.getElementById('editPlainMemo').value = (trip.tripType !== 'GO') ? (trip.memo || '') : '';
   selectEditGoGender((trip.tripType === 'GO' && trip.paxGender) ? trip.paxGender : '男性');
   setEditPlainGender((trip.tripType !== 'GO' && trip.paxGender) ? trip.paxGender : '');
@@ -2503,17 +2513,41 @@ function openTripEditModal(id) {
   selectEditPay(trip.payMethod || '現金');
   document.getElementById('tripEditModal').classList.add('open');
 }
-// 経由地欄の表示・非表示（記録画面のtoggleViaPointと同じ考え方。修正画面では既存値の有無で初期表示を決める）
-function setEditViaPointVisible(visible) {
-  document.getElementById('editViaPointInputWrap').style.display = visible ? '' : 'none';
-  document.getElementById('editViaPointToggleBtn').textContent = visible ? '🚏 経由地を削除' : '🚏 経由地を追加';
-  document.getElementById('editViaPointToggleBtn').classList.toggle('active', visible);
+// 経由地（修正画面）：記録画面のaddViaPointと同じ考え方。prefillを渡すと値を入れた状態で追加する
+let editViaPointCount = 0;
+function addEditViaPoint(prefill) {
+  const idx = editViaPointCount++;
+  const row = document.createElement('div');
+  row.className = 'input-group';
+  row.id = `editViaPointRow_${idx}`;
+  row.innerHTML = `
+    <div class="fare-label-row">
+      <label class="input-label" style="margin-bottom:0;">🚏 経由地</label>
+      <button type="button" class="discount-toggle-btn" onclick="removeEditViaPoint(${idx})">削除</button>
+    </div>
+    <input class="input-field" id="editViaPointLoc_${idx}" type="text" placeholder="" autocomplete="off"
+           oninput="onLocInput('editViaPointLoc_${idx}','editViaPointLocSuggest_${idx}')"
+           onfocus="onLocInput('editViaPointLoc_${idx}','editViaPointLocSuggest_${idx}');scrollLocFieldToTop('editViaPointLoc_${idx}')"
+           onblur="hideLocSuggest('editViaPointLocSuggest_${idx}')">
+    <div id="editViaPointLocSuggest_${idx}" class="loc-suggest"></div>
+  `;
+  document.getElementById('editViaPointsContainer').appendChild(row);
+  const input = document.getElementById(`editViaPointLoc_${idx}`);
+  if (prefill) input.value = prefill;
+  else input.focus();
 }
-function toggleEditViaPoint() {
-  const show = document.getElementById('editViaPointInputWrap').style.display === 'none';
-  setEditViaPointVisible(show);
-  if (show) document.getElementById('editViaPointLoc').focus();
-  else { document.getElementById('editViaPointLoc').value = ''; hideLocSuggest('editViaPointLocSuggest'); }
+function removeEditViaPoint(idx) {
+  const row = document.getElementById(`editViaPointRow_${idx}`);
+  if (row) row.remove();
+}
+function resetEditViaPoints() {
+  document.getElementById('editViaPointsContainer').innerHTML = '';
+  editViaPointCount = 0;
+}
+function getEditViaPointValues() {
+  return [...document.querySelectorAll('#editViaPointsContainer input[id^="editViaPointLoc_"]')]
+    .map(el => el.value.trim())
+    .filter(v => v);
 }
 
 function closeTripEditModal() {
@@ -2534,7 +2568,7 @@ function saveTripEdit() {
     ...trips[idx],
     pickup: document.getElementById('editPickupLoc').value.trim(),
     dropoff: document.getElementById('editDropoffLoc').value.trim(),
-    viaPoint: document.getElementById('editViaPointLoc').value.trim(),
+    viaPoints: getEditViaPointValues(),
     pickupTime: document.getElementById('editPickupTime').value,
     dropoffTime: document.getElementById('editDropoffTime').value,
     cashFare, uncollectedFare, tip,
@@ -2547,7 +2581,7 @@ function saveTripEdit() {
     paxName: tripType === 'GO' ? document.getElementById('editGoPaxName').value.trim() : '',
     paxGender: tripType === 'GO' ? document.getElementById('editGoPaxGender').value : document.getElementById('editPlainPaxGender').value,
     paxAge: tripType === 'GO' ? document.getElementById('editGoPaxAge').value : '',
-    dropoffDetail: tripType === 'GO' ? document.getElementById('editGoDropoffDetail').value.trim() : '',
+    dropoffDetail: document.getElementById('editDropoffDetail').value.trim(),
     updatedAt: new Date().toISOString()
   };
   saveTrips(trips);
@@ -3661,10 +3695,10 @@ function renderSchedule() {
             <div style="font-size:12px;font-weight:800;color:var(--muted);">${rideNumber}</div>
             <div style="font-size:11px;font-weight:700;color:var(--success);margin-top:2px;">¥${cumulative.toLocaleString()}</div>
           </div>
-          <div class="sched-time">${fmtHM(seg.start)}〜${fmtHM(seg.end)} <span class="sched-dur">（${fmtWait(durMin)}）</span></div>
+          <div class="sched-time">${fmtHM(seg.start)}〜${fmtHM(seg.end)} <span class="sched-dur">（${fmtWait(durMin)}）</span> <span style="color:var(--success);font-weight:700;">¥${fare.toLocaleString()}</span></div>
           <div class="sched-body">
             <span class="sched-type-badge" style="background:${typeColor}22;color:${typeColor};">${type}</span>
-            ${t.pickup||'（乗車場所未設定）'} → ${t.dropoff||'（降車場所未設定）'}　<span style="color:var(--success);font-weight:700;">¥${fare.toLocaleString()}</span>
+            ${[t.pickup||'（乗車場所未設定）', ...getTripViaPoints(t), t.dropoff||'（降車場所未設定）'].join(' → ')}
             ${paxLine ? `<div style="margin-top:4px;font-size:12px;font-weight:700;color:var(--primary);${paxClickable ? 'cursor:pointer;' : ''}"${paxClickable ? ` onclick="event.stopPropagation();showCustomerHistory(${t.id})"` : ''}>${paxLine}${paxClickable ? ' ›' : ''}</div>` : ''}
             <div style="margin-top:4px;font-size:12px;color:var(--muted);">${paxCountLabel}</div>
           </div>
