@@ -426,21 +426,16 @@
           <div id="pickupLocSuggest" class="loc-suggest"></div>
         </div>
         <div class="input-group">
-          <div class="fare-label-row">
-            <button type="button" class="discount-toggle-btn" id="viaPointAddBtn" onclick="addViaPoint()">経由地を追加</button>
-            <label class="input-label" style="margin-bottom:0;">🔴 降車場所</label>
-          </div>
+          <label class="input-label">🔴 降車場所</label>
           <input class="input-field" data-scroll-up="1" id="dropoffLoc" type="text" placeholder="" autocomplete="off" oninput="onLocInput('dropoffLoc','dropoffLocSuggest')" onfocus="onLocInput('dropoffLoc','dropoffLocSuggest');scrollLocFieldToTop('dropoffLoc')" onblur="hideLocSuggest('dropoffLocSuggest')" onkeydown="if(event.key==='Enter'){event.preventDefault();hideLocSuggest('dropoffLocSuggest');openNextTimeField('dropoffLoc');}">
           <div id="dropoffLocSuggest" class="loc-suggest"></div>
+        </div>
+        <div style="display:flex;align-items:flex-end;padding-bottom:1px;">
+          <button type="button" class="place-chip" id="viaPointAddBtn" onclick="addViaPoint()" style="white-space:nowrap;">経由地を追加</button>
         </div>
       </div>
 
       <div id="viaPointsContainer"></div>
-
-      <div class="input-group">
-        <label class="input-label">🏢 降車場所詳細（店名・施設名など／空欄可）</label>
-        <input class="input-field" id="dropoffDetail" type="text" placeholder="">
-      </div>
 
       <div class="input-row">
         <div class="input-group">
@@ -483,6 +478,11 @@
         <textarea class="input-field" id="plainMemo" rows="2" placeholder="自由記入" style="resize:vertical;" oninput="onPlainMemoInput()"></textarea>
         <input type="hidden" id="plainPaxGender" value="">
         <div id="plainMemoHistory" style="display:none;margin-top:8px;"></div>
+      </div>
+
+      <div class="input-group">
+        <label class="input-label">🏢 降車場所詳細（店名・施設名など／空欄可）</label>
+        <input class="input-field" id="dropoffDetail" type="text" placeholder="">
       </div>
 
       <button class="btn btn-primary" onclick="saveTrip()" style="margin-top:4px;">
@@ -928,17 +928,13 @@
     </div>
     <div class="input-group">
       <div class="fare-label-row">
-        <button type="button" class="discount-toggle-btn" id="editViaPointAddBtn" onclick="addEditViaPoint()">経由地を追加</button>
         <label class="input-label" style="margin-bottom:0;">🔴 降車場所</label>
+        <button type="button" class="discount-toggle-btn" id="editViaPointAddBtn" onclick="addEditViaPoint()" style="margin-left:auto;">経由地を追加</button>
       </div>
       <input class="input-field" id="editDropoffLoc" type="text" placeholder="例：新宿三丁目" autocomplete="off" oninput="onLocInput('editDropoffLoc','editDropoffLocSuggest')" onfocus="onLocInput('editDropoffLoc','editDropoffLocSuggest');scrollLocFieldToTop('editDropoffLoc')" onblur="hideLocSuggest('editDropoffLocSuggest')">
       <div id="editDropoffLocSuggest" class="loc-suggest"></div>
     </div>
     <div id="editViaPointsContainer"></div>
-    <div class="input-group">
-      <label class="input-label">🏢 降車場所詳細（店名・施設名など／空欄可）</label>
-      <input class="input-field" id="editDropoffDetail" type="text" placeholder="">
-    </div>
     <div class="input-row">
       <div class="input-group">
         <label class="input-label">⏱ 乗車時刻</label>
@@ -1038,6 +1034,10 @@
         <button class="pay-btn" id="editPlainGender-女性" onclick="selectEditPlainGender('女性')" style="flex:1;">女性</button>
       </div>
       <input type="hidden" id="editPlainPaxGender" value="">
+    </div>
+    <div class="input-group">
+      <label class="input-label">🏢 降車場所詳細（店名・施設名など／空欄可）</label>
+      <input class="input-field" id="editDropoffDetail" type="text" placeholder="">
     </div>
     <div class="btn-row">
       <button class="btn btn-gray" onclick="closeTripEditModal()">キャンセル</button>
