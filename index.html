@@ -704,6 +704,15 @@
         </div>
       </div>
     </div>
+    <div class="card">
+      <div class="card-title">データのバックアップ</div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-gray" style="flex:1;" onclick="exportBackup()">📤 バックアップを保存</button>
+        <button class="btn btn-gray" style="flex:1;" onclick="document.getElementById('backupRestoreInput').click()">📥 復元する</button>
+      </div>
+      <input type="file" id="backupRestoreInput" accept="application/json" style="display:none;" onchange="importBackupFile(event)">
+      <div style="font-size:11px;color:var(--muted);margin-top:6px;">機種変更の前にバックアップを保存しておくと、新しい端末で「復元する」から記録を戻せます。</div>
+    </div>
   </div>
 
 </div><!-- end content -->
@@ -1111,6 +1120,65 @@ function saveScheduleFuelStops(date, stops) {
     data[date] = stops;
     localStorage.setItem(FUEL_STOPS_KEY, JSON.stringify(data));
   } catch(e) {}
+}
+
+// ==================== バックアップ / 復元 ====================
+// 機種変更などでlocalStorageのデータが失われないよう、全データをJSONファイルに書き出し／読み込みする
+// （HIDDEN_PLACES_KEYなど一部の定数はこのコードより後で宣言されるため、
+// 　配列は使用時に関数として組み立てる＝TDZエラーを避ける）
+function getBackupKeys() {
+  return [
+    TRIPS_KEY, WAITS_KEY, DAY_END_KEY, BREAKS_KEY, FUEL_STOPS_KEY,
+    HIDDEN_PLACES_KEY, DAY_SALES_OVERRIDE_KEY, USER_PERIODS_KEY
+  ];
+}
+function exportBackup() {
+  const data = {};
+  getBackupKeys().forEach(key => { data[key] = localStorage.getItem(key); });
+  const backup = { app: 'taxi-app', version: APP_VERSION, exportedAt: new Date().toISOString(), data };
+  const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const today = new Date();
+  a.href = url;
+  a.download = `taxi-backup-${today.getFullYear()}${pad(today.getMonth()+1)}${pad(today.getDate())}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+function importBackupFile(event) {
+  const file = event.target.files[0];
+  event.target.value = '';
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    let backup;
+    try {
+      backup = JSON.parse(reader.result);
+    } catch(e) {
+      alert('ファイルの読み込みに失敗しました。正しいバックアップファイルを選択してください。');
+      return;
+    }
+    if (!backup || typeof backup.data !== 'object') {
+      alert('このファイルはバックアップデータの形式ではありません。');
+      return;
+    }
+    if (!confirm('現在この端末にあるデータを、バックアップファイルの内容で上書きします。\nよろしいですか？')) return;
+    getBackupKeys().forEach(key => {
+      if (backup.data[key] !== undefined && backup.data[key] !== null) {
+        localStorage.setItem(key, backup.data[key]);
+      } else {
+        localStorage.removeItem(key);
+      }
+    });
+    alert('復元が完了しました。アプリを再読み込みします。');
+    location.reload();
+  };
+  reader.onerror = () => {
+    alert('ファイルの読み込みに失敗しました。');
+  };
+  reader.readAsText(file);
 }
 
 // 月・水・金かどうか（待機時間表示対象日）
