@@ -2841,6 +2841,16 @@ function switchLocTab(tab) {
   renderLocationRanking();
 }
 
+// 種別の内訳バッジ。色はタイムラインと同じ（GO=青／流し=緑／配車=橙）
+function typeBadges(types) {
+  return ['GO','流し','配車']
+    .filter(tp => types[tp])
+    .map(tp => {
+      const c = { '配車': '#ff6b00', 'GO': '#1a73e8', '流し': '#00a152' }[tp];
+      return `<span class="sched-type-badge" style="background:${c}22;color:${c};">${tp} ${types[tp]}</span>`;
+    }).join('');
+}
+
 // 降車場所詳細（店名・施設名など）ごとの利用回数ランキング
 function renderDropoffDetailRanking() {
   const trips = getTrips().filter(t => t.dropoffDetail && t.dropoffDetail.trim() !== '');
@@ -2852,12 +2862,14 @@ function renderDropoffDetailRanking() {
   const map = {};
   trips.forEach(t => {
     const detail = t.dropoffDetail.trim();
-    if (!map[detail]) map[detail] = { count: 0, total: 0 };
+    if (!map[detail]) map[detail] = { count: 0, total: 0, types: {} };
     map[detail].count++;
     map[detail].total += getTripFare(t);
+    const type = t.tripType || '流し';
+    map[detail].types[type] = (map[detail].types[type] || 0) + 1;
   });
   const items = Object.entries(map)
-    .map(([detail, d]) => ({ detail, count: d.count, total: d.total }))
+    .map(([detail, d]) => ({ detail, count: d.count, total: d.total, types: d.types }))
     .sort((a,b) => b.count - a.count);
   const medals = ['gold','silver','bronze'];
   document.getElementById('locationRanking').innerHTML = items.map((item, i) => `
@@ -2866,6 +2878,7 @@ function renderDropoffDetailRanking() {
       <div class="loc-rank-body">
         <div class="loc-rank-name">${item.detail}</div>
         <div class="loc-rank-meta">${item.count}回 ／ 合計 ¥${item.total.toLocaleString()}</div>
+        <div style="margin-top:3px;">${typeBadges(item.types)}</div>
       </div>
       <div class="loc-rank-fare">${item.count}回</div>
     </div>
@@ -2938,13 +2951,6 @@ function renderLocationRanking() {
   else items.sort((a,b) => b.total - a.total);
 
   const medals = ['gold','silver','bronze'];
-  // 種別の内訳バッジ。色はタイムラインと同じ（GO=青／流し=緑／配車=橙）
-  const typeBadges = types => ['GO','流し','配車']
-    .filter(tp => types[tp])
-    .map(tp => {
-      const c = { '配車': '#ff6b00', 'GO': '#1a73e8', '流し': '#00a152' }[tp];
-      return `<span class="sched-type-badge" style="background:${c}22;color:${c};">${tp} ${types[tp]}</span>`;
-    }).join('');
   document.getElementById('locationRanking').innerHTML = items.map((item, i) => `
     <div class="loc-rank-item" style="cursor:pointer;" onclick="showLocationHistory('${encodeURIComponent(item.loc)}')">
       <div class="loc-rank-num ${medals[i]||''}">${i+1}</div>
