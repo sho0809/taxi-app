@@ -90,29 +90,27 @@
 
 
   /* コンパクトフォーム */
-  /* 画面の高さいっぱいに広げ、余った分を項目の間に均等に配ることで
-     保存ボタンの下に余白が残らないようにする */
+  /* 以前は画面の高さいっぱいに広げていたが、項目が増えて常に画面より長くなったため、
+     その仕組み（100vh基準のmin-height + space-between）はやめ、内容にそのまま
+     合わせる。実機で100vhがアドレスバー分だけ実際の表示領域より大きくなり、
+     保存ボタンが画面外に押し出されて半分しか見えなくなる不具合の原因だったため */
   #tripFormCard {
-    padding: 10px 12px;
+    padding: 8px 12px;
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
     gap: 6px;
-    /* --header-actual / --nav-actual は実測値（JSで設定）。
-       14px = .content の上パディング。下は .content.record-page 側で詰めている */
     margin-bottom: 0;
-    min-height: calc(100vh - var(--header-actual, var(--header-h)) - var(--nav-actual, var(--nav-h)) - var(--safe-bottom) - 14px);
   }
   #tripFormCard .card-title { display: none; }
   #tripFormCard .input-group { margin-bottom: 0; }
-  #tripFormCard .input-label { font-size: 11px; margin-bottom: 3px; }
-  #tripFormCard .input-field { padding: 8px 12px; font-size: 15px; }
+  #tripFormCard .input-label { font-size: 11px; margin-bottom: 2px; }
+  #tripFormCard .input-field { padding: 7px 12px; font-size: 15px; }
   #tripFormCard .fare-wrap .input-field { padding-left: 26px; }
   /* 乗車時刻・降車時刻を乗車場所・降車場所と同じ大きさにそろえ、
      値を入れても高さが変わらないよう固定する */
-  #tripFormCard input[type="time"] { font-size: 15px; padding: 8px 12px; }
-  #tripFormCard input.input-field, #tripFormCard select.input-field { height: 40px; }
-  #tripFormCard .pay-btn { padding: 6px 4px; font-size: 11px; }
+  #tripFormCard input[type="time"] { font-size: 15px; padding: 7px 12px; }
+  #tripFormCard input.input-field, #tripFormCard select.input-field { height: 37px; }
+  #tripFormCard .pay-btn { padding: 5px 4px; font-size: 11px; }
   #tripFormCard .type-btn { padding: 8px 4px; font-size: 13px; }
   /* 年代ボタン（7個）は折り返さず横1列に収める */
   .go-age-btns { flex-wrap: nowrap; gap: 4px; }
@@ -452,7 +450,7 @@
 
       <div class="input-group" id="goMemoGroup" style="display:none;">
         <label class="input-label">📝 乗客情報</label>
-        <div class="input-row" style="margin-bottom:6px;">
+        <div class="input-row" style="margin-bottom:4px;">
           <div class="input-group" style="flex:1.4;margin-bottom:0;">
             <input class="input-field" data-scroll-up="1" id="goPaxName" type="text" placeholder="" autocomplete="off" oninput="onGoPaxNameInput()" onfocus="scrollLocFieldToTop('goPaxName')">
           </div>
@@ -461,7 +459,7 @@
             <button class="pay-btn" id="goGender-女性" onclick="selectGoGender('女性', true)" style="flex:1;">女性</button>
           </div>
         </div>
-        <div class="pay-btns go-age-btns" style="margin-bottom:6px;">
+        <div class="pay-btns go-age-btns" style="margin-bottom:0;">
           <button class="pay-btn" id="goAge-10代" onclick="selectGoAge('10代')">10代</button>
           <button class="pay-btn" id="goAge-20代" onclick="selectGoAge('20代')">20代</button>
           <button class="pay-btn" id="goAge-30代" onclick="selectGoAge('30代')">30代</button>
@@ -583,6 +581,7 @@
         <button class="analysis-tab active" id="locTab-count" onclick="switchLocTab('count')">乗車回数順</button>
         <button class="analysis-tab" id="locTab-avg" onclick="switchLocTab('avg')">平均単価順</button>
         <button class="analysis-tab" id="locTab-total" onclick="switchLocTab('total')">総売上順</button>
+        <button class="analysis-tab" id="locTab-dropoffDetail" onclick="switchLocTab('dropoffDetail')">降車詳細順</button>
       </div>
       <div id="locationRanking"></div>
     </div>
@@ -1398,7 +1397,7 @@ function onGoPaxNameInput() {
     return `
       <div class="pax-history-item" onclick="applyGoPaxHistory(${t.id})">
         <span class="ph-date">${parseInt(mm)}/${parseInt(dd)}(${dow}) ${t.pickupTime||''}</span> ${t.paxName} ${t.paxGender||''}${t.paxAge||''}　<b>¥${fare.toLocaleString()}</b>
-        <div class="ph-route">${t.pickup||'?'} → ${t.dropoff||'?'}</div>
+        <div class="ph-route">${formatTripRoute(t)}</div>
       </div>
     `;
   }).join('');
@@ -1448,7 +1447,7 @@ function onPlainMemoInput() {
     return `
       <div class="pax-history-item" onclick="applyPlainMemoHistory(${t.id})">
         <span class="ph-date">${parseInt(mm)}/${parseInt(dd)}(${dow}) ${t.pickupTime||''}</span> ${formatPaxLabel(t)}　<b>¥${fare.toLocaleString()}</b>
-        <div class="ph-route">${t.pickup||'?'} → ${t.dropoff||'?'}</div>
+        <div class="ph-route">${formatTripRoute(t)}</div>
       </div>
     `;
   }).join('');
@@ -1903,6 +1902,11 @@ function getTripViaPoints(t) {
   if (t.viaPoint) return [t.viaPoint];
   return [];
 }
+// 経由地・降車場所詳細を含めた1行のルート表示（履歴・乗客情報・タイムラインで共通して使う）
+function formatTripRoute(t) {
+  const dropoffLabel = t.dropoffDetail ? `${t.dropoff||'?'}（${t.dropoffDetail}）` : (t.dropoff || '?');
+  return [t.pickup||'?', ...getTripViaPoints(t), dropoffLabel].join(' → ');
+}
 
 function saveTrip() {
   const pickup = document.getElementById('pickupLoc').value.trim();
@@ -2151,9 +2155,9 @@ function updateTodaySummary() {
   const totalWorkMin = hourlyScheduleResult ? hourlyScheduleResult.allMin : 0;
   const hourlyWage = totalWorkMin > 0 ? Math.round(exTax(hourlyDaySales) / (totalWorkMin / 60) * 0.5) : null;
 
-  // 未収額に含めるのは支払方法が現金以外の記録のみ。障害者割引で現金払いの記録に
-  // 付いた未収額（自治体等への後日精算分）はここには含めない
-  const totalUncollected = trips.filter(t => (t.payMethod||'現金') !== '現金').reduce((s,t) => s + (t.uncollectedFare||0), 0);
+  // 未収額 = 支払方法が現金以外の記録の全額 ＋ 現金払いでも障害者割引で別途未収にした分
+  // （uncollectedFareは保存時点でこの2種類の合計として計算済みのため、そのまま合計すればよい）
+  const totalUncollected = trips.reduce((s,t) => s + (t.uncollectedFare||0), 0);
   const totalTip = trips.reduce((s,t) => s + (t.tip||0), 0);
   const goCount = trips.filter(t => (t.tripType||'流し') === 'GO').length;
   const totalPax = trips.reduce((s,t) => s + (t.passengers||1), 0);
@@ -2831,13 +2835,75 @@ let currentLocTab = 'count';
 
 function switchLocTab(tab) {
   currentLocTab = tab;
-  ['count','avg','total'].forEach(t => {
+  ['count','avg','total','dropoffDetail'].forEach(t => {
     document.getElementById(`locTab-${t}`).className = 'analysis-tab' + (t === tab ? ' active' : '');
   });
   renderLocationRanking();
 }
 
+// 降車場所詳細（店名・施設名など）ごとの利用回数ランキング
+function renderDropoffDetailRanking() {
+  const trips = getTrips().filter(t => t.dropoffDetail && t.dropoffDetail.trim() !== '');
+  if (trips.length === 0) {
+    document.getElementById('locationRanking').innerHTML =
+      `<div style="text-align:center;padding:40px;color:var(--muted);">まだデータがありません<br><small>降車場所詳細を記入すると分析できます</small></div>`;
+    return;
+  }
+  const map = {};
+  trips.forEach(t => {
+    const detail = t.dropoffDetail.trim();
+    if (!map[detail]) map[detail] = { count: 0, total: 0 };
+    map[detail].count++;
+    map[detail].total += getTripFare(t);
+  });
+  const items = Object.entries(map)
+    .map(([detail, d]) => ({ detail, count: d.count, total: d.total }))
+    .sort((a,b) => b.count - a.count);
+  const medals = ['gold','silver','bronze'];
+  document.getElementById('locationRanking').innerHTML = items.map((item, i) => `
+    <div class="loc-rank-item" style="cursor:pointer;" onclick="showDropoffDetailHistory('${encodeURIComponent(item.detail)}')">
+      <div class="loc-rank-num ${medals[i]||''}">${i+1}</div>
+      <div class="loc-rank-body">
+        <div class="loc-rank-name">${item.detail}</div>
+        <div class="loc-rank-meta">${item.count}回 ／ 合計 ¥${item.total.toLocaleString()}</div>
+      </div>
+      <div class="loc-rank-fare">${item.count}回</div>
+    </div>
+  `).join('');
+}
+function showDropoffDetailHistory(encodedDetail) {
+  const detail = decodeURIComponent(encodedDetail);
+  const trips = getTrips().filter(t => t.dropoffDetail && t.dropoffDetail.trim() === detail)
+    .sort((a,b) => (b.date + (b.pickupTime||'')).localeCompare(a.date + (a.pickupTime||'')));
+  const totalFare = trips.reduce((s,t) => s + getTripFare(t), 0);
+  document.getElementById('hourLocationTitle').textContent = `${detail}の過去の記録（${trips.length}件）`;
+  document.getElementById('hourLocationContent').innerHTML =
+    `<div style="text-align:center;font-size:13px;color:var(--muted);margin-bottom:10px;">合計¥${totalFare.toLocaleString()}</div>` +
+    trips.map(t => {
+      const [,mm,dd] = t.date.split('-');
+      const dow = ['日','月','火','水','木','金','土'][new Date(t.date + 'T00:00:00').getDay()];
+      const fare = getTripFare(t);
+      const name = formatPaxLabel(t);
+      const type = t.tripType || '流し';
+      const typeColor = { '配車': '#ff6b00', 'GO': '#1a73e8', '流し': '#00a152' }[type] || '#1a73e8';
+      return `
+        <div style="padding:8px;border-bottom:1px solid var(--border);cursor:pointer;" onclick="closeHourLocationModal();openTripEditModal(${t.id})">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <span style="font-size:13px;font-weight:700;">
+              <span class="sched-type-badge" style="background:${typeColor}22;color:${typeColor};">${type}</span>${parseInt(mm)}/${parseInt(dd)}(${dow}) ${t.pickupTime||''}
+            </span>
+            <span style="font-weight:700;color:var(--success);">¥${fare.toLocaleString()}</span>
+          </div>
+          <div style="font-size:12px;color:var(--muted);margin-top:2px;">${formatTripRoute(t)}</div>
+          ${name ? `<div style="font-size:12px;font-weight:700;color:var(--primary);margin-top:2px;">👤 ${name}</div>` : ''}
+        </div>
+      `;
+    }).join('');
+  document.getElementById('hourLocationModal').classList.add('open');
+}
+
 function renderLocationRanking() {
+  if (currentLocTab === 'dropoffDetail') { renderDropoffDetailRanking(); return; }
   const trips = getTrips().filter(t => t.pickup && t.pickup.trim() !== '');
   if (trips.length === 0) {
     document.getElementById('locationRanking').innerHTML =
@@ -2957,7 +3023,7 @@ function renderTripHistoryModal(title, trips, showDate) {
               </span>
               <span style="font-weight:700;color:var(--success);">¥${fare.toLocaleString()}</span>
             </div>
-            <div style="font-size:12px;color:var(--muted);margin-top:2px;">${t.pickup||'?'} → ${t.dropoff||'?'}</div>
+            <div style="font-size:12px;color:var(--muted);margin-top:2px;">${formatTripRoute(t)}</div>
             ${name ? `<div style="font-size:12px;font-weight:700;color:var(--primary);margin-top:2px;">${name}</div>` : ''}
           </div>
         `;
@@ -3431,7 +3497,7 @@ function showCustomerHistory(tripId) {
             </span>
             <span style="font-weight:700;color:var(--success);">¥${fare.toLocaleString()}</span>
           </div>
-          <div style="font-size:12px;color:var(--muted);margin-top:2px;">${t.pickup||'?'} → ${t.dropoff||'?'}</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:2px;">${formatTripRoute(t)}</div>
         </div>
       `;
     }).join('');
@@ -3447,7 +3513,7 @@ function showSummaryDetail(kind) {
   const trips = getTrips().filter(t => t.date === date);
   let filtered, title;
   if (kind === 'uncollected') {
-    filtered = trips.filter(t => (t.payMethod||'現金') !== '現金');
+    filtered = trips.filter(t => (t.uncollectedFare||0) > 0);
     title = '未収額の内訳';
   } else {
     filtered = trips.filter(t => (t.tripType||'流し') === '流し');
@@ -3700,7 +3766,7 @@ function renderSchedule() {
           <div class="sched-time">${fmtHM(seg.start)}〜${fmtHM(seg.end)} <span class="sched-dur">（${fmtWait(durMin)}）</span> <span style="color:var(--success);font-weight:700;">¥${fare.toLocaleString()}</span></div>
           <div class="sched-body">
             <span class="sched-type-badge" style="background:${typeColor}22;color:${typeColor};">${type}</span>
-            ${[t.pickup||'（乗車場所未設定）', ...getTripViaPoints(t), t.dropoff||'（降車場所未設定）'].join(' → ')}
+            ${[t.pickup||'（乗車場所未設定）', ...getTripViaPoints(t), (t.dropoff||'（降車場所未設定）') + (t.dropoffDetail ? `（${t.dropoffDetail}）` : '')].join(' → ')}
             ${paxLine ? `<div style="margin-top:4px;font-size:12px;font-weight:700;color:var(--primary);${paxClickable ? 'cursor:pointer;' : ''}"${paxClickable ? ` onclick="event.stopPropagation();showCustomerHistory(${t.id})"` : ''}>${paxLine}${paxClickable ? ' ›' : ''}</div>` : ''}
             <div style="margin-top:4px;font-size:12px;color:var(--muted);">${paxCountLabel}</div>
           </div>
