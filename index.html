@@ -2930,22 +2930,34 @@ function renderDropoffDetailRanking() {
   const map = {};
   trips.forEach(t => {
     const detail = t.dropoffDetail.trim();
-    if (!map[detail]) map[detail] = { count: 0, total: 0, types: {} };
+    if (!map[detail]) map[detail] = { count: 0, total: 0, fares: [], types: {}, dropoffCounts: {} };
+    const f = getTripFare(t);
     map[detail].count++;
-    map[detail].total += getTripFare(t);
+    map[detail].total += f;
+    if (f > 0) map[detail].fares.push(f);
     const type = t.tripType || '流し';
     map[detail].types[type] = (map[detail].types[type] || 0) + 1;
+    const dropoff = (t.dropoff || '').trim();
+    if (dropoff) map[detail].dropoffCounts[dropoff] = (map[detail].dropoffCounts[dropoff] || 0) + 1;
   });
   const items = Object.entries(map)
-    .map(([detail, d]) => ({ detail, count: d.count, total: d.total, types: d.types }))
+    .map(([detail, d]) => {
+      // 同じ店名・施設名でも複数の地名が紐づく場合があるため、一番件数の多い地名を代表として表示する
+      const dropoffEntries = Object.entries(d.dropoffCounts).sort((a,b) => b[1] - a[1]);
+      const dropoff = dropoffEntries.length ? dropoffEntries[0][0] : '';
+      return {
+        detail, count: d.count, total: d.total, types: d.types, dropoff,
+        avg: d.fares.length ? Math.round(d.fares.reduce((s,v)=>s+v,0)/d.fares.length) : 0
+      };
+    })
     .sort((a,b) => b.count - a.count);
   const medals = ['gold','silver','bronze'];
   document.getElementById('locationRanking').innerHTML = items.map((item, i) => `
     <div class="loc-rank-item" style="cursor:pointer;" onclick="showDropoffDetailHistory('${encodeURIComponent(item.detail)}')">
       <div class="loc-rank-num ${medals[i]||''}">${i+1}</div>
       <div class="loc-rank-body">
-        <div class="loc-rank-name">${item.detail}</div>
-        <div class="loc-rank-meta">${item.count}回 ／ 合計 ¥${item.total.toLocaleString()}</div>
+        <div class="loc-rank-name">${item.detail}${item.dropoff ? `（${item.dropoff}）` : ''}</div>
+        <div class="loc-rank-meta">${item.count}回 ／ 平均 ¥${item.avg.toLocaleString()} ／ 合計 ¥${item.total.toLocaleString()}</div>
         <div style="margin-top:3px;">${typeBadges(item.types)}</div>
       </div>
       <div class="loc-rank-fare">${item.count}回</div>
