@@ -844,6 +844,9 @@
     <button class="btn btn-gray" style="width:100%;margin-bottom:10px;" onclick="addUserPlaceReading()">＋ 追加</button>
     <div id="userPlaceReadingList"></div>
 
+    <div style="font-size:12px;font-weight:700;color:var(--muted);margin-top:12px;margin-bottom:4px;">過去の記録にあるが読み方が未登録のもの</div>
+    <div id="unregisteredPlaceList"></div>
+
     <div class="section-label" style="margin-top:16px;">降車場所詳細（店名・施設名など）</div>
     <div class="input-row">
       <div class="input-group" style="flex:1.4;">
@@ -855,6 +858,9 @@
     </div>
     <button class="btn btn-gray" style="width:100%;margin-bottom:10px;" onclick="addUserDropoffDetailReading()">＋ 追加</button>
     <div id="userDropoffDetailReadingList"></div>
+
+    <div style="font-size:12px;font-weight:700;color:var(--muted);margin-top:12px;margin-bottom:4px;">過去の記録にあるが読み方が未登録のもの</div>
+    <div id="unregisteredDropoffDetailList"></div>
 
     <div class="btn-row" style="margin-top:14px;">
       <button class="btn btn-primary" onclick="closeReadingHintModal()">閉じる</button>
@@ -1767,6 +1773,8 @@ function getDropoffDetailSuggestions(query) {
 function openReadingHintModal() {
   renderUserPlaceReadingList();
   renderUserDropoffDetailReadingList();
+  renderUnregisteredPlaceList();
+  renderUnregisteredDropoffDetailList();
   document.getElementById('readingHintModal').classList.add('open');
 }
 function closeReadingHintModal() {
@@ -1841,6 +1849,81 @@ function removeUserDropoffDetailReading(encodedName) {
   delete map[name];
   saveUserDropoffDetailReadings(map);
   renderUserDropoffDetailReadingList();
+}
+
+// 過去の記録にある地名・降車場所詳細のうち、まだ読み方（イニシャル）が登録されていないものを一覧にする。
+// 手動で登録すると、その場でこの一覧から消える
+let unregisteredPlaceCache = [];
+let unregisteredDropoffDetailCache = [];
+function getUnregisteredPlaceNames() {
+  const hints = getMergedPlaceReadingHints();
+  const names = new Set();
+  getTrips().forEach(t => {
+    if (t.pickup && t.pickup.trim()) names.add(t.pickup.trim());
+    if (t.dropoff && t.dropoff.trim()) names.add(t.dropoff.trim());
+    getTripViaPoints(t).forEach(v => { if (v && v.trim()) names.add(v.trim()); });
+  });
+  return [...names].filter(n => !hints[n]).sort((a,b) => a.localeCompare(b, 'ja'));
+}
+function getUnregisteredDropoffDetails() {
+  const hints = getUserDropoffDetailReadings();
+  const names = new Set();
+  getTrips().forEach(t => {
+    if (t.dropoffDetail && t.dropoffDetail.trim()) names.add(t.dropoffDetail.trim());
+  });
+  return [...names].filter(n => !hints[n]).sort((a,b) => a.localeCompare(b, 'ja'));
+}
+function renderUnregisteredPlaceList() {
+  unregisteredPlaceCache = getUnregisteredPlaceNames();
+  const box = document.getElementById('unregisteredPlaceList');
+  if (unregisteredPlaceCache.length === 0) {
+    box.innerHTML = `<div style="font-size:12px;color:var(--muted);padding:6px 0;">未登録の地名はありません</div>`;
+    return;
+  }
+  box.innerHTML = unregisteredPlaceCache.map((name, i) => `
+    <div style="display:flex;align-items:center;gap:6px;padding:6px 0;border-bottom:1px solid var(--border);">
+      <div style="flex:1;font-size:13px;overflow-wrap:anywhere;">${name}</div>
+      <input class="input-field" style="width:64px;flex:none;padding:6px 8px;font-size:13px;" id="unregPlaceInitial_${i}" maxlength="4" placeholder="頭文字">
+      <button type="button" class="discount-toggle-btn" onclick="registerUnregisteredPlace(${i})">登録</button>
+    </div>
+  `).join('');
+}
+function registerUnregisteredPlace(i) {
+  const name = unregisteredPlaceCache[i];
+  const initial = document.getElementById(`unregPlaceInitial_${i}`).value.trim();
+  if (name === undefined) return;
+  if (!initial) { alert('頭文字を入力してください。'); return; }
+  const map = getUserPlaceReadings();
+  map[name] = initial;
+  saveUserPlaceReadings(map);
+  renderUserPlaceReadingList();
+  renderUnregisteredPlaceList();
+}
+function renderUnregisteredDropoffDetailList() {
+  unregisteredDropoffDetailCache = getUnregisteredDropoffDetails();
+  const box = document.getElementById('unregisteredDropoffDetailList');
+  if (unregisteredDropoffDetailCache.length === 0) {
+    box.innerHTML = `<div style="font-size:12px;color:var(--muted);padding:6px 0;">未登録の降車場所詳細はありません</div>`;
+    return;
+  }
+  box.innerHTML = unregisteredDropoffDetailCache.map((name, i) => `
+    <div style="display:flex;align-items:center;gap:6px;padding:6px 0;border-bottom:1px solid var(--border);">
+      <div style="flex:1;font-size:13px;overflow-wrap:anywhere;">${name}</div>
+      <input class="input-field" style="width:64px;flex:none;padding:6px 8px;font-size:13px;" id="unregDetailInitial_${i}" maxlength="4" placeholder="頭文字">
+      <button type="button" class="discount-toggle-btn" onclick="registerUnregisteredDropoffDetail(${i})">登録</button>
+    </div>
+  `).join('');
+}
+function registerUnregisteredDropoffDetail(i) {
+  const name = unregisteredDropoffDetailCache[i];
+  const initial = document.getElementById(`unregDetailInitial_${i}`).value.trim();
+  if (name === undefined) return;
+  if (!initial) { alert('頭文字を入力してください。'); return; }
+  const map = getUserDropoffDetailReadings();
+  map[name] = initial;
+  saveUserDropoffDetailReadings(map);
+  renderUserDropoffDetailReadingList();
+  renderUnregisteredDropoffDetailList();
 }
 // 乗車場所・降車場所をタップしたとき、入力欄を画面の上の方へ巻き上げて
 // 地名の候補リストがキーボードに隠れないようにする
@@ -4044,7 +4127,7 @@ function renderSchedule() {
             ${paxLine ? `<div style="margin-top:4px;font-size:12px;font-weight:700;color:var(--primary);${paxClickable ? 'cursor:pointer;' : ''}"${paxClickable ? ` onclick="event.stopPropagation();showCustomerHistory(${t.id})"` : ''}>${paxLine}${paxClickable ? ' ›' : ''}</div>` : ''}
             <div style="margin-top:4px;font-size:12px;color:var(--muted);display:flex;justify-content:space-between;align-items:center;gap:8px;">
               <span>${paxCountLabel}</span>
-              <span style="font-size:11px;font-weight:700;color:var(--success);white-space:nowrap;">計¥${cumulative.toLocaleString()}</span>
+              <span style="font-size:11px;font-weight:700;color:var(--success);white-space:nowrap;">¥${cumulative.toLocaleString()}</span>
             </div>
           </div>
         </div>
