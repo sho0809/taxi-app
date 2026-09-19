@@ -482,7 +482,12 @@
 
       <div class="input-group">
         <label class="input-label">🏢 降車場所詳細（店名・施設名など／空欄可）</label>
-        <input class="input-field" id="dropoffDetail" type="text" placeholder="">
+        <input class="input-field" data-scroll-up="1" id="dropoffDetail" type="text" placeholder="" autocomplete="off"
+               oninput="onLocInput('dropoffDetail','dropoffDetailSuggest',getDropoffDetailSuggestions)"
+               onfocus="onLocInput('dropoffDetail','dropoffDetailSuggest',getDropoffDetailSuggestions);scrollLocFieldToTop('dropoffDetail')"
+               onblur="hideLocSuggest('dropoffDetailSuggest')"
+               onkeydown="if(event.key==='Enter'){event.preventDefault();hideLocSuggest('dropoffDetailSuggest');this.blur();}">
+        <div id="dropoffDetailSuggest" class="loc-suggest"></div>
       </div>
 
       <button class="btn btn-primary" onclick="saveTrip()" style="margin-top:4px;">
@@ -713,6 +718,11 @@
       <input type="file" id="backupRestoreInput" accept="application/json" style="display:none;" onchange="importBackupFile(event)">
       <div style="font-size:11px;color:var(--muted);margin-top:6px;">機種変更の前にバックアップを保存しておくと、新しい端末で「復元する」から記録を戻せます。</div>
     </div>
+    <div class="card">
+      <div class="card-title">地名の読み方（イニシャル）登録</div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:8px;">乗車・降車場所や降車場所詳細を、頭文字１文字の入力で予測変換に出したいときはここで登録します。この端末から直接登録できます。</div>
+      <button class="btn btn-gray" style="width:100%;" onclick="openReadingHintModal()">📖 読み方の登録・確認</button>
+    </div>
   </div>
 
 </div><!-- end content -->
@@ -813,6 +823,41 @@
     <div class="btn-row" style="margin-top:14px;">
       <button class="btn btn-gray" onclick="closePeriodEditModal()">キャンセル</button>
       <button class="btn btn-primary" onclick="savePeriodEdit()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- Reading Hint (地名の読み方登録) Modal -->
+<div class="modal-overlay" id="readingHintModal" onclick="if(event.target===this) closeReadingHintModal()">
+  <div class="modal">
+    <div class="modal-title">地名の読み方（イニシャル）登録</div>
+
+    <div class="section-label">乗車・降車場所</div>
+    <div class="input-row">
+      <div class="input-group" style="flex:1.4;">
+        <input class="input-field" id="newPlaceReadingName" type="text" placeholder="地名（例：南斎院町）">
+      </div>
+      <div class="input-group" style="flex:1;">
+        <input class="input-field" id="newPlaceReadingInitial" type="text" placeholder="頭文字（例：み）" maxlength="4">
+      </div>
+    </div>
+    <button class="btn btn-gray" style="width:100%;margin-bottom:10px;" onclick="addUserPlaceReading()">＋ 追加</button>
+    <div id="userPlaceReadingList"></div>
+
+    <div class="section-label" style="margin-top:16px;">降車場所詳細（店名・施設名など）</div>
+    <div class="input-row">
+      <div class="input-group" style="flex:1.4;">
+        <input class="input-field" id="newDropoffDetailReadingName" type="text" placeholder="店名・施設名（例：県民文化会館）">
+      </div>
+      <div class="input-group" style="flex:1;">
+        <input class="input-field" id="newDropoffDetailReadingInitial" type="text" placeholder="頭文字（例：け）" maxlength="4">
+      </div>
+    </div>
+    <button class="btn btn-gray" style="width:100%;margin-bottom:10px;" onclick="addUserDropoffDetailReading()">＋ 追加</button>
+    <div id="userDropoffDetailReadingList"></div>
+
+    <div class="btn-row" style="margin-top:14px;">
+      <button class="btn btn-primary" onclick="closeReadingHintModal()">閉じる</button>
     </div>
   </div>
 </div>
@@ -1047,7 +1092,12 @@
     </div>
     <div class="input-group">
       <label class="input-label">🏢 降車場所詳細（店名・施設名など／空欄可）</label>
-      <input class="input-field" id="editDropoffDetail" type="text" placeholder="">
+      <input class="input-field" data-scroll-up="1" id="editDropoffDetail" type="text" placeholder="" autocomplete="off"
+             oninput="onLocInput('editDropoffDetail','editDropoffDetailSuggest',getDropoffDetailSuggestions)"
+             onfocus="onLocInput('editDropoffDetail','editDropoffDetailSuggest',getDropoffDetailSuggestions);scrollLocFieldToTop('editDropoffDetail')"
+             onblur="hideLocSuggest('editDropoffDetailSuggest')"
+             onkeydown="if(event.key==='Enter'){event.preventDefault();hideLocSuggest('editDropoffDetailSuggest');this.blur();}">
+      <div id="editDropoffDetailSuggest" class="loc-suggest"></div>
     </div>
     <div class="btn-row">
       <button class="btn btn-gray" onclick="closeTripEditModal()">キャンセル</button>
@@ -1129,7 +1179,8 @@ function saveScheduleFuelStops(date, stops) {
 function getBackupKeys() {
   return [
     TRIPS_KEY, WAITS_KEY, DAY_END_KEY, BREAKS_KEY, FUEL_STOPS_KEY,
-    HIDDEN_PLACES_KEY, DAY_SALES_OVERRIDE_KEY, USER_PERIODS_KEY
+    HIDDEN_PLACES_KEY, DAY_SALES_OVERRIDE_KEY, USER_PERIODS_KEY,
+    USER_PLACE_READING_KEY, USER_DROPOFF_DETAIL_READING_KEY
   ];
 }
 function exportBackup() {
@@ -1583,6 +1634,7 @@ const PLACE_NAME_READING_HINT = {
   '東温市牛渕':'と', '別府町':'へ', '祓川':'は', '竹原':'た', '内浜町':'う', '市坪南':'い', '鴨川':'か',
   '北井門':'き', '久万ノ台':'く', '市坪北':'い', '宮田町':'み',
   '山西町':'や', '東長戸':'ひ', '吉藤':'よ', '南江戸':'み', '東石井':'ひ', '高浜町':'た', '南白水':'み', '泉町':'い', '内宮町':'う', '堀江町':'ほ', '西長戸町':'に',
+  '南斎院町':'み',
 };
 
 // 特定のひらがな入力に対して誤って候補に出てしまう地名を除外する対応表（ユーザー指摘分）。
@@ -1614,23 +1666,45 @@ const PLACE_NAME_READING_EXCLUDE = {
 function stripDakuten(str) {
   return str.normalize('NFD').replace(/[゙゚]/g, '');
 }
-function locationMatchesQuery(name, q) {
+
+// アプリ内で登録した「地名の読み方（頭文字）」。コードを書き換えなくても
+// 新しい地名の予測変換を追加できるように、ハードコードのPLACE_NAME_READING_HINTとは別にlocalStorageで管理する
+const USER_PLACE_READING_KEY = 'taxi_user_place_reading';
+function getUserPlaceReadings() {
+  try { return JSON.parse(localStorage.getItem(USER_PLACE_READING_KEY) || '{}'); } catch(e) { return {}; }
+}
+function saveUserPlaceReadings(map) { localStorage.setItem(USER_PLACE_READING_KEY, JSON.stringify(map)); }
+function getMergedPlaceReadingHints() {
+  return { ...PLACE_NAME_READING_HINT, ...getUserPlaceReadings() };
+}
+
+// 降車場所詳細（店名・施設名など）の読み方。こちらは地名と違って固定の一覧がないため、
+// すべてアプリ内で登録したものだけを使う
+const USER_DROPOFF_DETAIL_READING_KEY = 'taxi_user_dropoff_detail_reading';
+function getUserDropoffDetailReadings() {
+  try { return JSON.parse(localStorage.getItem(USER_DROPOFF_DETAIL_READING_KEY) || '{}'); } catch(e) { return {}; }
+}
+function saveUserDropoffDetailReadings(map) { localStorage.setItem(USER_DROPOFF_DETAIL_READING_KEY, JSON.stringify(map)); }
+
+function locationMatchesQuery(name, q, hintMap) {
+  const hints = hintMap || getMergedPlaceReadingHints();
   const qBase = stripDakuten(q);
   for (const [key, names] of Object.entries(PLACE_NAME_READING_EXCLUDE)) {
     if (stripDakuten(key) === qBase && names.includes(name)) return false;
   }
   if (stripDakuten(name).includes(qBase)) return true;
-  const hint = PLACE_NAME_READING_HINT[name];
+  const hint = hints[name];
   return !!hint && stripDakuten(hint).startsWith(qBase);
 }
 let locSuggestCache = {};
 function getLocationSuggestions(query) {
   const q = query.trim();
   if (!q) return [];
+  const hints = getMergedPlaceReadingHints();
   // 並び順は統計「場所」タブの乗車回数（＝乗車場所としての利用回数）に合わせる
   const freq = new Map();
   const touch = (loc, key, isPickup) => {
-    if (!loc || !locationMatchesQuery(loc, q)) return;
+    if (!loc || !locationMatchesQuery(loc, q, hints)) return;
     let entry = freq.get(loc);
     if (!entry) { entry = { count: 0, lastKey: '' }; freq.set(loc, entry); }
     if (isPickup) entry.count++;
@@ -1642,8 +1716,8 @@ function getLocationSuggestions(query) {
     touch(t.dropoff, key, false);
   });
   // 登録済みの地名は、まだ利用実績がなくても候補に含める（実績があるものより下位に表示）
-  Object.keys(PLACE_NAME_READING_HINT).forEach(name => {
-    if (!locationMatchesQuery(name, q)) return;
+  Object.keys(hints).forEach(name => {
+    if (!locationMatchesQuery(name, q, hints)) return;
     if (!freq.has(name)) freq.set(name, { count: 0, lastKey: '' });
   });
   const hidden = getHiddenPlaces();
@@ -1653,6 +1727,120 @@ function getLocationSuggestions(query) {
     .sort((a,b) => b[1].lastKey.localeCompare(a[1].lastKey) || b[1].count - a[1].count)
     .map(([name]) => name)
     .slice(0, 20);
+}
+
+// 降車場所詳細（店名・施設名など）の予測変換。過去の記録＋アプリ内で登録した読み方をもとに候補を出す
+function dropoffDetailMatchesQuery(name, q, hintMap) {
+  const hints = hintMap || getUserDropoffDetailReadings();
+  const qBase = stripDakuten(q);
+  if (stripDakuten(name).includes(qBase)) return true;
+  const hint = hints[name];
+  return !!hint && stripDakuten(hint).startsWith(qBase);
+}
+function getDropoffDetailSuggestions(query) {
+  const q = (query || '').trim();
+  if (!q) return [];
+  const hints = getUserDropoffDetailReadings();
+  const freq = new Map();
+  getTrips().forEach(t => {
+    const detail = t.dropoffDetail && t.dropoffDetail.trim();
+    if (!detail || !dropoffDetailMatchesQuery(detail, q, hints)) return;
+    const key = t.date + (t.pickupTime || '');
+    let entry = freq.get(detail);
+    if (!entry) { entry = { count: 0, lastKey: '' }; freq.set(detail, entry); }
+    entry.count++;
+    if (key > entry.lastKey) entry.lastKey = key;
+  });
+  // 登録済みの読み方は、まだ利用実績がなくても候補に含める
+  Object.keys(hints).forEach(name => {
+    if (!dropoffDetailMatchesQuery(name, q, hints)) return;
+    if (!freq.has(name)) freq.set(name, { count: 0, lastKey: '' });
+  });
+  return [...freq.entries()]
+    .filter(([name]) => name !== q)
+    .sort((a,b) => b[1].lastKey.localeCompare(a[1].lastKey) || b[1].count - a[1].count)
+    .map(([name]) => name)
+    .slice(0, 20);
+}
+
+// ==================== 地名・降車場所詳細の読み方登録モーダル ====================
+function openReadingHintModal() {
+  renderUserPlaceReadingList();
+  renderUserDropoffDetailReadingList();
+  document.getElementById('readingHintModal').classList.add('open');
+}
+function closeReadingHintModal() {
+  document.getElementById('readingHintModal').classList.remove('open');
+}
+function renderUserPlaceReadingList() {
+  const map = getUserPlaceReadings();
+  const names = Object.keys(map).sort((a,b) => a.localeCompare(b, 'ja'));
+  const box = document.getElementById('userPlaceReadingList');
+  if (names.length === 0) {
+    box.innerHTML = `<div style="font-size:12px;color:var(--muted);padding:6px 0;">まだ登録がありません</div>`;
+    return;
+  }
+  box.innerHTML = names.map(name => `
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);">
+      <div><span style="font-weight:700;">${name}</span><span style="color:var(--muted);margin-left:6px;">（${map[name]}）</span></div>
+      <button type="button" class="discount-toggle-btn" onclick="removeUserPlaceReading('${encodeURIComponent(name)}')">削除</button>
+    </div>
+  `).join('');
+}
+function addUserPlaceReading() {
+  const nameInput = document.getElementById('newPlaceReadingName');
+  const initialInput = document.getElementById('newPlaceReadingInitial');
+  const name = nameInput.value.trim();
+  const initial = initialInput.value.trim();
+  if (!name || !initial) { alert('地名と頭文字の両方を入力してください。'); return; }
+  const map = getUserPlaceReadings();
+  map[name] = initial;
+  saveUserPlaceReadings(map);
+  nameInput.value = '';
+  initialInput.value = '';
+  renderUserPlaceReadingList();
+}
+function removeUserPlaceReading(encodedName) {
+  const name = decodeURIComponent(encodedName);
+  const map = getUserPlaceReadings();
+  delete map[name];
+  saveUserPlaceReadings(map);
+  renderUserPlaceReadingList();
+}
+function renderUserDropoffDetailReadingList() {
+  const map = getUserDropoffDetailReadings();
+  const names = Object.keys(map).sort((a,b) => a.localeCompare(b, 'ja'));
+  const box = document.getElementById('userDropoffDetailReadingList');
+  if (names.length === 0) {
+    box.innerHTML = `<div style="font-size:12px;color:var(--muted);padding:6px 0;">まだ登録がありません</div>`;
+    return;
+  }
+  box.innerHTML = names.map(name => `
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);">
+      <div><span style="font-weight:700;">${name}</span><span style="color:var(--muted);margin-left:6px;">（${map[name]}）</span></div>
+      <button type="button" class="discount-toggle-btn" onclick="removeUserDropoffDetailReading('${encodeURIComponent(name)}')">削除</button>
+    </div>
+  `).join('');
+}
+function addUserDropoffDetailReading() {
+  const nameInput = document.getElementById('newDropoffDetailReadingName');
+  const initialInput = document.getElementById('newDropoffDetailReadingInitial');
+  const name = nameInput.value.trim();
+  const initial = initialInput.value.trim();
+  if (!name || !initial) { alert('店名・施設名と頭文字の両方を入力してください。'); return; }
+  const map = getUserDropoffDetailReadings();
+  map[name] = initial;
+  saveUserDropoffDetailReadings(map);
+  nameInput.value = '';
+  initialInput.value = '';
+  renderUserDropoffDetailReadingList();
+}
+function removeUserDropoffDetailReading(encodedName) {
+  const name = decodeURIComponent(encodedName);
+  const map = getUserDropoffDetailReadings();
+  delete map[name];
+  saveUserDropoffDetailReadings(map);
+  renderUserDropoffDetailReadingList();
 }
 // 乗車場所・降車場所をタップしたとき、入力欄を画面の上の方へ巻き上げて
 // 地名の候補リストがキーボードに隠れないようにする
@@ -1690,7 +1878,8 @@ function getBreakPlaceSuggestions(query) {
   const presets0 = BREAK_PLACE_PRESETS.filter(n => !hidden.includes(n));
   const q = (query || '').trim();
   if (!q) return presets0;
-  const presets = presets0.filter(n => n !== q && locationMatchesQuery(n, q));
+  const hints = getMergedPlaceReadingHints();
+  const presets = presets0.filter(n => n !== q && locationMatchesQuery(n, q, hints));
   const rest = getLocationSuggestions(q).filter(n => !presets.includes(n));
   return [...presets, ...rest].slice(0, 6);
 }
@@ -3847,14 +4036,16 @@ function renderSchedule() {
         <div class="sched-item" style="border-left-color:${typeColor};position:relative;cursor:pointer;" onclick="openTripEditModal(${t.id})">
           <div style="position:absolute;top:10px;right:12px;text-align:right;">
             <div style="font-size:12px;font-weight:800;color:var(--muted);">${rideNumber}</div>
-            <div style="font-size:11px;font-weight:700;color:var(--success);margin-top:2px;">¥${cumulative.toLocaleString()}</div>
           </div>
           <div class="sched-time">${fmtHM(seg.start)}〜${fmtHM(seg.end)} <span class="sched-dur">（${fmtWait(durMin)}）</span> <span style="color:var(--success);font-weight:700;">¥${fare.toLocaleString()}</span></div>
           <div class="sched-body">
             <span class="sched-type-badge" style="background:${typeColor}22;color:${typeColor};">${type}</span>
             ${[t.pickup||'（乗車場所未設定）', ...getTripViaPoints(t), (t.dropoff||'（降車場所未設定）') + (t.dropoffDetail ? `（${t.dropoffDetail}）` : '')].join(' → ')}
             ${paxLine ? `<div style="margin-top:4px;font-size:12px;font-weight:700;color:var(--primary);${paxClickable ? 'cursor:pointer;' : ''}"${paxClickable ? ` onclick="event.stopPropagation();showCustomerHistory(${t.id})"` : ''}>${paxLine}${paxClickable ? ' ›' : ''}</div>` : ''}
-            <div style="margin-top:4px;font-size:12px;color:var(--muted);">${paxCountLabel}</div>
+            <div style="margin-top:4px;font-size:12px;color:var(--muted);display:flex;justify-content:space-between;align-items:center;gap:8px;">
+              <span>${paxCountLabel}</span>
+              <span style="font-size:11px;font-weight:700;color:var(--success);white-space:nowrap;">計¥${cumulative.toLocaleString()}</span>
+            </div>
           </div>
         </div>
       `;
