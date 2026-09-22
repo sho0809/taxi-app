@@ -848,6 +848,7 @@
 
     <div style="font-size:12px;font-weight:700;color:var(--muted);margin-top:16px;margin-bottom:4px;">登録済みの読み方（タップして確認・編集）</div>
     <div class="dow-tabs" id="userPlaceReadingTabs"></div>
+    <div class="dow-tabs" id="userPlaceReadingCharTabs" style="margin-top:6px;"></div>
     <div id="userPlaceReadingList"></div>
 
     <div class="section-label" style="margin-top:16px;">降車場所詳細（店名・施設名など）</div>
@@ -866,6 +867,7 @@
 
     <div style="font-size:12px;font-weight:700;color:var(--muted);margin-top:16px;margin-bottom:4px;">登録済みの読み方（タップして確認・編集）</div>
     <div class="dow-tabs" id="userDropoffDetailReadingTabs"></div>
+    <div class="dow-tabs" id="userDropoffDetailReadingCharTabs" style="margin-top:6px;"></div>
     <div id="userDropoffDetailReadingList"></div>
 
     <div class="btn-row" style="margin-top:14px;">
@@ -1808,17 +1810,52 @@ const GOJUON_ROW_CHARS = {
   'あ':'あいうえお', 'か':'かきくけこ', 'さ':'さしすせそ', 'た':'たちつてと', 'な':'なにぬねの',
   'は':'はひふへほ', 'ま':'まみむめも', 'や':'やゆよ', 'ら':'らりるれろ', 'わ':'わをん',
 };
-function gojuonRowOf(initial) {
-  const base = stripDakuten((initial || '')[0] || '');
-  for (const row of GOJUON_ROWS) {
-    if (GOJUON_ROW_CHARS[row].includes(base)) return row;
-  }
-  return 'あ';
-}
 function renderGojuonTabs(containerId, activeRow, onclickFnName) {
   document.getElementById(containerId).innerHTML = GOJUON_ROWS.map(row =>
     `<div class="dow-tab${row === activeRow ? ' active' : ''}" onclick="${onclickFnName}('${row}')">${row}</div>`
   ).join('');
+}
+// 行を選んだ後、さらにその行の文字（あ行なら あ・い・う・え・お）で絞り込めるようにする
+function renderGojuonCharTabs(containerId, row, activeChar, onclickFnName) {
+  document.getElementById(containerId).innerHTML = GOJUON_ROW_CHARS[row].split('').map(ch =>
+    `<div class="dow-tab${ch === activeChar ? ' active' : ''}" onclick="${onclickFnName}('${ch}')">${ch}</div>`
+  ).join('');
+}
+
+// 地名・降車場所詳細ごとに、最後に使われた日時（記録の日付＋乗車時刻）を調べる。
+// 登録済みの読み方は、この値が新しいものから並べる（実績がないものは末尾）
+function getPlaceLastUsedMap() {
+  const map = new Map();
+  getTrips().forEach(t => {
+    const key = t.date + (t.pickupTime || '');
+    const touch = (name) => {
+      name = (name || '').trim();
+      if (!name) return;
+      if (!map.has(name) || key > map.get(name)) map.set(name, key);
+    };
+    touch(t.pickup);
+    touch(t.dropoff);
+    getTripViaPoints(t).forEach(touch);
+  });
+  return map;
+}
+function getDropoffDetailLastUsedMap() {
+  const map = new Map();
+  getTrips().forEach(t => {
+    const name = (t.dropoffDetail || '').trim();
+    if (!name) return;
+    const key = t.date + (t.pickupTime || '');
+    if (!map.has(name) || key > map.get(name)) map.set(name, key);
+  });
+  return map;
+}
+function sortByLastUsed(names, lastUsedMap) {
+  return names.slice().sort((a,b) => {
+    const la = lastUsedMap.get(a) || '';
+    const lb = lastUsedMap.get(b) || '';
+    if (la !== lb) return lb.localeCompare(la); // 新しく使ったものが先
+    return a.localeCompare(b, 'ja');
+  });
 }
 
 function openReadingHintModal() {
@@ -1833,30 +1870,61 @@ function closeReadingHintModal() {
 }
 
 let placeReadingTab = 'あ';
+let placeReadingChar = 'あ';
+let editingPlaceReadingName = null;
 function switchPlaceReadingTab(row) {
   placeReadingTab = row;
+  placeReadingChar = GOJUON_ROW_CHARS[row][0];
+  editingPlaceReadingName = null;
+  renderUserPlaceReadingList();
+}
+function switchPlaceReadingChar(ch) {
+  placeReadingChar = ch;
+  editingPlaceReadingName = null;
+  renderUserPlaceReadingList();
+}
+function togglePlaceReadingEdit(encodedName) {
+  const name = decodeURIComponent(encodedName);
+  editingPlaceReadingName = (editingPlaceReadingName === name) ? null : name;
   renderUserPlaceReadingList();
 }
 function renderUserPlaceReadingList() {
   renderGojuonTabs('userPlaceReadingTabs', placeReadingTab, 'switchPlaceReadingTab');
+  renderGojuonCharTabs('userPlaceReadingCharTabs', placeReadingTab, placeReadingChar, 'switchPlaceReadingChar');
   // 運行記録の予測変換に実際に使われている読み方（ハードコード分＋アプリ内登録分）をすべて表示する
   const map = getMergedPlaceReadingHints();
-  const names = Object.keys(map)
-    .filter(name => gojuonRowOf(map[name]) === placeReadingTab)
-    .sort((a,b) => a.localeCompare(b, 'ja'));
+  const names = sortByLastUsed(
+    Object.keys(map).filter(name => stripDakuten((map[name] || '')[0] || '') === placeReadingChar),
+    getPlaceLastUsedMap()
+  );
   const box = document.getElementById('userPlaceReadingList');
   if (names.length === 0) {
-    box.innerHTML = `<div style="font-size:12px;color:var(--muted);padding:6px 0;">この行に登録はありません</div>`;
+    box.innerHTML = `<div style="font-size:12px;color:var(--muted);padding:6px 0;">「${placeReadingChar}」で始まる読み方の登録はありません</div>`;
     return;
   }
-  box.innerHTML = names.map(name => `
-    <div style="display:flex;align-items:center;gap:6px;padding:6px 0;border-bottom:1px solid var(--border);">
-      <div style="flex:1;font-size:13px;font-weight:700;overflow-wrap:anywhere;">${name}</div>
-      <input class="input-field" style="width:64px;flex:none;padding:6px 8px;font-size:13px;" id="placeReadingEdit_${encodeURIComponent(name)}" maxlength="4" value="${map[name]}">
-      <button type="button" class="discount-toggle-btn" onclick="updateUserPlaceReading('${encodeURIComponent(name)}')">更新</button>
-      <button type="button" class="discount-toggle-btn" onclick="removeUserPlaceReading('${encodeURIComponent(name)}')">削除</button>
-    </div>
-  `).join('');
+  box.innerHTML = names.map(name => {
+    const encoded = encodeURIComponent(name);
+    if (editingPlaceReadingName === name) {
+      return `
+        <div style="padding:6px 0;border-bottom:1px solid var(--border);">
+          <div style="display:flex;align-items:center;gap:6px;">
+            <div style="flex:1;font-size:13px;font-weight:700;overflow-wrap:anywhere;cursor:pointer;" onclick="togglePlaceReadingEdit('${encoded}')">${name}</div>
+            <input class="input-field" style="width:64px;flex:none;padding:6px 8px;font-size:13px;" id="placeReadingEdit_${encoded}" maxlength="4" value="${map[name]}">
+          </div>
+          <div style="display:flex;gap:6px;justify-content:flex-end;margin-top:6px;">
+            <button type="button" class="discount-toggle-btn" onclick="updateUserPlaceReading('${encoded}')">更新</button>
+            <button type="button" class="discount-toggle-btn" onclick="removeUserPlaceReading('${encoded}')">削除</button>
+          </div>
+        </div>
+      `;
+    }
+    return `
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border);cursor:pointer;" onclick="togglePlaceReadingEdit('${encoded}')">
+        <span style="font-weight:700;font-size:13px;">${name}</span>
+        <span style="color:var(--muted);font-size:13px;">（${map[name]}）</span>
+      </div>
+    `;
+  }).join('');
 }
 function addUserPlaceReading() {
   const nameInput = document.getElementById('newPlaceReadingName');
@@ -1882,6 +1950,7 @@ function updateUserPlaceReading(encodedName) {
   map[name] = initial;
   saveUserPlaceReadings(map);
   showToast(`「${name}」の読み方を更新しました`);
+  editingPlaceReadingName = null;
   renderUserPlaceReadingList();
 }
 function removeUserPlaceReading(encodedName) {
@@ -1892,34 +1961,66 @@ function removeUserPlaceReading(encodedName) {
   // ハードコードされた読み方はコードから消せないため、除外リストに載せて「未登録」扱いにする
   const suppressed = getSuppressedPlaceReadings();
   if (!suppressed.includes(name)) { suppressed.push(name); saveSuppressedPlaceReadings(suppressed); }
+  if (editingPlaceReadingName === name) editingPlaceReadingName = null;
   renderUserPlaceReadingList();
   renderUnregisteredPlaceList();
 }
 
 let dropoffDetailReadingTab = 'あ';
+let dropoffDetailReadingChar = 'あ';
+let editingDropoffDetailReadingName = null;
 function switchDropoffDetailReadingTab(row) {
   dropoffDetailReadingTab = row;
+  dropoffDetailReadingChar = GOJUON_ROW_CHARS[row][0];
+  editingDropoffDetailReadingName = null;
+  renderUserDropoffDetailReadingList();
+}
+function switchDropoffDetailReadingChar(ch) {
+  dropoffDetailReadingChar = ch;
+  editingDropoffDetailReadingName = null;
+  renderUserDropoffDetailReadingList();
+}
+function toggleDropoffDetailReadingEdit(encodedName) {
+  const name = decodeURIComponent(encodedName);
+  editingDropoffDetailReadingName = (editingDropoffDetailReadingName === name) ? null : name;
   renderUserDropoffDetailReadingList();
 }
 function renderUserDropoffDetailReadingList() {
   renderGojuonTabs('userDropoffDetailReadingTabs', dropoffDetailReadingTab, 'switchDropoffDetailReadingTab');
+  renderGojuonCharTabs('userDropoffDetailReadingCharTabs', dropoffDetailReadingTab, dropoffDetailReadingChar, 'switchDropoffDetailReadingChar');
   const map = getUserDropoffDetailReadings();
-  const names = Object.keys(map)
-    .filter(name => gojuonRowOf(map[name]) === dropoffDetailReadingTab)
-    .sort((a,b) => a.localeCompare(b, 'ja'));
+  const names = sortByLastUsed(
+    Object.keys(map).filter(name => stripDakuten((map[name] || '')[0] || '') === dropoffDetailReadingChar),
+    getDropoffDetailLastUsedMap()
+  );
   const box = document.getElementById('userDropoffDetailReadingList');
   if (names.length === 0) {
-    box.innerHTML = `<div style="font-size:12px;color:var(--muted);padding:6px 0;">この行に登録はありません</div>`;
+    box.innerHTML = `<div style="font-size:12px;color:var(--muted);padding:6px 0;">「${dropoffDetailReadingChar}」で始まる読み方の登録はありません</div>`;
     return;
   }
-  box.innerHTML = names.map(name => `
-    <div style="display:flex;align-items:center;gap:6px;padding:6px 0;border-bottom:1px solid var(--border);">
-      <div style="flex:1;font-size:13px;font-weight:700;overflow-wrap:anywhere;">${name}</div>
-      <input class="input-field" style="width:64px;flex:none;padding:6px 8px;font-size:13px;" id="dropoffDetailReadingEdit_${encodeURIComponent(name)}" maxlength="4" value="${map[name]}">
-      <button type="button" class="discount-toggle-btn" onclick="updateUserDropoffDetailReading('${encodeURIComponent(name)}')">更新</button>
-      <button type="button" class="discount-toggle-btn" onclick="removeUserDropoffDetailReading('${encodeURIComponent(name)}')">削除</button>
-    </div>
-  `).join('');
+  box.innerHTML = names.map(name => {
+    const encoded = encodeURIComponent(name);
+    if (editingDropoffDetailReadingName === name) {
+      return `
+        <div style="padding:6px 0;border-bottom:1px solid var(--border);">
+          <div style="display:flex;align-items:center;gap:6px;">
+            <div style="flex:1;font-size:13px;font-weight:700;overflow-wrap:anywhere;cursor:pointer;" onclick="toggleDropoffDetailReadingEdit('${encoded}')">${name}</div>
+            <input class="input-field" style="width:64px;flex:none;padding:6px 8px;font-size:13px;" id="dropoffDetailReadingEdit_${encoded}" maxlength="4" value="${map[name]}">
+          </div>
+          <div style="display:flex;gap:6px;justify-content:flex-end;margin-top:6px;">
+            <button type="button" class="discount-toggle-btn" onclick="updateUserDropoffDetailReading('${encoded}')">更新</button>
+            <button type="button" class="discount-toggle-btn" onclick="removeUserDropoffDetailReading('${encoded}')">削除</button>
+          </div>
+        </div>
+      `;
+    }
+    return `
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border);cursor:pointer;" onclick="toggleDropoffDetailReadingEdit('${encoded}')">
+        <span style="font-weight:700;font-size:13px;">${name}</span>
+        <span style="color:var(--muted);font-size:13px;">（${map[name]}）</span>
+      </div>
+    `;
+  }).join('');
 }
 function addUserDropoffDetailReading() {
   const nameInput = document.getElementById('newDropoffDetailReadingName');
@@ -1943,6 +2044,7 @@ function updateUserDropoffDetailReading(encodedName) {
   map[name] = initial;
   saveUserDropoffDetailReadings(map);
   showToast(`「${name}」の読み方を更新しました`);
+  editingDropoffDetailReadingName = null;
   renderUserDropoffDetailReadingList();
 }
 function removeUserDropoffDetailReading(encodedName) {
@@ -1950,6 +2052,7 @@ function removeUserDropoffDetailReading(encodedName) {
   const map = getUserDropoffDetailReadings();
   delete map[name];
   saveUserDropoffDetailReadings(map);
+  if (editingDropoffDetailReadingName === name) editingDropoffDetailReadingName = null;
   renderUserDropoffDetailReadingList();
   renderUnregisteredDropoffDetailList();
 }
