@@ -1192,7 +1192,8 @@ function getBackupKeys() {
   return [
     TRIPS_KEY, WAITS_KEY, DAY_END_KEY, BREAKS_KEY, FUEL_STOPS_KEY,
     HIDDEN_PLACES_KEY, DAY_SALES_OVERRIDE_KEY, USER_PERIODS_KEY,
-    USER_PLACE_READING_KEY, USER_DROPOFF_DETAIL_READING_KEY
+    USER_PLACE_READING_KEY, USER_DROPOFF_DETAIL_READING_KEY,
+    PLACE_READING_SUPPRESSED_KEY, USER_PLACE_READING_IGNORED_KEY, USER_DROPOFF_DETAIL_READING_IGNORED_KEY
   ];
 }
 function exportBackup() {
@@ -1686,9 +1687,34 @@ function getUserPlaceReadings() {
   try { return JSON.parse(localStorage.getItem(USER_PLACE_READING_KEY) || '{}'); } catch(e) { return {}; }
 }
 function saveUserPlaceReadings(map) { localStorage.setItem(USER_PLACE_READING_KEY, JSON.stringify(map)); }
-function getMergedPlaceReadingHints() {
-  return { ...PLACE_NAME_READING_HINT, ...getUserPlaceReadings() };
+
+// ハードコードされたPLACE_NAME_READING_HINTの読み方を、アプリ内から「削除」できるようにするための除外リスト。
+// コードそのものは書き換えられないため、ここに載っている地名は読み方が登録されていない扱いにする
+const PLACE_READING_SUPPRESSED_KEY = 'taxi_place_reading_suppressed';
+function getSuppressedPlaceReadings() {
+  try { return JSON.parse(localStorage.getItem(PLACE_READING_SUPPRESSED_KEY) || '[]'); } catch(e) { return []; }
 }
+function saveSuppressedPlaceReadings(list) { localStorage.setItem(PLACE_READING_SUPPRESSED_KEY, JSON.stringify(list)); }
+
+// 運行記録の予測変換に実際に使われている読み方（ハードコード＋アプリ内登録分、削除されたものは除く）
+function getMergedPlaceReadingHints() {
+  const merged = { ...PLACE_NAME_READING_HINT, ...getUserPlaceReadings() };
+  getSuppressedPlaceReadings().forEach(name => { delete merged[name]; });
+  return merged;
+}
+
+// 過去の記録にはあるが、まだ読み方（イニシャル）の登録が不要と判断して見送ったもの。
+// 「未登録」一覧から消すためだけに使い、予測変換自体には影響しない
+const USER_PLACE_READING_IGNORED_KEY = 'taxi_user_place_reading_ignored';
+function getIgnoredPlaceNames() {
+  try { return JSON.parse(localStorage.getItem(USER_PLACE_READING_IGNORED_KEY) || '[]'); } catch(e) { return []; }
+}
+function saveIgnoredPlaceNames(list) { localStorage.setItem(USER_PLACE_READING_IGNORED_KEY, JSON.stringify(list)); }
+const USER_DROPOFF_DETAIL_READING_IGNORED_KEY = 'taxi_user_dropoff_detail_reading_ignored';
+function getIgnoredDropoffDetails() {
+  try { return JSON.parse(localStorage.getItem(USER_DROPOFF_DETAIL_READING_IGNORED_KEY) || '[]'); } catch(e) { return []; }
+}
+function saveIgnoredDropoffDetails(list) { localStorage.setItem(USER_DROPOFF_DETAIL_READING_IGNORED_KEY, JSON.stringify(list)); }
 
 // 降車場所詳細（店名・施設名など）の読み方。こちらは地名と違って固定の一覧がないため、
 // すべてアプリ内で登録したものだけを使う
@@ -1813,7 +1839,8 @@ function switchPlaceReadingTab(row) {
 }
 function renderUserPlaceReadingList() {
   renderGojuonTabs('userPlaceReadingTabs', placeReadingTab, 'switchPlaceReadingTab');
-  const map = getUserPlaceReadings();
+  // 運行記録の予測変換に実際に使われている読み方（ハードコード分＋アプリ内登録分）をすべて表示する
+  const map = getMergedPlaceReadingHints();
   const names = Object.keys(map)
     .filter(name => gojuonRowOf(map[name]) === placeReadingTab)
     .sort((a,b) => a.localeCompare(b, 'ja'));
@@ -1840,6 +1867,8 @@ function addUserPlaceReading() {
   const map = getUserPlaceReadings();
   map[name] = initial;
   saveUserPlaceReadings(map);
+  // 以前このアプリから削除していた場合は、登録し直したので除外を解除する
+  saveSuppressedPlaceReadings(getSuppressedPlaceReadings().filter(n => n !== name));
   nameInput.value = '';
   initialInput.value = '';
   renderUserPlaceReadingList();
@@ -1860,6 +1889,9 @@ function removeUserPlaceReading(encodedName) {
   const map = getUserPlaceReadings();
   delete map[name];
   saveUserPlaceReadings(map);
+  // ハードコードされた読み方はコードから消せないため、除外リストに載せて「未登録」扱いにする
+  const suppressed = getSuppressedPlaceReadings();
+  if (!suppressed.includes(name)) { suppressed.push(name); saveSuppressedPlaceReadings(suppressed); }
   renderUserPlaceReadingList();
   renderUnregisteredPlaceList();
 }
@@ -1923,26 +1955,30 @@ function removeUserDropoffDetailReading(encodedName) {
 }
 
 // 過去の記録にある地名・降車場所詳細のうち、まだ読み方（イニシャル）が登録されていないものを一覧にする。
-// 手動で登録すると、その場でこの一覧から消える
+// 手動で登録すると、その場でこの一覧から消える。
+// 「町」の有無など表記ゆれで同じ場所が別項目として出ることがあるため、登録するほどではないものは
+// 「削除」でこの一覧からだけ消せるようにする（予測変換や記録そのものには影響しない）
 let unregisteredPlaceCache = [];
 let unregisteredDropoffDetailCache = [];
 function getUnregisteredPlaceNames() {
   const hints = getMergedPlaceReadingHints();
+  const ignored = getIgnoredPlaceNames();
   const names = new Set();
   getTrips().forEach(t => {
     if (t.pickup && t.pickup.trim()) names.add(t.pickup.trim());
     if (t.dropoff && t.dropoff.trim()) names.add(t.dropoff.trim());
     getTripViaPoints(t).forEach(v => { if (v && v.trim()) names.add(v.trim()); });
   });
-  return [...names].filter(n => !hints[n]).sort((a,b) => a.localeCompare(b, 'ja'));
+  return [...names].filter(n => !hints[n] && !ignored.includes(n)).sort((a,b) => a.localeCompare(b, 'ja'));
 }
 function getUnregisteredDropoffDetails() {
   const hints = getUserDropoffDetailReadings();
+  const ignored = getIgnoredDropoffDetails();
   const names = new Set();
   getTrips().forEach(t => {
     if (t.dropoffDetail && t.dropoffDetail.trim()) names.add(t.dropoffDetail.trim());
   });
-  return [...names].filter(n => !hints[n]).sort((a,b) => a.localeCompare(b, 'ja'));
+  return [...names].filter(n => !hints[n] && !ignored.includes(n)).sort((a,b) => a.localeCompare(b, 'ja'));
 }
 function renderUnregisteredPlaceList() {
   unregisteredPlaceCache = getUnregisteredPlaceNames();
@@ -1956,6 +1992,7 @@ function renderUnregisteredPlaceList() {
       <div style="flex:1;font-size:13px;overflow-wrap:anywhere;">${name}</div>
       <input class="input-field" style="width:64px;flex:none;padding:6px 8px;font-size:13px;" id="unregPlaceInitial_${i}" maxlength="4" placeholder="頭文字">
       <button type="button" class="discount-toggle-btn" onclick="registerUnregisteredPlace(${i})">登録</button>
+      <button type="button" class="discount-toggle-btn" onclick="ignoreUnregisteredPlace(${i})">削除</button>
     </div>
   `).join('');
 }
@@ -1967,7 +2004,16 @@ function registerUnregisteredPlace(i) {
   const map = getUserPlaceReadings();
   map[name] = initial;
   saveUserPlaceReadings(map);
+  saveSuppressedPlaceReadings(getSuppressedPlaceReadings().filter(n => n !== name));
   renderUserPlaceReadingList();
+  renderUnregisteredPlaceList();
+}
+function ignoreUnregisteredPlace(i) {
+  const name = unregisteredPlaceCache[i];
+  if (name === undefined) return;
+  if (!confirm(`「${name}」をこの一覧から消しますか？\n（読み方は登録されません。予測変換や記録には影響しません）`)) return;
+  const ignored = getIgnoredPlaceNames();
+  if (!ignored.includes(name)) { ignored.push(name); saveIgnoredPlaceNames(ignored); }
   renderUnregisteredPlaceList();
 }
 function renderUnregisteredDropoffDetailList() {
@@ -1982,6 +2028,7 @@ function renderUnregisteredDropoffDetailList() {
       <div style="flex:1;font-size:13px;overflow-wrap:anywhere;">${name}</div>
       <input class="input-field" style="width:64px;flex:none;padding:6px 8px;font-size:13px;" id="unregDetailInitial_${i}" maxlength="4" placeholder="頭文字">
       <button type="button" class="discount-toggle-btn" onclick="registerUnregisteredDropoffDetail(${i})">登録</button>
+      <button type="button" class="discount-toggle-btn" onclick="ignoreUnregisteredDropoffDetail(${i})">削除</button>
     </div>
   `).join('');
 }
@@ -1994,6 +2041,14 @@ function registerUnregisteredDropoffDetail(i) {
   map[name] = initial;
   saveUserDropoffDetailReadings(map);
   renderUserDropoffDetailReadingList();
+  renderUnregisteredDropoffDetailList();
+}
+function ignoreUnregisteredDropoffDetail(i) {
+  const name = unregisteredDropoffDetailCache[i];
+  if (name === undefined) return;
+  if (!confirm(`「${name}」をこの一覧から消しますか？\n（読み方は登録されません。予測変換や記録には影響しません）`)) return;
+  const ignored = getIgnoredDropoffDetails();
+  if (!ignored.includes(name)) { ignored.push(name); saveIgnoredDropoffDetails(ignored); }
   renderUnregisteredDropoffDetailList();
 }
 // 乗車場所・降車場所をタップしたとき、入力欄を画面の上の方へ巻き上げて
