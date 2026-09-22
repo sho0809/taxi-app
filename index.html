@@ -710,6 +710,11 @@
       </div>
     </div>
     <div class="card">
+      <div class="card-title">地名の読み方（イニシャル）登録</div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:8px;">乗車・降車場所や降車場所詳細を、頭文字１文字の入力で予測変換に出したいときはここで登録します。この端末から直接登録できます。</div>
+      <button class="btn btn-gray" style="width:100%;" onclick="openReadingHintModal()">📖 読み方の登録・確認</button>
+    </div>
+    <div class="card">
       <div class="card-title">データのバックアップ</div>
       <div style="display:flex;gap:8px;">
         <button class="btn btn-gray" style="flex:1;" onclick="exportBackup()">📤 バックアップを保存</button>
@@ -717,11 +722,6 @@
       </div>
       <input type="file" id="backupRestoreInput" accept="application/json" style="display:none;" onchange="importBackupFile(event)">
       <div style="font-size:11px;color:var(--muted);margin-top:6px;">機種変更の前にバックアップを保存しておくと、新しい端末で「復元する」から記録を戻せます。</div>
-    </div>
-    <div class="card">
-      <div class="card-title">地名の読み方（イニシャル）登録</div>
-      <div style="font-size:11px;color:var(--muted);margin-bottom:8px;">乗車・降車場所や降車場所詳細を、頭文字１文字の入力で予測変換に出したいときはここで登録します。この端末から直接登録できます。</div>
-      <button class="btn btn-gray" style="width:100%;" onclick="openReadingHintModal()">📖 読み方の登録・確認</button>
     </div>
   </div>
 
@@ -842,10 +842,13 @@
       </div>
     </div>
     <button class="btn btn-gray" style="width:100%;margin-bottom:10px;" onclick="addUserPlaceReading()">＋ 追加</button>
-    <div id="userPlaceReadingList"></div>
 
-    <div style="font-size:12px;font-weight:700;color:var(--muted);margin-top:12px;margin-bottom:4px;">過去の記録にあるが読み方が未登録のもの</div>
+    <div style="font-size:12px;font-weight:700;color:var(--muted);margin-top:4px;margin-bottom:4px;">過去の記録にあるが読み方が未登録のもの</div>
     <div id="unregisteredPlaceList"></div>
+
+    <div style="font-size:12px;font-weight:700;color:var(--muted);margin-top:16px;margin-bottom:4px;">登録済みの読み方（タップして確認・編集）</div>
+    <div class="dow-tabs" id="userPlaceReadingTabs"></div>
+    <div id="userPlaceReadingList"></div>
 
     <div class="section-label" style="margin-top:16px;">降車場所詳細（店名・施設名など）</div>
     <div class="input-row">
@@ -857,10 +860,13 @@
       </div>
     </div>
     <button class="btn btn-gray" style="width:100%;margin-bottom:10px;" onclick="addUserDropoffDetailReading()">＋ 追加</button>
-    <div id="userDropoffDetailReadingList"></div>
 
-    <div style="font-size:12px;font-weight:700;color:var(--muted);margin-top:12px;margin-bottom:4px;">過去の記録にあるが読み方が未登録のもの</div>
+    <div style="font-size:12px;font-weight:700;color:var(--muted);margin-top:4px;margin-bottom:4px;">過去の記録にあるが読み方が未登録のもの</div>
     <div id="unregisteredDropoffDetailList"></div>
+
+    <div style="font-size:12px;font-weight:700;color:var(--muted);margin-top:16px;margin-bottom:4px;">登録済みの読み方（タップして確認・編集）</div>
+    <div class="dow-tabs" id="userDropoffDetailReadingTabs"></div>
+    <div id="userDropoffDetailReadingList"></div>
 
     <div class="btn-row" style="margin-top:14px;">
       <button class="btn btn-primary" onclick="closeReadingHintModal()">閉じる</button>
@@ -1770,6 +1776,25 @@ function getDropoffDetailSuggestions(query) {
 }
 
 // ==================== 地名・降車場所詳細の読み方登録モーダル ====================
+// 登録済みの読み方は五十音の行（あ・か・さ…）ごとにタブを分けて表示し、探しやすくする
+const GOJUON_ROWS = ['あ','か','さ','た','な','は','ま','や','ら','わ'];
+const GOJUON_ROW_CHARS = {
+  'あ':'あいうえお', 'か':'かきくけこ', 'さ':'さしすせそ', 'た':'たちつてと', 'な':'なにぬねの',
+  'は':'はひふへほ', 'ま':'まみむめも', 'や':'やゆよ', 'ら':'らりるれろ', 'わ':'わをん',
+};
+function gojuonRowOf(initial) {
+  const base = stripDakuten((initial || '')[0] || '');
+  for (const row of GOJUON_ROWS) {
+    if (GOJUON_ROW_CHARS[row].includes(base)) return row;
+  }
+  return 'あ';
+}
+function renderGojuonTabs(containerId, activeRow, onclickFnName) {
+  document.getElementById(containerId).innerHTML = GOJUON_ROWS.map(row =>
+    `<div class="dow-tab${row === activeRow ? ' active' : ''}" onclick="${onclickFnName}('${row}')">${row}</div>`
+  ).join('');
+}
+
 function openReadingHintModal() {
   renderUserPlaceReadingList();
   renderUserDropoffDetailReadingList();
@@ -1780,17 +1805,28 @@ function openReadingHintModal() {
 function closeReadingHintModal() {
   document.getElementById('readingHintModal').classList.remove('open');
 }
+
+let placeReadingTab = 'あ';
+function switchPlaceReadingTab(row) {
+  placeReadingTab = row;
+  renderUserPlaceReadingList();
+}
 function renderUserPlaceReadingList() {
+  renderGojuonTabs('userPlaceReadingTabs', placeReadingTab, 'switchPlaceReadingTab');
   const map = getUserPlaceReadings();
-  const names = Object.keys(map).sort((a,b) => a.localeCompare(b, 'ja'));
+  const names = Object.keys(map)
+    .filter(name => gojuonRowOf(map[name]) === placeReadingTab)
+    .sort((a,b) => a.localeCompare(b, 'ja'));
   const box = document.getElementById('userPlaceReadingList');
   if (names.length === 0) {
-    box.innerHTML = `<div style="font-size:12px;color:var(--muted);padding:6px 0;">まだ登録がありません</div>`;
+    box.innerHTML = `<div style="font-size:12px;color:var(--muted);padding:6px 0;">この行に登録はありません</div>`;
     return;
   }
   box.innerHTML = names.map(name => `
-    <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);">
-      <div><span style="font-weight:700;">${name}</span><span style="color:var(--muted);margin-left:6px;">（${map[name]}）</span></div>
+    <div style="display:flex;align-items:center;gap:6px;padding:6px 0;border-bottom:1px solid var(--border);">
+      <div style="flex:1;font-size:13px;font-weight:700;overflow-wrap:anywhere;">${name}</div>
+      <input class="input-field" style="width:64px;flex:none;padding:6px 8px;font-size:13px;" id="placeReadingEdit_${encodeURIComponent(name)}" maxlength="4" value="${map[name]}">
+      <button type="button" class="discount-toggle-btn" onclick="updateUserPlaceReading('${encodeURIComponent(name)}')">更新</button>
       <button type="button" class="discount-toggle-btn" onclick="removeUserPlaceReading('${encodeURIComponent(name)}')">削除</button>
     </div>
   `).join('');
@@ -1807,6 +1843,17 @@ function addUserPlaceReading() {
   nameInput.value = '';
   initialInput.value = '';
   renderUserPlaceReadingList();
+  renderUnregisteredPlaceList();
+}
+function updateUserPlaceReading(encodedName) {
+  const name = decodeURIComponent(encodedName);
+  const initial = document.getElementById(`placeReadingEdit_${encodedName}`).value.trim();
+  if (!initial) { alert('頭文字を入力してください。'); return; }
+  const map = getUserPlaceReadings();
+  map[name] = initial;
+  saveUserPlaceReadings(map);
+  showToast(`「${name}」の読み方を更新しました`);
+  renderUserPlaceReadingList();
 }
 function removeUserPlaceReading(encodedName) {
   const name = decodeURIComponent(encodedName);
@@ -1814,18 +1861,30 @@ function removeUserPlaceReading(encodedName) {
   delete map[name];
   saveUserPlaceReadings(map);
   renderUserPlaceReadingList();
+  renderUnregisteredPlaceList();
+}
+
+let dropoffDetailReadingTab = 'あ';
+function switchDropoffDetailReadingTab(row) {
+  dropoffDetailReadingTab = row;
+  renderUserDropoffDetailReadingList();
 }
 function renderUserDropoffDetailReadingList() {
+  renderGojuonTabs('userDropoffDetailReadingTabs', dropoffDetailReadingTab, 'switchDropoffDetailReadingTab');
   const map = getUserDropoffDetailReadings();
-  const names = Object.keys(map).sort((a,b) => a.localeCompare(b, 'ja'));
+  const names = Object.keys(map)
+    .filter(name => gojuonRowOf(map[name]) === dropoffDetailReadingTab)
+    .sort((a,b) => a.localeCompare(b, 'ja'));
   const box = document.getElementById('userDropoffDetailReadingList');
   if (names.length === 0) {
-    box.innerHTML = `<div style="font-size:12px;color:var(--muted);padding:6px 0;">まだ登録がありません</div>`;
+    box.innerHTML = `<div style="font-size:12px;color:var(--muted);padding:6px 0;">この行に登録はありません</div>`;
     return;
   }
   box.innerHTML = names.map(name => `
-    <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);">
-      <div><span style="font-weight:700;">${name}</span><span style="color:var(--muted);margin-left:6px;">（${map[name]}）</span></div>
+    <div style="display:flex;align-items:center;gap:6px;padding:6px 0;border-bottom:1px solid var(--border);">
+      <div style="flex:1;font-size:13px;font-weight:700;overflow-wrap:anywhere;">${name}</div>
+      <input class="input-field" style="width:64px;flex:none;padding:6px 8px;font-size:13px;" id="dropoffDetailReadingEdit_${encodeURIComponent(name)}" maxlength="4" value="${map[name]}">
+      <button type="button" class="discount-toggle-btn" onclick="updateUserDropoffDetailReading('${encodeURIComponent(name)}')">更新</button>
       <button type="button" class="discount-toggle-btn" onclick="removeUserDropoffDetailReading('${encodeURIComponent(name)}')">削除</button>
     </div>
   `).join('');
@@ -1842,6 +1901,17 @@ function addUserDropoffDetailReading() {
   nameInput.value = '';
   initialInput.value = '';
   renderUserDropoffDetailReadingList();
+  renderUnregisteredDropoffDetailList();
+}
+function updateUserDropoffDetailReading(encodedName) {
+  const name = decodeURIComponent(encodedName);
+  const initial = document.getElementById(`dropoffDetailReadingEdit_${encodedName}`).value.trim();
+  if (!initial) { alert('頭文字を入力してください。'); return; }
+  const map = getUserDropoffDetailReadings();
+  map[name] = initial;
+  saveUserDropoffDetailReadings(map);
+  showToast(`「${name}」の読み方を更新しました`);
+  renderUserDropoffDetailReadingList();
 }
 function removeUserDropoffDetailReading(encodedName) {
   const name = decodeURIComponent(encodedName);
@@ -1849,6 +1919,7 @@ function removeUserDropoffDetailReading(encodedName) {
   delete map[name];
   saveUserDropoffDetailReadings(map);
   renderUserDropoffDetailReadingList();
+  renderUnregisteredDropoffDetailList();
 }
 
 // 過去の記録にある地名・降車場所詳細のうち、まだ読み方（イニシャル）が登録されていないものを一覧にする。
