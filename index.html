@@ -1292,12 +1292,12 @@ function floorDivInt(a, b) {
   const r = a % b;
   return (a - r) / b;
 }
-// 消費税抜き（10円単位で四捨五入）。例：税込1000円 → 1000/1.1=909.09... → 910円
-// amount/1.1/10 = amount/11 のため、四捨五入 round(amount/11) を
-// floor((amount*2+11)/22) という整数演算だけで求め、浮動小数点の割り算を経由しないことで
+// 消費税抜き（10円単位で切り捨て）。例：税込8400円 → 8400/1.1=7636.36... → 7630円
+// amount/1.1/10 = amount/11 のため、切り捨て floor(amount/11) を
+// floorDivIntによる整数演算だけで求め、浮動小数点の割り算を経由しないことで
 // 数回に1回程度発生していた10円のずれを無くす
 function exTax(amount) {
-  return floorDivInt(amount * 2 + 11, 22) * 10;
+  return floorDivInt(amount, 11) * 10;
 }
 
 // ==================== GPS / LOCATION ====================
@@ -4490,7 +4490,7 @@ function renderSchedule() {
           <div style="position:absolute;top:10px;right:12px;text-align:right;">
             <div style="font-size:12px;font-weight:800;color:var(--muted);">${rideNumber}</div>
           </div>
-          <div class="sched-time">${fmtHM(seg.start)}〜${fmtHM(seg.end)} <span class="sched-dur">（${fmtWait(durMin)}）</span> <span style="color:var(--success);font-weight:700;">¥${fare.toLocaleString()}</span></div>
+          <div class="sched-time">${fmtHM(seg.start)}〜${fmtHM(seg.end)} <span class="sched-dur">（${fmtWait(durMin)}）</span> <span style="color:var(--success);font-weight:700;">¥${fare.toLocaleString()}</span> <span style="color:var(--muted);font-size:12px;font-weight:700;">（${t.payMethod || '現金'}）</span></div>
           <div class="sched-body">
             <span class="sched-type-badge" style="background:${typeColor}22;color:${typeColor};">${type}</span>
             ${[t.pickup||'（乗車場所未設定）', ...getTripViaPoints(t), (t.dropoff||'（降車場所未設定）') + (t.dropoffDetail ? `（${t.dropoffDetail}）` : '')].join(' → ')}
