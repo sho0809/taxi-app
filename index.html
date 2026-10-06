@@ -200,6 +200,10 @@
   .stat-card.wage-mid .stat-value, .stat-card.wage-mid .stat-label,
   .stat-card.wage-high .stat-value, .stat-card.wage-high .stat-label { color: white; }
   .stat-card.wage-low .stat-label, .stat-card.wage-mid .stat-label, .stat-card.wage-high .stat-label { opacity: 0.85; }
+  /* 休憩中は「休憩」タブと同じ色を「休憩時間」カードにも付け、ひと目で進行中とわかるようにする。
+     休憩が終わると元の表示に戻る */
+  .stat-card.ongoing-break { background: #f5a623; }
+  .stat-card.ongoing-break .stat-value, .stat-card.ongoing-break .stat-label { color: white; opacity: 0.95; }
 
   /* Modal */
   .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 300; display: flex; align-items: flex-end; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
@@ -636,7 +640,7 @@
         <div class="stat-value" id="schedJisshaTotal">0分</div>
         <div class="stat-label">実車時間（乗客あり）</div>
       </div>
-      <div class="stat-card">
+      <div class="stat-card" id="schedBreakCard">
         <div class="stat-value" id="schedBreakTotal">0分</div>
         <div class="stat-label">休憩時間</div>
       </div>
@@ -922,6 +926,16 @@
     <div class="input-group">
       <input class="input-field" id="newCanceledPlace" type="text" placeholder="地名（例：二番町／空欄可）">
     </div>
+    <div class="input-row">
+      <div class="input-group">
+        <label class="input-label">📅 日付（空欄可）</label>
+        <input class="input-field" id="newCanceledDate" type="date">
+      </div>
+      <div class="input-group">
+        <label class="input-label">⏱ 時間（空欄可）</label>
+        <input class="input-field" id="newCanceledTime" type="time">
+      </div>
+    </div>
     <button class="btn btn-gray" style="width:100%;margin-bottom:10px;" onclick="addCanceledCustomer()">＋ 追加</button>
     <div id="canceledCustomerList"></div>
     <div class="btn-row" style="margin-top:14px;">
@@ -1143,19 +1157,11 @@
           </select>
         </div>
       </div>
-      <div style="display:flex;gap:6px;">
-        <button class="pay-btn active" id="editGoGender-男性" onclick="selectEditGoGender('男性')" style="flex:1;">男性</button>
-        <button class="pay-btn" id="editGoGender-女性" onclick="selectEditGoGender('女性')" style="flex:1;">女性</button>
-      </div>
       <input type="hidden" id="editGoPaxGender" value="男性">
     </div>
     <div class="input-group" id="editPlainMemoGroup">
       <label class="input-label">📝 メモ</label>
       <textarea class="input-field" id="editPlainMemo" rows="2" placeholder="自由記入" style="resize:vertical;"></textarea>
-      <div style="display:flex;gap:6px;margin-top:6px;">
-        <button class="pay-btn" id="editPlainGender-男性" onclick="selectEditPlainGender('男性')" style="flex:1;">男性</button>
-        <button class="pay-btn" id="editPlainGender-女性" onclick="selectEditPlainGender('女性')" style="flex:1;">女性</button>
-      </div>
       <input type="hidden" id="editPlainPaxGender" value="">
     </div>
     <div class="input-group">
@@ -1976,6 +1982,8 @@ function selectNewCanceledGender(g) {
 }
 function openCanceledCustomerModal() {
   renderCanceledCustomerList();
+  // 入力しやすいよう、日付は今日を既定値にしておく
+  document.getElementById('newCanceledDate').value = todayStr();
   document.getElementById('canceledCustomerModal').classList.add('open');
 }
 function closeCanceledCustomerModal() {
@@ -1985,16 +1993,22 @@ function addCanceledCustomer() {
   const nameInput = document.getElementById('newCanceledName');
   const ageInput = document.getElementById('newCanceledAge');
   const placeInput = document.getElementById('newCanceledPlace');
+  const dateInput = document.getElementById('newCanceledDate');
+  const timeInput = document.getElementById('newCanceledTime');
   const name = nameInput.value.trim();
   const age = ageInput.value;
   const place = placeInput.value.trim();
+  const date = dateInput.value;
+  const time = timeInput.value;
   if (!name || !newCanceledGender || !age) { alert('名前・性別・年代を入力してください。'); return; }
   const list = getCanceledCustomers();
-  list.push({ name, gender: newCanceledGender, age, place });
+  list.push({ name, gender: newCanceledGender, age, place, date, time });
   saveCanceledCustomers(list);
   nameInput.value = '';
   ageInput.value = '';
   placeInput.value = '';
+  dateInput.value = todayStr();
+  timeInput.value = '';
   selectNewCanceledGender(newCanceledGender); // 選択状態を解除
   renderCanceledCustomerList();
 }
@@ -2014,15 +2028,24 @@ function renderCanceledCustomerList() {
     box.innerHTML = `<div style="font-size:12px;color:var(--muted);padding:6px 0;">登録がありません</div>`;
     return;
   }
-  box.innerHTML = list.map((c, i) => `
+  box.innerHTML = list.map((c, i) => {
+    let whenLabel = '';
+    if (c.date) {
+      const [,mm,dd] = c.date.split('-');
+      whenLabel = `${parseInt(mm)}/${parseInt(dd)}`;
+      if (c.time) whenLabel += ` ${c.time}`;
+    }
+    return `
     <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);">
       <div>
         <span style="font-weight:800;font-size:15px;color:var(--danger);">${c.name}</span>
         <span style="color:var(--muted);font-size:13px;margin-left:6px;">${c.gender}・${c.age}${c.place ? '・'+c.place : ''}</span>
+        ${whenLabel ? `<div style="color:var(--muted);font-size:12px;margin-top:2px;">📅 ${whenLabel}</div>` : ''}
       </div>
       <button type="button" class="discount-toggle-btn" onclick="removeCanceledCustomer(${i})">削除</button>
     </div>
-  `).join('');
+  `;
+  }).join('');
 }
 
 let placeReadingTab = 'あ';
@@ -2602,6 +2625,10 @@ function incrementEditPax(gender) {
     if (editPaxMale + editPaxFemale > 4) editPaxMale = Math.max(0, 4 - editPaxFemale);
   }
   updateEditPaxDisplay();
+  // 性別タグ用の専用ボタンは廃止したため、人員（男性・女性の人数）から自動で決める
+  const derived = deriveEditPaxGender();
+  selectEditGoGender(derived);
+  setEditPlainGender(derived);
 }
 function updateEditPaxDisplay() {
   document.getElementById('editPaxMaleCount').textContent = editPaxMale;
@@ -3223,22 +3250,19 @@ function carryOverEditPaxInfo(prev, type) {
   }
 }
 
-// GOアプリ乗客情報（メモ・修正画面）
+// GOアプリ乗客情報（メモ・修正画面）。性別は専用ボタンを廃止し、人員（男性・女性の人数）から自動で決める
 function selectEditGoGender(g) {
   document.getElementById('editGoPaxGender').value = g;
-  ['男性','女性'].forEach(x => {
-    document.getElementById(`editGoGender-${x}`).className = 'pay-btn' + (x === g ? ' active' : '');
-  });
 }
 function setEditPlainGender(g) {
   document.getElementById('editPlainPaxGender').value = g;
-  ['男性','女性'].forEach(x => {
-    document.getElementById(`editPlainGender-${x}`).className = 'pay-btn' + (x === g ? ' active' : '');
-  });
 }
-function selectEditPlainGender(g) {
-  const cur = document.getElementById('editPlainPaxGender').value;
-  setEditPlainGender(cur === g ? '' : g); // 同じボタンをもう一度押すと選択解除
+// 人員（男性・女性の人数）から性別タグを決める。片方だけなら明確に判定でき、
+// 両方いる・どちらも0人のときは単一の性別に決められないため空にする
+function deriveEditPaxGender() {
+  if (editPaxMale > 0 && editPaxFemale === 0) return '男性';
+  if (editPaxFemale > 0 && editPaxMale === 0) return '女性';
+  return '';
 }
 function buildEditGoMemo() {
   const name = document.getElementById('editGoPaxName').value.trim();
@@ -4034,6 +4058,10 @@ function renderSchedTabs() {
     btn.classList.toggle('ongoing-break', ongoing && kind === 'break');
     btn.classList.toggle('ongoing-fuel', ongoing && kind === 'fuel');
     btn.classList.toggle('done', kind === 'fuel' && done);
+    // 「休憩時間」カードも休憩タブと同じ色にし、休憩が終わると元の表示に戻す
+    if (kind === 'break') {
+      document.getElementById('schedBreakCard').classList.toggle('ongoing-break', ongoing);
+    }
   });
 }
 
