@@ -470,6 +470,7 @@
         </div>
         <input type="hidden" id="goPaxGender" value="">
         <input type="hidden" id="goPaxAge" value="">
+        <div id="goPaxCancelWarning" style="display:none;margin-top:8px;padding:8px 10px;border-radius:10px;background:#fdecea;border:1.5px solid var(--danger);color:var(--danger);font-size:13px;font-weight:700;"></div>
         <div id="goPaxHistory" style="display:none;margin-top:8px;"></div>
       </div>
 
@@ -715,6 +716,11 @@
       <button class="btn btn-gray" style="width:100%;" onclick="openReadingHintModal()">📖 読み方の登録・確認</button>
     </div>
     <div class="card">
+      <div class="card-title">キャンセルした人リスト</div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:8px;">登録しておくと、運行記録でGOの乗客情報（名前・性別・年代）が一致したときに警告を表示します。</div>
+      <button class="btn btn-gray" style="width:100%;" onclick="openCanceledCustomerModal()">🚫 リストの登録・確認</button>
+    </div>
+    <div class="card">
       <div class="card-title">データのバックアップ</div>
       <div style="display:flex;gap:8px;">
         <button class="btn btn-gray" style="flex:1;" onclick="exportBackup()">📤 バックアップを保存</button>
@@ -884,6 +890,42 @@
 
     <div class="btn-row" style="margin-top:14px;">
       <button class="btn btn-primary" onclick="closeReadingHintModal()">閉じる</button>
+    </div>
+  </div>
+</div>
+
+<!-- Canceled Customer List Modal -->
+<div class="modal-overlay" id="canceledCustomerModal" onclick="if(event.target===this) closeCanceledCustomerModal()">
+  <div class="modal">
+    <div class="modal-title">キャンセルした人リスト</div>
+    <div class="input-group">
+      <input class="input-field" id="newCanceledName" type="text" placeholder="名前（例：とよた よしきみ）">
+    </div>
+    <div class="input-row">
+      <div class="input-group" style="display:flex;gap:6px;">
+        <button class="pay-btn" id="newCanceledGender-男性" onclick="selectNewCanceledGender('男性')" style="flex:1;">男性</button>
+        <button class="pay-btn" id="newCanceledGender-女性" onclick="selectNewCanceledGender('女性')" style="flex:1;">女性</button>
+      </div>
+      <div class="input-group">
+        <select class="input-field" id="newCanceledAge">
+          <option value="">年代を選択</option>
+          <option value="10代">10代</option>
+          <option value="20代">20代</option>
+          <option value="30代">30代</option>
+          <option value="40代">40代</option>
+          <option value="50代">50代</option>
+          <option value="60代">60代</option>
+          <option value="70代">70代</option>
+        </select>
+      </div>
+    </div>
+    <div class="input-group">
+      <input class="input-field" id="newCanceledPlace" type="text" placeholder="地名（例：二番町／空欄可）">
+    </div>
+    <button class="btn btn-gray" style="width:100%;margin-bottom:10px;" onclick="addCanceledCustomer()">＋ 追加</button>
+    <div id="canceledCustomerList"></div>
+    <div class="btn-row" style="margin-top:14px;">
+      <button class="btn btn-primary" onclick="closeCanceledCustomerModal()">閉じる</button>
     </div>
   </div>
 </div>
@@ -1198,6 +1240,30 @@ function saveScheduleFuelStops(date, stops) {
   } catch(e) {}
 }
 
+// キャンセルした人のリスト（名前・性別・年代・地名）。運行記録でGOの乗客情報を入力中、
+// 名前・性別・年代が一致したら警告を出せるようにする
+const CANCELED_CUSTOMERS_KEY = 'taxi_canceled_customers';
+function getCanceledCustomers() {
+  try {
+    const raw = localStorage.getItem(CANCELED_CUSTOMERS_KEY);
+    if (raw === null) {
+      // 初回起動時のみ、ご指定の初期データを登録する
+      const defaults = [
+        { name: 'とよた よしきみ', gender: '男性', age: '30代', place: '二番町' },
+        { name: 'よしだ てんせい', gender: '男性', age: '20代', place: '宮西' },
+      ];
+      localStorage.setItem(CANCELED_CUSTOMERS_KEY, JSON.stringify(defaults));
+      return defaults;
+    }
+    return JSON.parse(raw) || [];
+  } catch(e) { return []; }
+}
+function saveCanceledCustomers(list) { localStorage.setItem(CANCELED_CUSTOMERS_KEY, JSON.stringify(list)); }
+function matchesCanceledCustomer(name, gender, age) {
+  if (!name || !gender || !age) return null;
+  return getCanceledCustomers().find(c => c.name === name && c.gender === gender && c.age === age) || null;
+}
+
 // ==================== バックアップ / 復元 ====================
 // 機種変更などでlocalStorageのデータが失われないよう、全データをJSONファイルに書き出し／読み込みする
 // （HIDDEN_PLACES_KEYなど一部の定数はこのコードより後で宣言されるため、
@@ -1207,7 +1273,8 @@ function getBackupKeys() {
     TRIPS_KEY, WAITS_KEY, DAY_END_KEY, BREAKS_KEY, FUEL_STOPS_KEY,
     HIDDEN_PLACES_KEY, DAY_SALES_OVERRIDE_KEY, USER_PERIODS_KEY,
     USER_PLACE_READING_KEY, USER_DROPOFF_DETAIL_READING_KEY,
-    PLACE_READING_SUPPRESSED_KEY, USER_PLACE_READING_IGNORED_KEY, USER_DROPOFF_DETAIL_READING_IGNORED_KEY
+    PLACE_READING_SUPPRESSED_KEY, USER_PLACE_READING_IGNORED_KEY, USER_DROPOFF_DETAIL_READING_IGNORED_KEY,
+    CANCELED_CUSTOMERS_KEY
   ];
 }
 function exportBackup() {
@@ -1477,6 +1544,7 @@ function resetGoMemo() {
   const hist = document.getElementById('goPaxHistory');
   hist.style.display = 'none';
   hist.innerHTML = '';
+  updateGoPaxCancelWarning();
 }
 
 // 流し・配車の乗客の性別は入力欄を廃止したため、保存値だけを初期化する
@@ -1496,11 +1564,27 @@ function applyGoMemoHint(val) {
   document.getElementById('goPaxName').value = val;
   onGoPaxNameInput();
 }
+// 名前・性別・年代が「キャンセルした人リスト」と一致したら警告を表示する
+function updateGoPaxCancelWarning() {
+  const name = document.getElementById('goPaxName').value.trim();
+  const gender = document.getElementById('goPaxGender').value;
+  const age = document.getElementById('goPaxAge').value;
+  const box = document.getElementById('goPaxCancelWarning');
+  const match = matchesCanceledCustomer(name, gender, age);
+  if (match) {
+    box.textContent = `⚠️ キャンセルした人と一致します${match.place ? `（${match.place}）` : ''}`;
+    box.style.display = 'block';
+  } else {
+    box.style.display = 'none';
+    box.textContent = '';
+  }
+}
 // 名前入力中に過去のGO乗車履歴（日付・乗降場所）を候補表示。
 // 名前の頭文字が一致し、かつ現在選択中の性別・年代が一致する履歴のみを候補にする。
 function onGoPaxNameInput() {
   const q = document.getElementById('goPaxName').value.trim();
   const hist = document.getElementById('goPaxHistory');
+  updateGoPaxCancelWarning();
   if (!q) { hist.style.display = 'none'; hist.innerHTML = ''; return; }
 
   const hintMatches = Object.entries(GO_MEMO_HINTS).filter(([hint]) => hint.startsWith(q));
@@ -1879,6 +1963,66 @@ function openReadingHintModal() {
 }
 function closeReadingHintModal() {
   document.getElementById('readingHintModal').classList.remove('open');
+}
+
+// ==================== キャンセルした人リスト ====================
+let newCanceledGender = '';
+function selectNewCanceledGender(g) {
+  newCanceledGender = (newCanceledGender === g) ? '' : g;
+  ['男性','女性'].forEach(x => {
+    const btn = document.getElementById(`newCanceledGender-${x}`);
+    if (btn) btn.className = 'pay-btn' + (x === newCanceledGender ? ' active' : '');
+  });
+}
+function openCanceledCustomerModal() {
+  renderCanceledCustomerList();
+  document.getElementById('canceledCustomerModal').classList.add('open');
+}
+function closeCanceledCustomerModal() {
+  document.getElementById('canceledCustomerModal').classList.remove('open');
+}
+function addCanceledCustomer() {
+  const nameInput = document.getElementById('newCanceledName');
+  const ageInput = document.getElementById('newCanceledAge');
+  const placeInput = document.getElementById('newCanceledPlace');
+  const name = nameInput.value.trim();
+  const age = ageInput.value;
+  const place = placeInput.value.trim();
+  if (!name || !newCanceledGender || !age) { alert('名前・性別・年代を入力してください。'); return; }
+  const list = getCanceledCustomers();
+  list.push({ name, gender: newCanceledGender, age, place });
+  saveCanceledCustomers(list);
+  nameInput.value = '';
+  ageInput.value = '';
+  placeInput.value = '';
+  selectNewCanceledGender(newCanceledGender); // 選択状態を解除
+  renderCanceledCustomerList();
+}
+function removeCanceledCustomer(idx) {
+  const list = getCanceledCustomers();
+  const target = list[idx];
+  if (!target) return;
+  if (!confirm(`「${target.name}」をキャンセルした人リストから削除しますか？`)) return;
+  list.splice(idx, 1);
+  saveCanceledCustomers(list);
+  renderCanceledCustomerList();
+}
+function renderCanceledCustomerList() {
+  const list = getCanceledCustomers();
+  const box = document.getElementById('canceledCustomerList');
+  if (list.length === 0) {
+    box.innerHTML = `<div style="font-size:12px;color:var(--muted);padding:6px 0;">登録がありません</div>`;
+    return;
+  }
+  box.innerHTML = list.map((c, i) => `
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);">
+      <div>
+        <span style="font-weight:800;font-size:15px;color:var(--danger);">${c.name}</span>
+        <span style="color:var(--muted);font-size:13px;margin-left:6px;">${c.gender}・${c.age}${c.place ? '・'+c.place : ''}</span>
+      </div>
+      <button type="button" class="discount-toggle-btn" onclick="removeCanceledCustomer(${i})">削除</button>
+    </div>
+  `).join('');
 }
 
 let placeReadingTab = 'あ';
@@ -4200,6 +4344,15 @@ function getPaxHistory(trip) {
   return { visitNumber, total: all.length, all };
 }
 
+// 乗車〜降車の経過時間（分）。深夜をまたぐ場合は24時間を足して補正する
+function tripDurationMin(t) {
+  if (!t.pickupTime || !t.dropoffTime) return null;
+  const [ph,pm] = t.pickupTime.split(':').map(Number);
+  const [dh,dm] = t.dropoffTime.split(':').map(Number);
+  let diff = (dh*60+dm) - (ph*60+pm);
+  if (diff < 0) diff += 24*60;
+  return diff;
+}
 function showCustomerHistory(tripId) {
   const trip = getTrips().find(t => t.id === tripId);
   const info = getPaxHistory(trip);
@@ -4208,7 +4361,7 @@ function showCustomerHistory(tripId) {
   const totalFare = info.all.reduce((s,t) => s + getTripFare(t), 0);
   document.getElementById('custHistoryTitle').textContent = `${getPaxName(trip)}のご利用履歴（${info.total}回）`;
   document.getElementById('custHistoryContent').innerHTML =
-    `<div style="text-align:center;font-size:13px;color:var(--muted);margin-bottom:10px;">合計¥${totalFare.toLocaleString()}</div>` +
+    `<div style="text-align:center;font-size:13px;color:var(--muted);margin-bottom:10px;">合計¥${totalFare.toLocaleString()}　<span style="font-size:11px;">（タップして記録を修正）</span></div>` +
     sorted.map(t => {
       const [,mm,dd] = t.date.split('-');
       const dow = ['日','月','火','水','木','金','土'][new Date(t.date + 'T00:00:00').getDay()];
@@ -4217,15 +4370,18 @@ function showCustomerHistory(tripId) {
       // 種別バッジ。色はタイムラインと同じ（GO=青／流し=緑／配車=橙）
       const type = t.tripType || '流し';
       const typeColor = { '配車': '#ff6b00', 'GO': '#1a73e8', '流し': '#00a152' }[type] || '#1a73e8';
+      const durMin = tripDurationMin(t);
+      const payMethod = t.payMethod || '現金';
       return `
-        <div style="padding:8px;border-radius:8px;margin-bottom:4px;${isCurrent ? 'background:#e3f2fd;' : ''}border-bottom:${isCurrent ? 'none' : '1px solid var(--border)'};">
+        <div style="padding:8px;border-radius:8px;margin-bottom:4px;cursor:pointer;${isCurrent ? 'background:#e3f2fd;' : ''}border-bottom:${isCurrent ? 'none' : '1px solid var(--border)'};" onclick="closeCustHistoryModal();openTripEditModal(${t.id})">
           <div style="display:flex;justify-content:space-between;">
             <span style="font-size:13px;font-weight:700;">
-              <span class="sched-type-badge" style="background:${typeColor}22;color:${typeColor};">${type}</span>${parseInt(mm)}/${parseInt(dd)}(${dow}) ${t.pickupTime||''}
+              <span class="sched-type-badge" style="background:${typeColor}22;color:${typeColor};">${type}</span>${parseInt(mm)}/${parseInt(dd)}(${dow}) ${t.pickupTime||''}${durMin !== null ? `　<span style="color:var(--muted);font-weight:600;">（${fmtWait(durMin)}）</span>` : ''}
             </span>
             <span style="font-weight:700;color:var(--success);">¥${fare.toLocaleString()}</span>
           </div>
           <div style="font-size:12px;color:var(--muted);margin-top:2px;">${formatTripRoute(t)}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px;">💳 ${payMethod}</div>
         </div>
       `;
     }).join('');
