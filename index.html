@@ -903,28 +903,33 @@
   <div class="modal">
     <div class="modal-title">キャンセルした人リスト</div>
     <div class="input-group">
-      <input class="input-field" id="newCanceledName" type="text" placeholder="名前（例：とよた よしきみ）">
+      <input class="input-field" id="newCanceledName" type="text" placeholder="名前（例：とよた よしきみ／これだけでも登録できます）">
     </div>
-    <div class="input-row">
-      <div class="input-group" style="display:flex;gap:6px;">
+    <div class="input-group">
+      <label class="input-label">性別（空欄可）</label>
+      <div style="display:flex;gap:6px;">
         <button class="pay-btn" id="newCanceledGender-男性" onclick="selectNewCanceledGender('男性')" style="flex:1;">男性</button>
         <button class="pay-btn" id="newCanceledGender-女性" onclick="selectNewCanceledGender('女性')" style="flex:1;">女性</button>
       </div>
-      <div class="input-group">
-        <select class="input-field" id="newCanceledAge">
-          <option value="">年代を選択</option>
-          <option value="10代">10代</option>
-          <option value="20代">20代</option>
-          <option value="30代">30代</option>
-          <option value="40代">40代</option>
-          <option value="50代">50代</option>
-          <option value="60代">60代</option>
-          <option value="70代">70代</option>
-        </select>
+    </div>
+    <div class="input-group">
+      <label class="input-label">年代（空欄可）</label>
+      <div class="pay-btns go-age-btns">
+        <button class="pay-btn" id="newCanceledAge-10代" onclick="selectNewCanceledAge('10代')">10代</button>
+        <button class="pay-btn" id="newCanceledAge-20代" onclick="selectNewCanceledAge('20代')">20代</button>
+        <button class="pay-btn" id="newCanceledAge-30代" onclick="selectNewCanceledAge('30代')">30代</button>
+        <button class="pay-btn" id="newCanceledAge-40代" onclick="selectNewCanceledAge('40代')">40代</button>
+        <button class="pay-btn" id="newCanceledAge-50代" onclick="selectNewCanceledAge('50代')">50代</button>
+        <button class="pay-btn" id="newCanceledAge-60代" onclick="selectNewCanceledAge('60代')">60代</button>
+        <button class="pay-btn" id="newCanceledAge-70代" onclick="selectNewCanceledAge('70代')">70代</button>
       </div>
     </div>
     <div class="input-group">
-      <input class="input-field" id="newCanceledPlace" type="text" placeholder="地名（例：二番町／空欄可）">
+      <input class="input-field" id="newCanceledPlace" type="text" placeholder="地名（例：二番町／空欄可）" autocomplete="off"
+             oninput="onLocInput('newCanceledPlace','newCanceledPlaceSuggest')"
+             onfocus="onLocInput('newCanceledPlace','newCanceledPlaceSuggest');scrollLocFieldToTop('newCanceledPlace')"
+             onblur="hideLocSuggest('newCanceledPlaceSuggest')">
+      <div id="newCanceledPlaceSuggest" class="loc-suggest"></div>
     </div>
     <div class="input-row">
       <div class="input-group">
@@ -1265,9 +1270,15 @@ function getCanceledCustomers() {
   } catch(e) { return []; }
 }
 function saveCanceledCustomers(list) { localStorage.setItem(CANCELED_CUSTOMERS_KEY, JSON.stringify(list)); }
+// 名前のみの登録にも対応する。性別・年代は、リスト側に記入がある場合だけ一致を求める
 function matchesCanceledCustomer(name, gender, age) {
-  if (!name || !gender || !age) return null;
-  return getCanceledCustomers().find(c => c.name === name && c.gender === gender && c.age === age) || null;
+  if (!name) return null;
+  return getCanceledCustomers().find(c => {
+    if (c.name !== name) return false;
+    if (c.gender && c.gender !== gender) return false;
+    if (c.age && c.age !== age) return false;
+    return true;
+  }) || null;
 }
 
 // ==================== バックアップ / 復元 ====================
@@ -1973,11 +1984,31 @@ function closeReadingHintModal() {
 
 // ==================== キャンセルした人リスト ====================
 let newCanceledGender = '';
+let newCanceledAge = '';
 function selectNewCanceledGender(g) {
   newCanceledGender = (newCanceledGender === g) ? '' : g;
   ['男性','女性'].forEach(x => {
     const btn = document.getElementById(`newCanceledGender-${x}`);
     if (btn) btn.className = 'pay-btn' + (x === newCanceledGender ? ' active' : '');
+  });
+}
+function selectNewCanceledAge(age) {
+  newCanceledAge = (newCanceledAge === age) ? '' : age;
+  GO_AGE_OPTIONS.forEach(a => {
+    const btn = document.getElementById(`newCanceledAge-${a}`);
+    if (btn) btn.className = 'pay-btn' + (a === newCanceledAge ? ' active' : '');
+  });
+}
+function resetNewCanceledSelections() {
+  newCanceledGender = '';
+  newCanceledAge = '';
+  ['男性','女性'].forEach(x => {
+    const btn = document.getElementById(`newCanceledGender-${x}`);
+    if (btn) btn.className = 'pay-btn';
+  });
+  GO_AGE_OPTIONS.forEach(a => {
+    const btn = document.getElementById(`newCanceledAge-${a}`);
+    if (btn) btn.className = 'pay-btn';
   });
 }
 function openCanceledCustomerModal() {
@@ -1991,25 +2022,22 @@ function closeCanceledCustomerModal() {
 }
 function addCanceledCustomer() {
   const nameInput = document.getElementById('newCanceledName');
-  const ageInput = document.getElementById('newCanceledAge');
   const placeInput = document.getElementById('newCanceledPlace');
   const dateInput = document.getElementById('newCanceledDate');
   const timeInput = document.getElementById('newCanceledTime');
   const name = nameInput.value.trim();
-  const age = ageInput.value;
   const place = placeInput.value.trim();
   const date = dateInput.value;
   const time = timeInput.value;
-  if (!name || !newCanceledGender || !age) { alert('名前・性別・年代を入力してください。'); return; }
+  if (!name) { alert('名前を入力してください。'); return; }
   const list = getCanceledCustomers();
-  list.push({ name, gender: newCanceledGender, age, place, date, time });
+  list.push({ name, gender: newCanceledGender, age: newCanceledAge, place, date, time });
   saveCanceledCustomers(list);
   nameInput.value = '';
-  ageInput.value = '';
   placeInput.value = '';
   dateInput.value = todayStr();
   timeInput.value = '';
-  selectNewCanceledGender(newCanceledGender); // 選択状態を解除
+  resetNewCanceledSelections();
   renderCanceledCustomerList();
 }
 function removeCanceledCustomer(idx) {
@@ -2035,11 +2063,12 @@ function renderCanceledCustomerList() {
       whenLabel = `${parseInt(mm)}/${parseInt(dd)}`;
       if (c.time) whenLabel += ` ${c.time}`;
     }
+    const details = [c.gender, c.age, c.place].filter(Boolean).join('・');
     return `
     <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);">
       <div>
         <span style="font-weight:800;font-size:15px;color:var(--danger);">${c.name}</span>
-        <span style="color:var(--muted);font-size:13px;margin-left:6px;">${c.gender}・${c.age}${c.place ? '・'+c.place : ''}</span>
+        ${details ? `<span style="color:var(--muted);font-size:13px;margin-left:6px;">${details}</span>` : ''}
         ${whenLabel ? `<div style="color:var(--muted);font-size:12px;margin-top:2px;">📅 ${whenLabel}</div>` : ''}
       </div>
       <button type="button" class="discount-toggle-btn" onclick="removeCanceledCustomer(${i})">削除</button>
@@ -4404,12 +4433,11 @@ function showCustomerHistory(tripId) {
         <div style="padding:8px;border-radius:8px;margin-bottom:4px;cursor:pointer;${isCurrent ? 'background:#e3f2fd;' : ''}border-bottom:${isCurrent ? 'none' : '1px solid var(--border)'};" onclick="closeCustHistoryModal();openTripEditModal(${t.id})">
           <div style="display:flex;justify-content:space-between;">
             <span style="font-size:13px;font-weight:700;">
-              <span class="sched-type-badge" style="background:${typeColor}22;color:${typeColor};">${type}</span>${parseInt(mm)}/${parseInt(dd)}(${dow}) ${t.pickupTime||''}${durMin !== null ? `　<span style="color:var(--muted);font-weight:600;">（${fmtWait(durMin)}）</span>` : ''}
+              <span class="sched-type-badge" style="background:${typeColor}22;color:${typeColor};">${type}</span>${parseInt(mm)}/${parseInt(dd)}(${dow}) ${t.pickupTime||''}${durMin !== null ? `　<span style="color:var(--muted);font-weight:600;">（${fmtWait(durMin)}）</span>` : ''}　<span style="color:var(--muted);font-weight:600;">${payMethod}</span>
             </span>
             <span style="font-weight:700;color:var(--success);">¥${fare.toLocaleString()}</span>
           </div>
           <div style="font-size:12px;color:var(--muted);margin-top:2px;">${formatTripRoute(t)}</div>
-          <div style="font-size:11px;color:var(--muted);margin-top:2px;">💳 ${payMethod}</div>
         </div>
       `;
     }).join('');
