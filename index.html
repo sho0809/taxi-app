@@ -1376,12 +1376,19 @@ function floorDivInt(a, b) {
   const r = a % b;
   return (a - r) / b;
 }
-// 消費税抜き（10円単位で切り捨て）。例：税込8400円 → 8400/1.1=7636.36... → 7630円
-// amount/1.1/10 = amount/11 のため、切り捨て floor(amount/11) を
-// floorDivIntによる整数演算だけで求め、浮動小数点の割り算を経由しないことで
-// 数回に1回程度発生していた10円のずれを無くす
+// 同じ考え方で切り上げる（余りがあれば1足す）
+function ceilDivInt(a, b) {
+  const r = a % b;
+  return r === 0 ? a / b : (a - r) / b + 1;
+}
+// 1件の乗車の消費税抜き（10円単位で切り上げ）。例：税込1000円 → 1000/1.1=909.09... → 910円
+// amount/1.1/10 = amount/11 のため、切り上げ ceil(amount/11) を
+// ceilDivIntによる整数演算だけで求め、浮動小数点の割り算を経由しないことで
+// 数回に1回程度発生していた10円のずれを無くす。
+// 1日の合計はこの関数を1件ずつ適用してから合計する（まとめて1回だけ計算すると
+// 件数によって最大10円前後ずれるため、calcDayTotalExTaxなどは必ず1件ずつ呼び出す）
 function exTax(amount) {
-  return floorDivInt(amount, 11) * 10;
+  return ceilDivInt(amount, 11) * 10;
 }
 
 // ==================== GPS / LOCATION ====================
@@ -2986,10 +2993,9 @@ function updateTodaySummary() {
   // 常に完全一致させるため、タイムラインが表示している日付（schedCurrentDate）と
   // 全く同じ計算方法で求める
   const hourlyDate = schedCurrentDate;
-  const hourlyDaySales = getTrips().filter(t => t.date === hourlyDate).reduce((s,t) => s + getTripFare(t), 0);
   const hourlyScheduleResult = computeScheduleSegments(hourlyDate);
   const totalWorkMin = hourlyScheduleResult ? hourlyScheduleResult.allMin : 0;
-  const hourlyWage = totalWorkMin > 0 ? Math.round(exTax(hourlyDaySales) / (totalWorkMin / 60) * 0.5) : null;
+  const hourlyWage = totalWorkMin > 0 ? Math.round(dayTotalExTax(hourlyDate) / (totalWorkMin / 60) * 0.5) : null;
 
   // 未収額 = 支払方法が現金以外の記録の全額 ＋ 現金払いでも障害者割引で別途未収にした分
   // （uncollectedFareは保存時点でこの2種類の合計として計算済みのため、そのまま合計すればよい）
@@ -4645,7 +4651,7 @@ function renderSchedule() {
   document.getElementById('schedBreakTotal').textContent = fmtWait(breakMin);
   document.getElementById('schedAllTotal').textContent = fmtWait(allMin);
   // 時給 = 営収額（税抜）÷ 実働時間 × 0.5（サマリーと同じ計算）
-  const schedHourlyWage = allMin > 0 ? Math.round(exTax(daySales) / (allMin / 60) * 0.5) : null;
+  const schedHourlyWage = allMin > 0 ? Math.round(daySalesEx / (allMin / 60) * 0.5) : null;
   const hourlyEl = document.getElementById('schedHourly');
   hourlyEl.textContent = schedHourlyWage !== null ? `¥${schedHourlyWage.toLocaleString()}` : '---';
   // 時給の金額そのものでカードの背景を3段階に塗り分ける
@@ -4874,7 +4880,7 @@ function shiftMinToHM(min) {
 }
 // 1日分の乗降記録を「降車時刻ごとの累計営収額（税抜）」の階段グラフの折れ点にする
 function buildDayCumulative(date) {
-  // exTaxは10円単位への四捨五入のため、1件ごとに丸めてから足すと合計が本来の
+  // exTaxは10円単位への丸めのため、1件ごとに丸めてから足すと合計が本来の
   // 「その日の営収額」（税込合計をまとめて丸めたもの）とずれてしまう。
   // そのため税込のまま累計し、各時点でまとめて丸めることで、最終値が
   // タイムラインの「この日の営収額」と必ず一致するようにする。
