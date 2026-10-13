@@ -200,6 +200,10 @@
   .stat-card.wage-mid .stat-value, .stat-card.wage-mid .stat-label,
   .stat-card.wage-high .stat-value, .stat-card.wage-high .stat-label { color: white; }
   .stat-card.wage-low .stat-label, .stat-card.wage-mid .stat-label, .stat-card.wage-high .stat-label { opacity: 0.85; }
+  /* 休憩中は「休憩」タブと同じ色を「休憩時間」カードにも付け、ひと目で進行中とわかるようにする。
+     休憩が終わると元の表示に戻る */
+  .stat-card.ongoing-break { background: #f5a623; }
+  .stat-card.ongoing-break .stat-value, .stat-card.ongoing-break .stat-label { color: white; opacity: 0.95; }
 
   /* Modal */
   .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 300; display: flex; align-items: flex-end; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
@@ -636,7 +640,7 @@
         <div class="stat-value" id="schedJisshaTotal">0分</div>
         <div class="stat-label">実車時間（乗客あり）</div>
       </div>
-      <div class="stat-card">
+      <div class="stat-card" id="schedBreakCard">
         <div class="stat-value" id="schedBreakTotal">0分</div>
         <div class="stat-label">休憩時間</div>
       </div>
@@ -899,28 +903,43 @@
   <div class="modal">
     <div class="modal-title">キャンセルした人リスト</div>
     <div class="input-group">
-      <input class="input-field" id="newCanceledName" type="text" placeholder="名前（例：とよた よしきみ）">
+      <input class="input-field" id="newCanceledName" type="text" placeholder="名前（例：とよた よしきみ／これだけでも登録できます）">
     </div>
-    <div class="input-row">
-      <div class="input-group" style="display:flex;gap:6px;">
+    <div class="input-group">
+      <label class="input-label">性別（空欄可）</label>
+      <div style="display:flex;gap:6px;">
         <button class="pay-btn" id="newCanceledGender-男性" onclick="selectNewCanceledGender('男性')" style="flex:1;">男性</button>
         <button class="pay-btn" id="newCanceledGender-女性" onclick="selectNewCanceledGender('女性')" style="flex:1;">女性</button>
       </div>
-      <div class="input-group">
-        <select class="input-field" id="newCanceledAge">
-          <option value="">年代を選択</option>
-          <option value="10代">10代</option>
-          <option value="20代">20代</option>
-          <option value="30代">30代</option>
-          <option value="40代">40代</option>
-          <option value="50代">50代</option>
-          <option value="60代">60代</option>
-          <option value="70代">70代</option>
-        </select>
+    </div>
+    <div class="input-group">
+      <label class="input-label">年代（空欄可）</label>
+      <div class="pay-btns go-age-btns">
+        <button class="pay-btn" id="newCanceledAge-10代" onclick="selectNewCanceledAge('10代')">10代</button>
+        <button class="pay-btn" id="newCanceledAge-20代" onclick="selectNewCanceledAge('20代')">20代</button>
+        <button class="pay-btn" id="newCanceledAge-30代" onclick="selectNewCanceledAge('30代')">30代</button>
+        <button class="pay-btn" id="newCanceledAge-40代" onclick="selectNewCanceledAge('40代')">40代</button>
+        <button class="pay-btn" id="newCanceledAge-50代" onclick="selectNewCanceledAge('50代')">50代</button>
+        <button class="pay-btn" id="newCanceledAge-60代" onclick="selectNewCanceledAge('60代')">60代</button>
+        <button class="pay-btn" id="newCanceledAge-70代" onclick="selectNewCanceledAge('70代')">70代</button>
       </div>
     </div>
     <div class="input-group">
-      <input class="input-field" id="newCanceledPlace" type="text" placeholder="地名（例：二番町／空欄可）">
+      <input class="input-field" id="newCanceledPlace" type="text" placeholder="地名（例：二番町／空欄可）" autocomplete="off"
+             oninput="onLocInput('newCanceledPlace','newCanceledPlaceSuggest')"
+             onfocus="onLocInput('newCanceledPlace','newCanceledPlaceSuggest');scrollLocFieldToTop('newCanceledPlace')"
+             onblur="hideLocSuggest('newCanceledPlaceSuggest')">
+      <div id="newCanceledPlaceSuggest" class="loc-suggest"></div>
+    </div>
+    <div class="input-row">
+      <div class="input-group">
+        <label class="input-label">📅 日付（空欄可）</label>
+        <input class="input-field" id="newCanceledDate" type="date">
+      </div>
+      <div class="input-group">
+        <label class="input-label">⏱ 時間（空欄可）</label>
+        <input class="input-field" id="newCanceledTime" type="time">
+      </div>
     </div>
     <button class="btn btn-gray" style="width:100%;margin-bottom:10px;" onclick="addCanceledCustomer()">＋ 追加</button>
     <div id="canceledCustomerList"></div>
@@ -1143,19 +1162,11 @@
           </select>
         </div>
       </div>
-      <div style="display:flex;gap:6px;">
-        <button class="pay-btn active" id="editGoGender-男性" onclick="selectEditGoGender('男性')" style="flex:1;">男性</button>
-        <button class="pay-btn" id="editGoGender-女性" onclick="selectEditGoGender('女性')" style="flex:1;">女性</button>
-      </div>
       <input type="hidden" id="editGoPaxGender" value="男性">
     </div>
     <div class="input-group" id="editPlainMemoGroup">
       <label class="input-label">📝 メモ</label>
       <textarea class="input-field" id="editPlainMemo" rows="2" placeholder="自由記入" style="resize:vertical;"></textarea>
-      <div style="display:flex;gap:6px;margin-top:6px;">
-        <button class="pay-btn" id="editPlainGender-男性" onclick="selectEditPlainGender('男性')" style="flex:1;">男性</button>
-        <button class="pay-btn" id="editPlainGender-女性" onclick="selectEditPlainGender('女性')" style="flex:1;">女性</button>
-      </div>
       <input type="hidden" id="editPlainPaxGender" value="">
     </div>
     <div class="input-group">
@@ -1259,9 +1270,15 @@ function getCanceledCustomers() {
   } catch(e) { return []; }
 }
 function saveCanceledCustomers(list) { localStorage.setItem(CANCELED_CUSTOMERS_KEY, JSON.stringify(list)); }
+// 名前のみの登録にも対応する。性別・年代は、リスト側に記入がある場合だけ一致を求める
 function matchesCanceledCustomer(name, gender, age) {
-  if (!name || !gender || !age) return null;
-  return getCanceledCustomers().find(c => c.name === name && c.gender === gender && c.age === age) || null;
+  if (!name) return null;
+  return getCanceledCustomers().find(c => {
+    if (c.name !== name) return false;
+    if (c.gender && c.gender !== gender) return false;
+    if (c.age && c.age !== age) return false;
+    return true;
+  }) || null;
 }
 
 // ==================== バックアップ / 復元 ====================
@@ -1359,12 +1376,19 @@ function floorDivInt(a, b) {
   const r = a % b;
   return (a - r) / b;
 }
-// 消費税抜き（10円単位で切り捨て）。例：税込8400円 → 8400/1.1=7636.36... → 7630円
-// amount/1.1/10 = amount/11 のため、切り捨て floor(amount/11) を
-// floorDivIntによる整数演算だけで求め、浮動小数点の割り算を経由しないことで
-// 数回に1回程度発生していた10円のずれを無くす
+// 同じ考え方で切り上げる（余りがあれば1足す）
+function ceilDivInt(a, b) {
+  const r = a % b;
+  return r === 0 ? a / b : (a - r) / b + 1;
+}
+// 1件の乗車の消費税抜き（10円単位で切り上げ）。例：税込1000円 → 1000/1.1=909.09... → 910円
+// amount/1.1/10 = amount/11 のため、切り上げ ceil(amount/11) を
+// ceilDivIntによる整数演算だけで求め、浮動小数点の割り算を経由しないことで
+// 数回に1回程度発生していた10円のずれを無くす。
+// 1日の合計はこの関数を1件ずつ適用してから合計する（まとめて1回だけ計算すると
+// 件数によって最大10円前後ずれるため、calcDayTotalExTaxなどは必ず1件ずつ呼び出す）
 function exTax(amount) {
-  return floorDivInt(amount, 11) * 10;
+  return ceilDivInt(amount, 11) * 10;
 }
 
 // ==================== GPS / LOCATION ====================
@@ -1967,6 +1991,7 @@ function closeReadingHintModal() {
 
 // ==================== キャンセルした人リスト ====================
 let newCanceledGender = '';
+let newCanceledAge = '';
 function selectNewCanceledGender(g) {
   newCanceledGender = (newCanceledGender === g) ? '' : g;
   ['男性','女性'].forEach(x => {
@@ -1974,8 +1999,29 @@ function selectNewCanceledGender(g) {
     if (btn) btn.className = 'pay-btn' + (x === newCanceledGender ? ' active' : '');
   });
 }
+function selectNewCanceledAge(age) {
+  newCanceledAge = (newCanceledAge === age) ? '' : age;
+  GO_AGE_OPTIONS.forEach(a => {
+    const btn = document.getElementById(`newCanceledAge-${a}`);
+    if (btn) btn.className = 'pay-btn' + (a === newCanceledAge ? ' active' : '');
+  });
+}
+function resetNewCanceledSelections() {
+  newCanceledGender = '';
+  newCanceledAge = '';
+  ['男性','女性'].forEach(x => {
+    const btn = document.getElementById(`newCanceledGender-${x}`);
+    if (btn) btn.className = 'pay-btn';
+  });
+  GO_AGE_OPTIONS.forEach(a => {
+    const btn = document.getElementById(`newCanceledAge-${a}`);
+    if (btn) btn.className = 'pay-btn';
+  });
+}
 function openCanceledCustomerModal() {
   renderCanceledCustomerList();
+  // 入力しやすいよう、日付は今日を既定値にしておく
+  document.getElementById('newCanceledDate').value = todayStr();
   document.getElementById('canceledCustomerModal').classList.add('open');
 }
 function closeCanceledCustomerModal() {
@@ -1983,19 +2029,22 @@ function closeCanceledCustomerModal() {
 }
 function addCanceledCustomer() {
   const nameInput = document.getElementById('newCanceledName');
-  const ageInput = document.getElementById('newCanceledAge');
   const placeInput = document.getElementById('newCanceledPlace');
+  const dateInput = document.getElementById('newCanceledDate');
+  const timeInput = document.getElementById('newCanceledTime');
   const name = nameInput.value.trim();
-  const age = ageInput.value;
   const place = placeInput.value.trim();
-  if (!name || !newCanceledGender || !age) { alert('名前・性別・年代を入力してください。'); return; }
+  const date = dateInput.value;
+  const time = timeInput.value;
+  if (!name) { alert('名前を入力してください。'); return; }
   const list = getCanceledCustomers();
-  list.push({ name, gender: newCanceledGender, age, place });
+  list.push({ name, gender: newCanceledGender, age: newCanceledAge, place, date, time });
   saveCanceledCustomers(list);
   nameInput.value = '';
-  ageInput.value = '';
   placeInput.value = '';
-  selectNewCanceledGender(newCanceledGender); // 選択状態を解除
+  dateInput.value = todayStr();
+  timeInput.value = '';
+  resetNewCanceledSelections();
   renderCanceledCustomerList();
 }
 function removeCanceledCustomer(idx) {
@@ -2014,15 +2063,25 @@ function renderCanceledCustomerList() {
     box.innerHTML = `<div style="font-size:12px;color:var(--muted);padding:6px 0;">登録がありません</div>`;
     return;
   }
-  box.innerHTML = list.map((c, i) => `
+  box.innerHTML = list.map((c, i) => {
+    let whenLabel = '';
+    if (c.date) {
+      const [,mm,dd] = c.date.split('-');
+      whenLabel = `${parseInt(mm)}/${parseInt(dd)}`;
+      if (c.time) whenLabel += ` ${c.time}`;
+    }
+    const details = [c.gender, c.age, c.place].filter(Boolean).join('・');
+    return `
     <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);">
       <div>
         <span style="font-weight:800;font-size:15px;color:var(--danger);">${c.name}</span>
-        <span style="color:var(--muted);font-size:13px;margin-left:6px;">${c.gender}・${c.age}${c.place ? '・'+c.place : ''}</span>
+        ${details ? `<span style="color:var(--muted);font-size:13px;margin-left:6px;">${details}</span>` : ''}
+        ${whenLabel ? `<div style="color:var(--muted);font-size:12px;margin-top:2px;">📅 ${whenLabel}</div>` : ''}
       </div>
       <button type="button" class="discount-toggle-btn" onclick="removeCanceledCustomer(${i})">削除</button>
     </div>
-  `).join('');
+  `;
+  }).join('');
 }
 
 let placeReadingTab = 'あ';
@@ -2602,6 +2661,10 @@ function incrementEditPax(gender) {
     if (editPaxMale + editPaxFemale > 4) editPaxMale = Math.max(0, 4 - editPaxFemale);
   }
   updateEditPaxDisplay();
+  // 性別タグ用の専用ボタンは廃止したため、人員（男性・女性の人数）から自動で決める
+  const derived = deriveEditPaxGender();
+  selectEditGoGender(derived);
+  setEditPlainGender(derived);
 }
 function updateEditPaxDisplay() {
   document.getElementById('editPaxMaleCount').textContent = editPaxMale;
@@ -2930,10 +2993,9 @@ function updateTodaySummary() {
   // 常に完全一致させるため、タイムラインが表示している日付（schedCurrentDate）と
   // 全く同じ計算方法で求める
   const hourlyDate = schedCurrentDate;
-  const hourlyDaySales = getTrips().filter(t => t.date === hourlyDate).reduce((s,t) => s + getTripFare(t), 0);
   const hourlyScheduleResult = computeScheduleSegments(hourlyDate);
   const totalWorkMin = hourlyScheduleResult ? hourlyScheduleResult.allMin : 0;
-  const hourlyWage = totalWorkMin > 0 ? Math.round(exTax(hourlyDaySales) / (totalWorkMin / 60) * 0.5) : null;
+  const hourlyWage = totalWorkMin > 0 ? Math.round(dayTotalExTax(hourlyDate) / (totalWorkMin / 60) * 0.5) : null;
 
   // 未収額 = 支払方法が現金以外の記録の全額 ＋ 現金払いでも障害者割引で別途未収にした分
   // （uncollectedFareは保存時点でこの2種類の合計として計算済みのため、そのまま合計すればよい）
@@ -3223,22 +3285,19 @@ function carryOverEditPaxInfo(prev, type) {
   }
 }
 
-// GOアプリ乗客情報（メモ・修正画面）
+// GOアプリ乗客情報（メモ・修正画面）。性別は専用ボタンを廃止し、人員（男性・女性の人数）から自動で決める
 function selectEditGoGender(g) {
   document.getElementById('editGoPaxGender').value = g;
-  ['男性','女性'].forEach(x => {
-    document.getElementById(`editGoGender-${x}`).className = 'pay-btn' + (x === g ? ' active' : '');
-  });
 }
 function setEditPlainGender(g) {
   document.getElementById('editPlainPaxGender').value = g;
-  ['男性','女性'].forEach(x => {
-    document.getElementById(`editPlainGender-${x}`).className = 'pay-btn' + (x === g ? ' active' : '');
-  });
 }
-function selectEditPlainGender(g) {
-  const cur = document.getElementById('editPlainPaxGender').value;
-  setEditPlainGender(cur === g ? '' : g); // 同じボタンをもう一度押すと選択解除
+// 人員（男性・女性の人数）から性別タグを決める。片方だけなら明確に判定でき、
+// 両方いる・どちらも0人のときは単一の性別に決められないため空にする
+function deriveEditPaxGender() {
+  if (editPaxMale > 0 && editPaxFemale === 0) return '男性';
+  if (editPaxFemale > 0 && editPaxMale === 0) return '女性';
+  return '';
 }
 function buildEditGoMemo() {
   const name = document.getElementById('editGoPaxName').value.trim();
@@ -4034,6 +4093,10 @@ function renderSchedTabs() {
     btn.classList.toggle('ongoing-break', ongoing && kind === 'break');
     btn.classList.toggle('ongoing-fuel', ongoing && kind === 'fuel');
     btn.classList.toggle('done', kind === 'fuel' && done);
+    // 「休憩時間」カードも休憩タブと同じ色にし、休憩が終わると元の表示に戻す
+    if (kind === 'break') {
+      document.getElementById('schedBreakCard').classList.toggle('ongoing-break', ongoing);
+    }
   });
 }
 
@@ -4376,12 +4439,11 @@ function showCustomerHistory(tripId) {
         <div style="padding:8px;border-radius:8px;margin-bottom:4px;cursor:pointer;${isCurrent ? 'background:#e3f2fd;' : ''}border-bottom:${isCurrent ? 'none' : '1px solid var(--border)'};" onclick="closeCustHistoryModal();openTripEditModal(${t.id})">
           <div style="display:flex;justify-content:space-between;">
             <span style="font-size:13px;font-weight:700;">
-              <span class="sched-type-badge" style="background:${typeColor}22;color:${typeColor};">${type}</span>${parseInt(mm)}/${parseInt(dd)}(${dow}) ${t.pickupTime||''}${durMin !== null ? `　<span style="color:var(--muted);font-weight:600;">（${fmtWait(durMin)}）</span>` : ''}
+              <span class="sched-type-badge" style="background:${typeColor}22;color:${typeColor};">${type}</span>${parseInt(mm)}/${parseInt(dd)}(${dow}) ${t.pickupTime||''}${durMin !== null ? `　<span style="color:var(--muted);font-weight:600;">（${fmtWait(durMin)}）</span>` : ''}　<span style="color:var(--muted);font-weight:600;">${payMethod}</span>
             </span>
             <span style="font-weight:700;color:var(--success);">¥${fare.toLocaleString()}</span>
           </div>
           <div style="font-size:12px;color:var(--muted);margin-top:2px;">${formatTripRoute(t)}</div>
-          <div style="font-size:11px;color:var(--muted);margin-top:2px;">💳 ${payMethod}</div>
         </div>
       `;
     }).join('');
@@ -4589,7 +4651,7 @@ function renderSchedule() {
   document.getElementById('schedBreakTotal').textContent = fmtWait(breakMin);
   document.getElementById('schedAllTotal').textContent = fmtWait(allMin);
   // 時給 = 営収額（税抜）÷ 実働時間 × 0.5（サマリーと同じ計算）
-  const schedHourlyWage = allMin > 0 ? Math.round(exTax(daySales) / (allMin / 60) * 0.5) : null;
+  const schedHourlyWage = allMin > 0 ? Math.round(daySalesEx / (allMin / 60) * 0.5) : null;
   const hourlyEl = document.getElementById('schedHourly');
   hourlyEl.textContent = schedHourlyWage !== null ? `¥${schedHourlyWage.toLocaleString()}` : '---';
   // 時給の金額そのものでカードの背景を3段階に塗り分ける
@@ -4818,7 +4880,7 @@ function shiftMinToHM(min) {
 }
 // 1日分の乗降記録を「降車時刻ごとの累計営収額（税抜）」の階段グラフの折れ点にする
 function buildDayCumulative(date) {
-  // exTaxは10円単位への四捨五入のため、1件ごとに丸めてから足すと合計が本来の
+  // exTaxは10円単位への丸めのため、1件ごとに丸めてから足すと合計が本来の
   // 「その日の営収額」（税込合計をまとめて丸めたもの）とずれてしまう。
   // そのため税込のまま累計し、各時点でまとめて丸めることで、最終値が
   // タイムラインの「この日の営収額」と必ず一致するようにする。
