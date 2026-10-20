@@ -5641,11 +5641,15 @@ function updateHeader() {
     hourlyEl.style.display = 'none';
   }
 
-  // GO・流し・配車の件数。表示方法は統計「場所」タブの内訳バッジ（typeBadges）と同じにする。
-  // 配車が0件のときはtypeBadges側で自動的に表示されない
+  // GO・流し・配車の件数。バッジの見た目は統計「場所」タブの内訳バッジ（typeBadges）と同じにする。
+  // GO・流しは0件でも表示し、配車だけ0件のときは表示しない
   const types = {};
   trips.forEach(t => { const tp = t.tripType || '流し'; types[tp] = (types[tp] || 0) + 1; });
-  document.getElementById('headerTypeBadges').innerHTML = typeBadges(types);
+  const typeColors = { '配車': '#ff6b00', 'GO': '#1a73e8', '流し': '#00a152' };
+  document.getElementById('headerTypeBadges').innerHTML = ['GO','流し','配車']
+    .filter(tp => tp !== '配車' || types[tp] > 0)
+    .map(tp => `<span class="sched-type-badge" style="background:${typeColors[tp]}22;color:${typeColors[tp]};">${tp} ${types[tp] || 0}</span>`)
+    .join('');
 }
 
 updateTodaySummary();
