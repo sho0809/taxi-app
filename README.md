@@ -1,0 +1,5711 @@
+[index (1).html](https://github.com/user-attachments/files/33712758/index.1.html)
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="タクシー管理">
+<meta name="theme-color" content="#1a73e8">
+<meta name="description" content="タクシードライバー向け業務管理アプリ">
+<link rel="manifest" href="data:application/manifest+json,%7B%22name%22%3A%22%E3%82%BF%E3%82%AF%E3%82%B7%E3%83%BC%E6%A5%AD%E5%8B%99%E7%AE%A1%E7%90%86%22%2C%22short_name%22%3A%22%E3%82%BF%E3%82%AF%E3%82%B7%E3%83%BC%E7%AE%A1%E7%90%86%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%231a73e8%22%2C%22theme_color%22%3A%22%231a73e8%22%2C%22start_url%22%3A%22.%2F%22%2C%22lang%22%3A%22ja%22%7D">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20192%20192%22%3E%0A%20%20%3Cdefs%3E%0A%20%20%20%20%3ClinearGradient%20id%3D%22bg%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220%22%20stop-color%3D%22%233b93f5%22%2F%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%221%22%20stop-color%3D%22%231a73e8%22%2F%3E%0A%20%20%20%20%3C%2FlinearGradient%3E%0A%20%20%3C%2Fdefs%3E%0A%20%20%3Crect%20width%3D%22192%22%20height%3D%22192%22%20rx%3D%2246%22%20fill%3D%22url%28%23bg%29%22%2F%3E%0A%0A%20%20%3C%21--%20taxi%20roof%20sign%20--%3E%0A%20%20%3Cpath%20d%3D%22M78%2042%20C78%2036%2082%2032%2088%2032%20L104%2032%20C110%2032%20114%2036%20114%2042%20L114%2058%20L78%2058%20Z%22%20fill%3D%22%23ffffff%22%2F%3E%0A%0A%20%20%3C%21--%20car%20body%20%28front%20view%29%20--%3E%0A%20%20%3Cpath%20d%3D%22M40%20150%0A%20%20%20%20%20%20%20%20%20%20%20L40%20128%0A%20%20%20%20%20%20%20%20%20%20%20C40%20108%2046%2092%2054%2078%0A%20%20%20%20%20%20%20%20%20%20%20C60%2066%2068%2058%2080%2058%0A%20%20%20%20%20%20%20%20%20%20%20L112%2058%0A%20%20%20%20%20%20%20%20%20%20%20C124%2058%20132%2066%20138%2078%0A%20%20%20%20%20%20%20%20%20%20%20C146%2092%20152%20108%20152%20128%0A%20%20%20%20%20%20%20%20%20%20%20L152%20150%0A%20%20%20%20%20%20%20%20%20%20%20C152%20155%20148%20159%20143%20159%0A%20%20%20%20%20%20%20%20%20%20%20L136%20159%0A%20%20%20%20%20%20%20%20%20%20%20C131%20159%20127%20155%20127%20150%0A%20%20%20%20%20%20%20%20%20%20%20L127%20146%0A%20%20%20%20%20%20%20%20%20%20%20L65%20146%0A%20%20%20%20%20%20%20%20%20%20%20L65%20150%0A%20%20%20%20%20%20%20%20%20%20%20C65%20155%2061%20159%2056%20159%0A%20%20%20%20%20%20%20%20%20%20%20L49%20159%0A%20%20%20%20%20%20%20%20%20%20%20C44%20159%2040%20155%2040%20150%0A%20%20%20%20%20%20%20%20%20%20%20Z%22%20fill%3D%22%23ffffff%22%2F%3E%0A%0A%20%20%3C%21--%20side%20mirrors%20--%3E%0A%20%20%3Cpath%20d%3D%22M36%2096%20L26%20100%20C24%20101%2023%20103%2024%20105%20L27%20111%20C28%20113%2030%20114%2032%20113%20L40%20109%20Z%22%20fill%3D%22%23ffffff%22%2F%3E%0A%20%20%3Cpath%20d%3D%22M156%2096%20L166%20100%20C168%20101%20169%20103%20168%20105%20L165%20111%20C164%20113%20162%20114%20160%20113%20L152%20109%20Z%22%20fill%3D%22%23ffffff%22%2F%3E%0A%0A%20%20%3C%21--%20windshield%20%28cutout%29%20--%3E%0A%20%20%3Cpath%20d%3D%22M84%2064%20L108%2064%20C116%2064%20122%2070%20127%2080%20L131%2090%20L61%2090%20L65%2080%20C70%2070%2076%2064%2084%2064%20Z%22%20fill%3D%22url%28%23bg%29%22%2F%3E%0A%0A%20%20%3C%21--%20headlights%20%28cutout%29%20--%3E%0A%20%20%3Crect%20x%3D%2248%22%20y%3D%22100%22%20width%3D%2216%22%20height%3D%2210%22%20rx%3D%224%22%20fill%3D%22url%28%23bg%29%22%2F%3E%0A%20%20%3Crect%20x%3D%22128%22%20y%3D%22100%22%20width%3D%2216%22%20height%3D%2210%22%20rx%3D%224%22%20fill%3D%22url%28%23bg%29%22%2F%3E%0A%0A%20%20%3C%21--%20grille%20lines%20%28cutout%29%20--%3E%0A%20%20%3Crect%20x%3D%2268%22%20y%3D%22108%22%20width%3D%2256%22%20height%3D%225%22%20rx%3D%222.5%22%20fill%3D%22url%28%23bg%29%22%2F%3E%0A%20%20%3Crect%20x%3D%2268%22%20y%3D%22118%22%20width%3D%2256%22%20height%3D%225%22%20rx%3D%222.5%22%20fill%3D%22url%28%23bg%29%22%2F%3E%0A%0A%20%20%3C%21--%20license%20plate%20%28cutout%29%20--%3E%0A%20%20%3Crect%20x%3D%2280%22%20y%3D%22128%22%20width%3D%2232%22%20height%3D%2214%22%20rx%3D%223%22%20fill%3D%22url%28%23bg%29%22%2F%3E%0A%3C%2Fsvg%3E%0A">
+<title>タクシー業務管理</title>
+<style>
+  :root {
+    --primary: #1a73e8;
+    --primary-dark: #1557b0;
+    --success: #34a853;
+    --warning: #fbbc04;
+    --danger: #ea4335;
+    --bg: #f5f5f7;
+    --card: #ffffff;
+    --text: #1d1d1f;
+    --muted: #6e6e73;
+    --border: #d2d2d7;
+    --nav-h: 84px;
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+    --header-h: calc(62px + env(safe-area-inset-top, 0px));
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; overflow-x: hidden; }
+
+  /* Header */
+  .header { background: var(--primary); color: white; padding: 14px 18px 12px; padding-top: calc(14px + env(safe-area-inset-top, 0px)); position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
+  .header-row { display: flex; justify-content: space-between; align-items: center; }
+  .header h1 { font-size: 22px; font-weight: 800; letter-spacing: -0.3px; }
+  .header .date { font-size: 12px; opacity: 0.85; margin-bottom: 2px; }
+  .reload-btn { background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.4); border-radius: 8px; color: white; font-size: 12px; font-weight: 700; padding: 6px 10px; cursor: pointer; white-space: nowrap; transition: all 0.15s; }
+  .reload-btn:active { background: rgba(255,255,255,0.35); }
+  .reload-btn.loading { background: rgba(255,255,255,0.9); color: var(--primary); border-color: white; }
+  .reload-btn.loading span { display: inline-block; animation: spin 0.6s linear infinite; }
+
+  /* Content area */
+  .content { padding: 14px; padding-bottom: calc(var(--nav-h) + var(--safe-bottom) + 14px); }
+  /* 運行記録は保存ボタンを下のタブのすぐ上まで下げ、余白を残さない */
+  .content.record-page { padding-bottom: calc(var(--nav-actual, var(--nav-h)) + var(--safe-bottom)); }
+  /* 場所を入力している間は、入力欄を画面上部まで巻き上げられるよう下に余白を確保する */
+  .content.loc-focus { padding-bottom: 75vh; }
+
+  /* Bottom nav */
+  .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: white; border-top: 1px solid var(--border); display: flex; z-index: 200; padding-bottom: var(--safe-bottom); box-shadow: 0 -2px 12px rgba(0,0,0,0.1); }
+  .nav-btn { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 10px 2px 18px; gap: 4px; background: none; border: none; color: var(--muted); font-size: 9.5px; font-weight: 500; cursor: pointer; transition: color 0.15s; white-space: nowrap; }
+  .nav-btn.active { color: var(--primary); }
+  .nav-btn svg { width: 24px; height: 24px; }
+
+  /* Cards */
+  .card { background: var(--card); border-radius: 16px; padding: 16px; margin-bottom: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+  .card-title { font-size: 13px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; }
+
+  /* Status badges */
+  .status-row { display: flex; justify-content: center; gap: 8px; margin-bottom: 12px; }
+  .badge { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+  .badge-green { background: #e8f5e9; color: var(--success); }
+  .badge-yellow { background: #fffde7; color: #f57f17; }
+  .badge-blue { background: #e3f2fd; color: var(--primary); }
+  .badge-red { background: #ffebee; color: var(--danger); }
+  .dot { width: 7px; height: 7px; border-radius: 50%; }
+  .dot-green { background: var(--success); animation: pulse 1.2s infinite; }
+  .dot-yellow { background: var(--warning); animation: pulse 1.2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+  /* Buttons */
+  .btn { display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%; padding: 14px; border-radius: 12px; border: none; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.15s; letter-spacing: -0.2px; touch-action: manipulation; }
+  .btn:active { transform: scale(0.97); }
+  /* ボタン内のアイコン・文字を貫通させ、どこを押してもボタン自身が反応するようにする */
+  .btn > *, .pay-btn > *, .type-btn > *, .sched-tab > *, .nav-btn > * { pointer-events: none; }
+  /* タップ後の待ち時間をなくして反応を良くする */
+  .btn, .pay-btn, .type-btn, .tab-item, .sched-tab, .place-chip, .nav-btn, .loc-suggest-item, .pax-history-item { touch-action: manipulation; }
+  .btn-primary { background: var(--primary); color: white; }
+  .btn-success { background: var(--success); color: white; }
+  .btn-warning { background: var(--warning); color: #333; }
+  .btn-danger { background: var(--danger); color: white; }
+  .btn-outline { background: white; color: var(--primary); border: 2px solid var(--primary); }
+  .btn-gray { background: #f0f0f0; color: var(--text); }
+  .btn-sm { padding: 9px 14px; font-size: 14px; width: auto; border-radius: 10px; }
+
+  .btn-row { display: flex; gap: 10px; margin-top: 10px; }
+  .btn-row .btn { flex: 1; }
+
+
+  /* コンパクトフォーム */
+  /* 以前は画面の高さいっぱいに広げていたが、項目が増えて常に画面より長くなったため、
+     その仕組み（100vh基準のmin-height + space-between）はやめ、内容にそのまま
+     合わせる。実機で100vhがアドレスバー分だけ実際の表示領域より大きくなり、
+     保存ボタンが画面外に押し出されて半分しか見えなくなる不具合の原因だったため */
+  #tripFormCard {
+    padding: 8px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 0;
+  }
+  #tripFormCard .card-title { display: none; }
+  #tripFormCard .input-group { margin-bottom: 0; }
+  #tripFormCard .input-label { font-size: 11px; margin-bottom: 2px; }
+  #tripFormCard .input-field { padding: 7px 12px; font-size: 15px; }
+  #tripFormCard .fare-wrap .input-field { padding-left: 26px; }
+  /* 乗車時刻・降車時刻を乗車場所・降車場所と同じ大きさにそろえ、
+     値を入れても高さが変わらないよう固定する */
+  #tripFormCard input[type="time"] { font-size: 15px; padding: 7px 12px; }
+  #tripFormCard input.input-field, #tripFormCard select.input-field { height: 37px; }
+  #tripFormCard .pay-btn { padding: 5px 4px; font-size: 11px; }
+  #tripFormCard .type-btn { padding: 8px 4px; font-size: 13px; }
+  /* 年代ボタン（7個）は折り返さず横1列に収める */
+  .go-age-btns { flex-wrap: nowrap; gap: 4px; }
+  .go-age-btns .pay-btn { min-width: 0; padding: 6px 2px; }
+
+  /* Inputs */
+  .input-group { margin-bottom: 12px; position: relative; }
+  .input-label { font-size: 13px; font-weight: 600; color: var(--muted); margin-bottom: 5px; display: block; }
+  .input-field { width: 100%; padding: 12px 14px; border: 1.5px solid var(--border); border-radius: 12px; font-size: 16px; background: white; color: var(--text); outline: none; transition: border-color 0.15s; -webkit-appearance: none; }
+  .input-field:focus { border-color: var(--primary); }
+  .input-row { display: flex; gap: 8px; }
+  .input-row .input-group { flex: 1; }
+
+  /* 乗車/降車場所の予測変換候補 */
+  .loc-suggest { display: none; position: absolute; left: 0; right: 0; top: 100%; margin-top: 4px; background: white; border: 1px solid var(--border); border-radius: 10px; box-shadow: 0 4px 14px rgba(0,0,0,0.15); z-index: 60; max-height: 180px; overflow-y: auto; }
+  .loc-suggest-item { padding: 9px 12px; font-size: 14px; color: var(--text); cursor: pointer; border-bottom: 1px solid var(--border); }
+  .loc-suggest-item:last-child { border-bottom: none; }
+  .loc-suggest-item:active { background: var(--bg); }
+
+  /* Tabs (sub) */
+  .tab-bar { display: flex; background: #f0f0f5; border-radius: 12px; padding: 3px; margin-bottom: 14px; }
+  .tab-item { flex: 1; text-align: center; padding: 8px 6px; border-radius: 10px; font-size: 13px; font-weight: 600; color: var(--muted); cursor: pointer; transition: all 0.15s; }
+  .tab-item.active { background: white; color: var(--primary); box-shadow: 0 1px 4px rgba(0,0,0,0.12); }
+  /* タイムラインの操作タブ（グラフ・休憩・給油・業務終了） */
+  /* タイムラインの操作タブ。1つずつ独立したボタンとして並べる */
+  .sched-tab-bar { display: flex; margin-top: 10px; gap: 6px; }
+  .sched-tab { flex: 1; text-align: center; padding: 10px 2px; border-radius: 10px; font-size: 12px; font-weight: 700; color: var(--text); background: white; border: 1.5px solid var(--border); cursor: pointer; white-space: nowrap; transition: all 0.15s; }
+  .sched-tab:active { border-color: var(--primary); color: var(--primary); }
+  /* 休憩中・給油中はタイムラインの記録と同じ色で塗り、状態がわかるようにする */
+  .sched-tab.ongoing-break { background: #f5a623; border-color: #f5a623; color: white; }
+  .sched-tab.ongoing-fuel { background: #43a047; border-color: #43a047; color: white; }
+  /* 給油を終えた日は、済んだことがわかるよう控えめな見た目にする（押せば2回目も記録できる） */
+  .sched-tab.done { background: #e8f5e9; border-color: #43a047; color: #1b5e20; }
+  /* 稼働状況グラフモーダル内のタブ切り替え */
+  .graph-tab-bar { display: flex; gap: 6px; margin-bottom: 14px; }
+  .graph-tab { flex: 1; text-align: center; padding: 9px 4px; border-radius: 10px; font-size: 13px; font-weight: 700; color: var(--muted); background: var(--bg); border: 1.5px solid transparent; cursor: pointer; transition: all 0.15s; }
+  .graph-tab.active { background: #e3f2fd; border-color: var(--primary); color: var(--primary); }
+  /* 休憩場所のよく使う候補 */
+  .place-chip-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .place-chip { padding: 7px 12px; border-radius: 999px; border: 1.5px solid var(--border); background: white; font-size: 13px; font-weight: 600; color: var(--text); cursor: pointer; }
+  .place-chip.active { background:#fff3e0; border-color:#ff9800; color:#e65100; }
+  .place-chip:active { background: var(--bg); border-color: var(--primary); color: var(--primary); }
+
+  /* Trip list items */
+  .trip-item { background: white; border-radius: 14px; padding: 14px; margin-bottom: 10px; box-shadow: 0 1px 4px rgba(0,0,0,0.07); position: relative; }
+  .trip-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+  .trip-fare { font-size: 24px; font-weight: 700; color: var(--success); }
+  .trip-time { font-size: 15px; font-weight: 600; color: var(--text); text-align: right; }
+  .trip-route { display: flex; flex-direction: column; gap: 5px; font-size: 16px; font-weight: 600; }
+  .route-item { display: flex; align-items: center; gap: 8px; }
+  .route-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+  .route-dot-start { background: var(--primary); }
+  .route-dot-end { background: var(--danger); }
+  .route-line { width: 1.5px; height: 12px; background: var(--border); margin-left: 3.75px; }
+  .trip-meta { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+  .meta-chip { background: var(--bg); border-radius: 6px; padding: 4px 10px; font-size: 13px; color: var(--muted); font-weight: 500; }
+  .delete-btn { position: absolute; top: 12px; right: 12px; background: none; border: none; color: #ccc; font-size: 18px; cursor: pointer; padding: 4px; }
+  .delete-btn:active { color: var(--danger); }
+  .trip-actions { display: flex; gap: 6px; margin-top: 10px; justify-content: flex-end; }
+  .trip-actions .btn-edit { padding: 5px 12px; border-radius: 8px; border: 1px solid var(--primary); background: white; color: var(--primary); font-size: 11px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 3px; }
+  .trip-actions .btn-del { padding: 5px 12px; border-radius: 8px; border: 1px solid var(--danger); background: white; color: var(--danger); font-size: 11px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 3px; }
+  .trip-actions .btn-edit:active { background: #e3f2fd; }
+  .trip-actions .btn-del:active { background: #ffebee; }
+  /* Confirm overlay */
+  .confirm-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 500; display: flex; align-items: flex-end; }
+  .confirm-sheet { background: white; width: 100%; border-radius: 16px 16px 0 0; padding: 20px; padding-bottom: calc(20px + env(safe-area-inset-bottom)); }
+  .confirm-sheet h3 { font-size: 17px; font-weight: 700; text-align: center; margin-bottom: 6px; }
+  .confirm-sheet p { font-size: 14px; color: var(--muted); text-align: center; margin-bottom: 18px; }
+  .confirm-sheet .confirm-btns { display: flex; flex-direction: column; gap: 10px; }
+  .confirm-sheet .c-btn-del { padding: 15px; border-radius: 12px; border: none; background: var(--danger); color: white; font-size: 16px; font-weight: 700; cursor: pointer; }
+  .confirm-sheet .c-btn-cancel { padding: 15px; border-radius: 12px; border: none; background: #f0f0f0; color: var(--text); font-size: 16px; font-weight: 600; cursor: pointer; }
+
+  /* Stats */
+  .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+  .stat-card { background: white; border-radius: 14px; padding: 14px; box-shadow: 0 1px 4px rgba(0,0,0,0.07); }
+  .stat-value { font-size: 24px; font-weight: 700; color: var(--text); }
+  .stat-label { font-size: 11px; color: var(--muted); font-weight: 500; margin-top: 2px; }
+  .stat-card.accent { background: var(--primary); }
+  .stat-card.accent .stat-value, .stat-card.accent .stat-label { color: white; }
+  .stat-card.accent .stat-label { opacity: 0.8; }
+  /* 時給を過去の平均と比べて3段階の背景色で表す（文字は白）。
+     黄は白文字が読めるよう、やや濃いめの色にしている */
+  .stat-card.wage-low  { background: var(--danger); }
+  .stat-card.wage-mid  { background: #dd9500; }
+  .stat-card.wage-high { background: var(--success); }
+  .stat-card.wage-low .stat-value, .stat-card.wage-low .stat-label,
+  .stat-card.wage-mid .stat-value, .stat-card.wage-mid .stat-label,
+  .stat-card.wage-high .stat-value, .stat-card.wage-high .stat-label { color: white; }
+  .stat-card.wage-low .stat-label, .stat-card.wage-mid .stat-label, .stat-card.wage-high .stat-label { opacity: 0.85; }
+  /* 休憩中は「休憩」タブと同じ色を「休憩時間」カードにも付け、ひと目で進行中とわかるようにする。
+     休憩が終わると元の表示に戻る */
+  .stat-card.ongoing-break { background: #f5a623; }
+  .stat-card.ongoing-break .stat-value, .stat-card.ongoing-break .stat-label { color: white; opacity: 0.95; }
+
+  /* Modal */
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 300; display: flex; align-items: flex-end; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
+  .modal-overlay.open { opacity: 1; pointer-events: all; }
+  .modal { background: white; border-radius: 20px 20px 0 0; padding: 20px; padding-bottom: calc(20px + var(--safe-bottom)); width: 100%; transform: translateY(100%); transition: transform 0.25s cubic-bezier(0.32,0.72,0,1); max-height: 90vh; overflow-y: auto; }
+  .modal-overlay.open .modal { transform: translateY(0); }
+  .modal-handle { width: 40px; height: 4px; background: #ddd; border-radius: 2px; margin: 0 auto 16px; }
+  .modal-title { font-size: 18px; font-weight: 700; margin-bottom: 16px; }
+  #scheduleGraphModal { align-items: stretch; }
+  /* 休憩・給油の編集モーダルは場所入力時にキーボードで隠れないよう、画面の上側に表示する */
+  #schedItemEditModal { align-items: flex-start; }
+  #schedItemEditModal .modal { border-radius: 0 0 20px 20px; padding-top: calc(20px + env(safe-area-inset-top, 0px)); padding-bottom: 20px; transform: translateY(-100%); }
+  #schedItemEditModal.open .modal { transform: translateY(0); }
+  #scheduleGraphModal .modal { height: 100vh; max-height: 100vh; border-radius: 0; display: flex; flex-direction: column; padding-top: calc(16px + env(safe-area-inset-top, 0px)); }
+  /* 休憩開始直後の場所入力は、候補地をスクロールなしで一覧できるよう大きく表示する */
+  #schedItemEditPlaceSuggest { max-height: 62vh; }
+  /* 休憩の場所ランキングは1行1件の縦並びにし、10件くらいまではスクロールなしで見えるようにする。
+     .place-chip-rowのflex-wrap:wrapのままだと縦にあふれた分が新しい列として横に折り返されて
+     しまうため明示的にnowrapへ、また各行にflex-shrink:0を付けないと縮んでスクロールが働かない */
+  #schedItemEditPlaceChips { display: flex; flex-direction: column; flex-wrap: nowrap; gap: 0; max-height: 490px; overflow-y: auto; }
+  #schedItemEditPlaceChips .loc-rank-item { flex-shrink: 0; }
+
+  /* Empty state */
+  .empty { text-align: center; padding: 48px 24px; color: var(--muted); }
+  .empty svg { width: 56px; height: 56px; opacity: 0.3; margin-bottom: 12px; }
+  .empty p { font-size: 15px; }
+
+  /* Alert */
+  .alert { padding: 12px 16px; border-radius: 12px; margin-bottom: 12px; font-size: 14px; font-weight: 500; }
+  .alert-success { background: #e8f5e9; color: #2e7d32; }
+  .alert-info { background: #e3f2fd; color: #1565c0; }
+
+  /* Page sections */
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* Section label */
+  .section-label { font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.8px; margin: 16px 0 8px; }
+
+  /* Fare input with ¥ */
+  .fare-wrap { position: relative; }
+  .fare-wrap .yen { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); font-size: 16px; color: var(--muted); }
+  /* 障害者割引: 現金払いでも未収額を別途記入できるようにするトグルボタン */
+  .discount-toggle-btn { display:inline-block; margin-left:6px; font-size:11px; font-weight:700; padding:2px 8px; border-radius:10px; border:1.5px solid var(--border); background:white; color:var(--muted); cursor:pointer; vertical-align:middle; touch-action:manipulation; }
+  .discount-toggle-btn.active { background:#fff3e0; border-color:#ff9800; color:#e65100; }
+  /* 料金・チップのラベル行の高さをそろえ、障割ボタンの表示有無で横のfare-wrapがずれないようにする */
+  .fare-label-row { display:flex; align-items:center; gap:6px; margin-bottom:5px; min-height:22px; }
+  /* 料金は下2桁の「00」を省略して入力する。入力欄の文字は透明にしておき、
+     「入力値＋00」を1つの文字列として重ねて表示することで、数字と00の間隔が
+     通常の数字同士の間隔とまったく同じになるようにしている（カーソルは表示したまま） */
+  .fare-wrap .input-field.fare-masked { color: transparent; -webkit-text-fill-color: transparent; caret-color: var(--text); }
+  .fare-wrap .fare-display { position: absolute; left: 0; top: 0; color: var(--text); pointer-events: none; white-space: pre; }
+
+  /* Payment method buttons */
+  .pay-btns { display: flex; gap: 6px; flex-wrap: wrap; }
+  .pay-btn { flex: 1; min-width: 56px; padding: 10px 4px; border-radius: 10px; border: 1.5px solid var(--border); background: white; color: var(--muted); font-size: 13px; font-weight: 600; cursor: pointer; text-align: center; transition: all 0.15s; }
+  .pay-btn.active { border-color: var(--primary); background: #e3f2fd; color: var(--primary); }
+  .pay-btn.active.go { border-color: #ff6b00; background: #fff3e0; color: #ff6b00; }
+  .pay-btn.active.paypay { border-color: #e00; background: #fff0f0; color: #e00; }
+  .pay-btn.active.credit { border-color: var(--success); background: #e8f5e9; color: var(--success); }
+  .pay-btn:active { transform: scale(0.96); }
+  .pay-btn.active.dpay { border-color: #b00068; background: #fce4ec; color: #b00068; }
+  .pay-btn.active.ticket { border-color: #6200ea; background: #ede7f6; color: #6200ea; }
+  .pay-btn.active.rakuten { border-color: #bf0000; background: #fdeaea; color: #bf0000; }
+
+  /* Trip type selector */
+  .trip-type-row { display: flex; gap: 8px; }
+  .type-btn { flex: 1; padding: 11px 4px; border-radius: 12px; border: 1.5px solid var(--border); background: white; color: var(--muted); font-size: 14px; font-weight: 700; cursor: pointer; text-align: center; transition: all 0.15s; }
+  .type-btn.active { border-color: var(--primary); background: #e3f2fd; color: var(--primary); }
+  .type-btn.active.haisha { border-color: #ff6b00; background: #fff3e0; color: #ff6b00; }
+  .type-btn.active.nashi { border-color: #00a152; background: #e3f9ec; color: #00a152; }
+  .type-btn:active { transform: scale(0.97); }
+
+  /* GPS button */
+  .loc-wrap { display: flex; gap: 8px; align-items: center; }
+  .loc-wrap .input-field { flex: 1; }
+  .gps-btn { flex-shrink: 0; padding: 12px 12px; border-radius: 12px; border: 1.5px solid var(--primary); background: white; color: var(--primary); font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+  .gps-btn:active { background: #e3f2fd; transform: scale(0.95); }
+  .gps-btn.loading { border-color: var(--warning); color: var(--warning); animation: spin 1s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .fare-wrap .input-field { padding-left: 28px; }
+
+  /* CSV export button */
+  .export-btn { background: white; border: 1.5px solid var(--border); color: var(--text); display: flex; align-items: center; gap: 8px; padding: 12px 16px; border-radius: 12px; font-size: 14px; font-weight: 600; cursor: pointer; width: 100%; }
+  .export-btn:active { background: var(--bg); }
+
+  /* Divider */
+  .divider { height: 1px; background: var(--border); margin: 12px 0; }
+
+  /* 場所分析 */
+  .loc-rank-item { background:white; border-radius:14px; padding:13px 14px; margin-bottom:8px; box-shadow:0 1px 4px rgba(0,0,0,0.07); display:flex; align-items:center; gap:12px; }
+  .loc-rank-num { font-size:18px; font-weight:800; color:var(--primary); min-width:28px; text-align:center; }
+  .loc-rank-num.gold { color:#f5a623; }
+  .loc-rank-num.silver { color:#9b9b9b; }
+  .loc-rank-num.bronze { color:#c07642; }
+  .loc-rank-body { flex:1; }
+  .loc-rank-name { font-size:15px; font-weight:700; white-space:nowrap; overflow-x:auto; scrollbar-width:none; }
+  .loc-rank-name::-webkit-scrollbar { display:none; }
+  /* 週の稼働日は件数が多いため、少し小さくして1行に収まる日数を増やす */
+  .loc-rank-name.week-days { font-size:13px; letter-spacing:-0.2px; }
+  .loc-rank-meta { font-size:12px; color:var(--muted); margin-top:2px; }
+  .loc-rank-fare { font-size:16px; font-weight:800; color:var(--success); text-align:right; }
+  .analysis-tabs { display:flex; gap:6px; margin-bottom:12px; }
+  .analysis-tab { flex:1; padding:8px 4px; border-radius:10px; border:1.5px solid var(--border); background:white; color:var(--muted); font-size:12px; font-weight:700; cursor:pointer; text-align:center; }
+  .analysis-tab.active { border-color:var(--primary); background:#e3f2fd; color:var(--primary); }
+  .dow-tabs { display:flex; gap:6px; margin-bottom:12px; overflow-x:auto; -webkit-overflow-scrolling:touch; }
+  .dow-tab { flex:0 0 auto; padding:8px 14px; border-radius:10px; border:1.5px solid var(--border); background:white; color:var(--muted); font-size:13px; font-weight:700; cursor:pointer; text-align:center; white-space:nowrap; }
+  .dow-tab.active { border-color:var(--primary); background:#e3f2fd; color:var(--primary); }
+
+  /* GO乗客の過去履歴サジェスト */
+  .pax-history-item { background:var(--bg); border-radius:8px; padding:7px 10px; margin-top:5px; font-size:12px; color:var(--text); cursor:pointer; }
+  .pax-history-item:active { background:#e3f2fd; }
+  .pax-history-item .ph-date { font-weight:700; color:var(--primary); }
+  .pax-history-item .ph-route { color:var(--muted); }
+
+  /* タイムライン */
+  .sched-item { background:white; border-radius:12px; padding:12px 14px; margin-bottom:8px; box-shadow:0 1px 4px rgba(0,0,0,0.07); border-left:4px solid var(--border); }
+  .sched-item.vacant { background:var(--bg); box-shadow:none; border-left-color:#bbb; }
+  .sched-item.break { background:#fff8e1; box-shadow:none; border-left-color:#f5a623; }
+  .sched-item.fuel { background:#e8f5e9; box-shadow:none; border-left-color:#43a047; }
+  .sched-time { font-size:13px; font-weight:700; color:var(--text); }
+  .sched-time .sched-dur { font-weight:600; color:var(--muted); font-size:12px; }
+  .sched-body { font-size:13px; color:var(--text); margin-top:4px; }
+  .sched-item.vacant .sched-body { color:var(--muted); }
+  .sched-item.break .sched-body { color:#8a6100; }
+  .sched-item.fuel .sched-body { color:#1b5e20; }
+  .sched-type-badge { display:inline-block; padding:2px 8px; border-radius:6px; font-weight:700; font-size:12px; margin-right:6px; }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+  <div class="date" id="headerDate"></div>
+  <div class="header-row">
+    <h1 id="headerSales">¥0</h1>
+    <button class="reload-btn" id="reloadBtn" onclick="triggerReload()">↻ 更新</button>
+  </div>
+  <div style="display:flex;align-items:center;gap:8px;margin-top:6px;flex-wrap:wrap;font-size:12px;">
+    <span id="headerCount" style="opacity:0.9;font-weight:600;"></span>
+    <span id="headerHourly" style="padding:2px 8px;border-radius:8px;font-weight:700;display:none;"></span>
+    <span id="headerTypeBadges" style="display:flex;gap:4px;"></span>
+  </div>
+</div>
+
+<!-- Pages -->
+<div class="content">
+
+  <!-- ===== PAGE: 運行記録 ===== -->
+  <div class="page active" id="page-record">
+
+    <!-- Trip Entry Form -->
+    <div class="card" id="tripFormCard">
+      <div class="card-title">乗降記録入力</div>
+
+      <div class="input-group">
+        <label class="input-label">🚖 種別</label>
+        <div class="trip-type-row">
+          <button class="type-btn go active" id="type-GO" onclick="selectType('GO')">GO</button>
+          <button class="type-btn" id="type-流し" onclick="selectType('流し')">流　し</button>
+          <button class="type-btn haisha" id="type-配車" onclick="selectType('配車')">配　車</button>
+        </div>
+      </div>
+
+      <div class="input-group">
+        <label class="input-label">💳 支払方法</label>
+        <div class="pay-btns">
+          <button class="pay-btn active" id="pay-現金" onclick="selectPay('現金')">現金</button>
+          <button class="pay-btn go" id="pay-GO" onclick="selectPay('GO')">GO</button>
+          <button class="pay-btn paypay" id="pay-PayPay" onclick="selectPay('PayPay')">PayPay</button>
+          <button class="pay-btn dpay" id="pay-d払い" onclick="selectPay('d払い')">d払い</button>
+        </div>
+        <div class="pay-btns" style="margin-top:6px;">
+          <button class="pay-btn credit" id="pay-クレジット" onclick="selectPay('クレジット')">クレジット</button>
+          <button class="pay-btn rakuten" id="pay-楽天Pay" onclick="selectPay('楽天Pay')">楽天Pay</button>
+          <button class="pay-btn ticket" id="pay-チケット" onclick="selectPay('チケット')">チケット</button>
+          <button class="pay-btn" id="pay-その他" onclick="selectPay('その他')">その他</button>
+        </div>
+        <input type="hidden" id="payMethod" value="現金">
+      </div>
+
+      <div class="input-row">
+        <div class="input-group" style="flex:1.5;">
+          <div class="fare-label-row">
+            <label class="input-label" id="fareLabelMain" style="margin-bottom:0;">💴 料金（現金）</label>
+            <button type="button" class="discount-toggle-btn" id="disabilityToggleBtn" onclick="toggleDisabilityDiscount()">障割</button>
+          </div>
+          <div class="fare-wrap">
+            <span class="yen">¥</span>
+            <input class="input-field fare-masked" id="fareAmount" type="number" placeholder="" inputmode="numeric" oninput="updateFareDisplay()">
+            <span class="fare-display" id="fareDisplay">00</span>
+          </div>
+        </div>
+        <div class="input-group" style="flex:1;">
+          <div class="fare-label-row">
+            <label class="input-label" style="margin-bottom:0;">🎁 チップ</label>
+          </div>
+          <div class="fare-wrap">
+            <span class="yen">¥</span>
+            <input class="input-field" id="tipAmount" type="number" placeholder="0" inputmode="numeric">
+          </div>
+        </div>
+      </div>
+      <div class="input-group" id="disabilityUncollectedRow" style="display:none;">
+        <label class="input-label">📱 未収（障害者割引）</label>
+        <div class="fare-wrap">
+          <span class="yen">¥</span>
+          <input class="input-field fare-masked" id="disabilityUncollectedAmount" type="number" placeholder="" inputmode="numeric" oninput="updateDisabilityFareDisplay()">
+          <span class="fare-display" id="disabilityFareDisplay">0</span>
+        </div>
+      </div>
+
+      <div class="input-group">
+        <label class="input-label">👥 人員</label>
+        <div style="display:flex;gap:6px;">
+          <button class="pay-btn" id="pax-male" onclick="incrementPax('male')" style="flex:1;padding:8px 2px;font-size:13px;">🚹 男性 <b id="paxMaleCount">0</b></button>
+          <button class="pay-btn" id="pax-female" onclick="incrementPax('female')" style="flex:1;padding:8px 2px;font-size:13px;">🚺 女性 <b id="paxFemaleCount">0</b></button>
+        </div>
+        <div style="text-align:right;font-size:11px;color:var(--muted);margin-top:3px;">合計 <span id="paxTotalCount">0</span>名</div>
+        <input type="hidden" id="passengerCount" value="0">
+      </div>
+
+      <div class="input-row">
+        <div class="input-group">
+          <div class="fare-label-row">
+            <label class="input-label" style="margin-bottom:0;">🟢 乗車場所</label>
+          </div>
+          <input class="input-field" data-scroll-up="1" id="pickupLoc" type="text" placeholder="" autocomplete="off" oninput="onLocInput('pickupLoc','pickupLocSuggest')" onfocus="onLocInput('pickupLoc','pickupLocSuggest');scrollLocFieldToTop('pickupLoc')" onblur="hideLocSuggest('pickupLocSuggest')" onkeydown="if(event.key==='Enter'){event.preventDefault();hideLocSuggest('pickupLocSuggest');openNextTimeField('pickupLoc');}">
+          <div id="pickupLocSuggest" class="loc-suggest"></div>
+        </div>
+        <div class="input-group">
+          <div class="fare-label-row">
+            <label class="input-label" style="margin-bottom:0;">🔴 降車場所</label>
+            <button type="button" class="discount-toggle-btn" id="viaPointAddBtn" onclick="addViaPoint()">経由地を追加</button>
+          </div>
+          <input class="input-field" data-scroll-up="1" id="dropoffLoc" type="text" placeholder="" autocomplete="off" oninput="onLocInput('dropoffLoc','dropoffLocSuggest')" onfocus="onLocInput('dropoffLoc','dropoffLocSuggest');scrollLocFieldToTop('dropoffLoc')" onblur="hideLocSuggest('dropoffLocSuggest')" onkeydown="if(event.key==='Enter'){event.preventDefault();hideLocSuggest('dropoffLocSuggest');openNextTimeField('dropoffLoc');}">
+          <div id="dropoffLocSuggest" class="loc-suggest"></div>
+        </div>
+      </div>
+
+      <div class="input-row">
+        <div class="input-group">
+          <label class="input-label">⏱ 乗車時刻</label>
+          <input class="input-field" id="pickupTime" type="time">
+        </div>
+        <div class="input-group">
+          <label class="input-label">🏁 降車時刻</label>
+          <input class="input-field" id="dropoffTime" type="time">
+        </div>
+      </div>
+
+      <div id="viaPointsContainer"></div>
+
+      <div class="input-group" id="goMemoGroup" style="display:none;">
+        <label class="input-label">📝 乗客情報</label>
+        <div class="input-row" style="margin-bottom:4px;">
+          <div class="input-group" style="flex:1.4;margin-bottom:0;">
+            <input class="input-field" data-scroll-up="1" id="goPaxName" type="text" placeholder="" autocomplete="off" oninput="onGoPaxNameInput()" onfocus="scrollLocFieldToTop('goPaxName')">
+          </div>
+          <div class="input-group" style="flex:1;margin-bottom:0;display:flex;gap:6px;">
+            <button class="pay-btn" id="goGender-男性" onclick="selectGoGender('男性', true)" style="flex:1;">男性</button>
+            <button class="pay-btn" id="goGender-女性" onclick="selectGoGender('女性', true)" style="flex:1;">女性</button>
+          </div>
+        </div>
+        <div class="pay-btns go-age-btns" style="margin-bottom:0;">
+          <button class="pay-btn" id="goAge-10代" onclick="selectGoAge('10代')">10代</button>
+          <button class="pay-btn" id="goAge-20代" onclick="selectGoAge('20代')">20代</button>
+          <button class="pay-btn" id="goAge-30代" onclick="selectGoAge('30代')">30代</button>
+          <button class="pay-btn" id="goAge-40代" onclick="selectGoAge('40代')">40代</button>
+          <button class="pay-btn" id="goAge-50代" onclick="selectGoAge('50代')">50代</button>
+          <button class="pay-btn" id="goAge-60代" onclick="selectGoAge('60代')">60代</button>
+          <button class="pay-btn" id="goAge-70代" onclick="selectGoAge('70代')">70代</button>
+        </div>
+        <input type="hidden" id="goPaxGender" value="">
+        <input type="hidden" id="goPaxAge" value="">
+        <div id="goPaxCancelWarning" style="display:none;margin-top:8px;padding:8px 10px;border-radius:10px;background:#fdecea;border:1.5px solid var(--danger);color:var(--danger);font-size:13px;font-weight:700;"></div>
+        <div id="goPaxHistory" style="display:none;margin-top:8px;"></div>
+      </div>
+
+      <div class="input-group" id="plainMemoGroup">
+        <label class="input-label">📝 メモ</label>
+        <textarea class="input-field" id="plainMemo" rows="2" placeholder="自由記入" style="resize:vertical;" oninput="onPlainMemoInput()"></textarea>
+        <input type="hidden" id="plainPaxGender" value="">
+        <div id="plainMemoHistory" style="display:none;margin-top:8px;"></div>
+      </div>
+
+      <div class="input-group">
+        <label class="input-label">🏢 降車場所詳細（店名・施設名など／空欄可）</label>
+        <input class="input-field" data-scroll-up="1" id="dropoffDetail" type="text" placeholder="" autocomplete="off"
+               oninput="onLocInput('dropoffDetail','dropoffDetailSuggest',getDropoffDetailSuggestions)"
+               onfocus="onLocInput('dropoffDetail','dropoffDetailSuggest',getDropoffDetailSuggestions);scrollLocFieldToTop('dropoffDetail')"
+               onblur="hideLocSuggest('dropoffDetailSuggest')"
+               onkeydown="if(event.key==='Enter'){event.preventDefault();hideLocSuggest('dropoffDetailSuggest');this.blur();}">
+        <div id="dropoffDetailSuggest" class="loc-suggest"></div>
+      </div>
+
+      <button class="btn btn-primary" onclick="saveTrip()" style="margin-top:4px;">
+        <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z"/></svg>
+        乗降記録を保存
+      </button>
+
+    </div>
+  </div>
+
+  <!-- ===== PAGE: 履歴 ===== -->
+  <div class="page" id="page-history">
+    <!-- Day navigation -->
+    <div class="card" style="padding:10px 12px;">
+      <div style="display:flex;gap:6px;align-items:center;margin-bottom:8px;">
+        <button class="btn btn-gray btn-sm" onclick="histNavPrev()" style="padding:10px 16px;font-size:20px;line-height:1;">‹</button>
+        <div style="flex:1;text-align:center;">
+          <div id="histNavLabel" style="font-size:16px;font-weight:700;color:var(--text);"></div>
+          <div id="histNavSub" style="font-size:12px;color:var(--muted);margin-top:2px;"></div>
+        </div>
+        <button class="btn btn-gray btn-sm" onclick="histNavNext()" id="histNavNextBtn" style="padding:10px 16px;font-size:20px;line-height:1;">›</button>
+      </div>
+      <div style="display:flex;gap:6px;">
+        <button class="btn btn-gray btn-sm" onclick="histGoToday()" style="flex:1;">今日</button>
+        <button class="btn btn-gray btn-sm" onclick="histToggleAll()" id="histAllBtn" style="flex:1;">全期間表示</button>
+        <input class="input-field" id="historyFilter" type="date" onchange="histPickDate(this.value)" style="flex:1.5;padding:9px 10px;font-size:14px;">
+      </div>
+    </div>
+
+    <div id="historyList"></div>
+  </div>
+
+  <!-- ===== PAGE: 統計 ===== -->
+  <div class="page" id="page-stats">
+
+    <div class="tab-bar">
+      <div class="tab-item active" id="statTab-day" onclick="switchStatTab('day')">日別</div>
+      <div class="tab-item" id="statTab-week" onclick="switchStatTab('week')">週</div>
+      <div class="tab-item" id="statTab-month" onclick="switchStatTab('month')">月</div>
+      <div class="tab-item" id="statTab-hourly" onclick="switchStatTab('hourly')">時間帯</div>
+      <div class="tab-item" id="statTab-location" onclick="switchStatTab('location')">場所</div>
+    </div>
+
+    <!-- 日別・週・月タブ共通 -->
+    <div id="statMain">
+      <div style="display:flex;gap:6px;align-items:center;margin-bottom:8px;">
+        <button class="btn btn-gray btn-sm" id="statPeriodPrevBtn" onclick="statPeriodPrev()" style="padding:10px 16px;font-size:20px;line-height:1;">‹</button>
+        <div style="flex:1;text-align:center;font-size:15px;font-weight:700;color:var(--text);" id="statPeriodLabel" onclick="openPeriodEditModal()"></div>
+        <button class="btn btn-gray btn-sm" id="statPeriodNextBtn" onclick="statPeriodNext()" style="padding:10px 16px;font-size:20px;line-height:1;">›</button>
+      </div>
+      <div class="stat-grid">
+        <div class="stat-card accent" style="grid-column:1/-1;">
+          <div class="stat-value" id="statSales">¥0</div>
+          <div class="stat-label" id="statSalesLabel">本日の営収額</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="statTrips">0</div>
+          <div class="stat-label">乗車件数</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="statAvg">¥0</div>
+          <div class="stat-label">平均料金</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="statDrive">0分</div>
+          <div class="stat-label">実車時間計</div>
+        </div>
+      </div>
+      <div class="section-label" id="rankingLabel">売上ランキング</div>
+      <div id="rankingList"></div>
+    </div>
+
+    <!-- 時間帯タブ -->
+    <div id="statHourly" style="display:none;">
+      <div class="dow-tabs" id="hourlyDowTabs">
+        <div class="dow-tab active" data-dow="all" onclick="switchHourlyDow('all')">全体</div>
+        <div class="dow-tab" data-dow="1" onclick="switchHourlyDow('1')">月</div>
+        <div class="dow-tab" data-dow="2" onclick="switchHourlyDow('2')">火</div>
+        <div class="dow-tab" data-dow="3" onclick="switchHourlyDow('3')">水</div>
+        <div class="dow-tab" data-dow="4" onclick="switchHourlyDow('4')">木</div>
+        <div class="dow-tab" data-dow="5" onclick="switchHourlyDow('5')">金</div>
+      </div>
+      <div class="card">
+        <div class="card-title" id="hourlyChartTitle">時間帯別 乗車件数（全期間）</div>
+        <canvas id="hourlyChart" style="width:100%;max-height:220px;"></canvas>
+      </div>
+      <div class="card" style="margin-top:8px;">
+        <div class="card-title">時間帯別ランキング</div>
+        <div id="hourlyTop"></div>
+      </div>
+    </div>
+
+    <!-- 場所分析タブ -->
+    <div id="statLocation" style="display:none;">
+      <div class="analysis-tabs">
+        <button class="analysis-tab active" id="locTab-count" onclick="switchLocTab('count')">乗車回数順</button>
+        <button class="analysis-tab" id="locTab-avg" onclick="switchLocTab('avg')">平均単価順</button>
+        <button class="analysis-tab" id="locTab-total" onclick="switchLocTab('total')">総売上順</button>
+        <button class="analysis-tab" id="locTab-dropoffDetail" onclick="switchLocTab('dropoffDetail')">降車詳細順</button>
+      </div>
+      <div id="locationRanking"></div>
+    </div>
+  </div>
+
+  <!-- ===== PAGE: エリア（現在時刻のおすすめ） ===== -->
+  <div class="page" id="page-recommend">
+    <div class="card" style="text-align:center;">
+      <div style="font-size:13px;color:var(--muted);">現在時刻</div>
+      <div style="font-size:28px;font-weight:800;color:var(--primary);margin-top:2px;" id="recommendNow">--:--</div>
+    </div>
+    <div class="card" style="margin-top:8px;">
+      <div class="card-title">🎯 この時間帯のおすすめエリア</div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:4px;" id="recommendRange"></div>
+      <div id="recommendAreaRanking"></div>
+    </div>
+    <div style="font-size:12px;color:var(--muted);margin:10px 2px 4px;" id="recommendListRange"></div>
+    <div id="recommendList"></div>
+  </div>
+
+  <!-- ===== PAGE: タイムライン（実車・空車タイムライン） ===== -->
+  <div class="page" id="page-schedule">
+    <!-- Day navigation -->
+    <div class="card" style="padding:10px 12px;">
+      <div style="display:flex;gap:6px;align-items:center;">
+        <button class="btn btn-gray btn-sm" id="schedNavPrevBtn" onclick="schedNavPrev()" style="padding:10px 16px;font-size:20px;line-height:1;">‹</button>
+        <div style="flex:1;position:relative;">
+          <select id="scheduleFilter" onchange="schedPickDate(this.value)" style="width:100%;text-align:center;text-align-last:center;font-size:16px;font-weight:700;color:var(--text);padding:10px 22px;border:1.5px solid var(--border);border-radius:10px;background:white;-webkit-appearance:none;appearance:none;"></select>
+          <span style="position:absolute;right:10px;top:50%;transform:translateY(-50%);pointer-events:none;color:var(--muted);font-size:11px;">▾</span>
+        </div>
+        <button class="btn btn-gray btn-sm" onclick="schedNavNext()" id="schedNavNextBtn" style="padding:10px 16px;font-size:20px;line-height:1;">›</button>
+      </div>
+      <div style="text-align:center;margin-top:10px;cursor:pointer;" onclick="openDaySalesEditModal()">
+        <div style="font-size:26px;font-weight:800;color:var(--success);" id="schedDaySales">¥0</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:2px;">この日の営収額<span id="schedDaySalesEdited" style="display:none;color:var(--primary);font-weight:700;">（修正済み）</span></div>
+      </div>
+      <div class="sched-tab-bar">
+        <button class="sched-tab" onclick="openScheduleGraph()">グラフ</button>
+        <button class="sched-tab" id="schedTabBreak" onclick="toggleSchedStop('break')">休憩</button>
+        <button class="sched-tab" id="schedTabFuel" onclick="toggleSchedStop('fuel')">給油</button>
+        <button class="sched-tab" onclick="openSchedAdd()">業務終了</button>
+      </div>
+    </div>
+    <div class="stat-grid">
+      <div class="stat-card">
+        <div class="stat-value" id="schedJisshaTotal">0分</div>
+        <div class="stat-label">実車時間（乗客あり）</div>
+      </div>
+      <div class="stat-card" id="schedBreakCard">
+        <div class="stat-value" id="schedBreakTotal">0分</div>
+        <div class="stat-label">休憩時間</div>
+      </div>
+      <div class="stat-card" id="schedHourlyCard">
+        <div class="stat-value" id="schedHourly">---</div>
+        <div class="stat-label">時給</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="schedAllTotal">0分</div>
+        <div class="stat-label">合計（業務開始〜終了）</div>
+      </div>
+    </div>
+    <div id="scheduleList"></div>
+  </div>
+
+  <!-- ===== PAGE: サマリー（本日サマリー） ===== -->
+  <div class="page" id="page-summary">
+    <!-- Day navigation -->
+    <div class="card" style="padding:10px 12px;">
+      <div style="display:flex;gap:6px;align-items:center;">
+        <button class="btn btn-gray btn-sm" id="summaryNavPrevBtn" onclick="summaryNavPrev()" style="padding:10px 16px;font-size:20px;line-height:1;">‹</button>
+        <div style="flex:1;position:relative;">
+          <select id="summaryFilter" onchange="summaryPickDate(this.value)" style="width:100%;text-align:center;text-align-last:center;font-size:16px;font-weight:700;color:var(--text);padding:10px 22px;border:1.5px solid var(--border);border-radius:10px;background:white;-webkit-appearance:none;appearance:none;"></select>
+          <span style="position:absolute;right:10px;top:50%;transform:translateY(-50%);pointer-events:none;color:var(--muted);font-size:11px;">▾</span>
+        </div>
+        <button class="btn btn-gray btn-sm" onclick="summaryNavNext()" id="summaryNavNextBtn" style="padding:10px 16px;font-size:20px;line-height:1;">›</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title" id="summaryTitle">本日サマリー</div>
+      <div class="stat-grid">
+        <div class="stat-card accent" style="grid-column:1/-1;">
+          <div class="stat-value" id="todaySales">¥0</div>
+          <div class="stat-label" id="todaySalesLabel">本日営収額</div>
+        </div>
+        <div class="stat-card accent" style="grid-column:1/-1;">
+          <div class="stat-value" id="todayHourly">---</div>
+          <div class="stat-label" id="todayHourlyLabel">現在の時給</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="todayAvg">¥0</div>
+          <div class="stat-label">平均料金</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="todayJissha">0分</div>
+          <div class="stat-label">実車時間計</div>
+        </div>
+        <div class="stat-card" id="todayWaitCard">
+          <div class="stat-value" id="todayWait">0分</div>
+          <div class="stat-label">空車時間</div>
+        </div>
+        <div class="stat-card" style="cursor:pointer;" onclick="showSummaryDetail('uncollected')">
+          <div class="stat-value" id="todayUncollected">¥0</div>
+          <div class="stat-label">未収額</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="todayTip">¥0</div>
+          <div class="stat-label">チップ</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="todayGoCount">0件</div>
+          <div class="stat-label">GO回数</div>
+        </div>
+        <div class="stat-card" style="cursor:pointer;" onclick="showSummaryDetail('nashi')">
+          <div class="stat-value" id="todayNashiTotal">¥0</div>
+          <div class="stat-label">流し合計金額</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="todayPax">0名</div>
+          <div class="stat-label">人員</div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">地名の読み方（イニシャル）登録</div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:8px;">乗車・降車場所や降車場所詳細を、頭文字１文字の入力で予測変換に出したいときはここで登録します。この端末から直接登録できます。</div>
+      <button class="btn btn-gray" style="width:100%;" onclick="openReadingHintModal()">📖 読み方の登録・確認</button>
+    </div>
+    <div class="card">
+      <div class="card-title">キャンセルした人リスト</div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:8px;">登録しておくと、運行記録でGOの乗客情報（名前・性別・年代）が一致したときに警告を表示します。</div>
+      <button class="btn btn-gray" style="width:100%;" onclick="openCanceledCustomerModal()">🚫 リストの登録・確認</button>
+    </div>
+    <div class="card">
+      <div class="card-title">データのバックアップ</div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-gray" style="flex:1;" onclick="exportBackup()">📤 バックアップを保存</button>
+        <button class="btn btn-gray" style="flex:1;" onclick="document.getElementById('backupRestoreInput').click()">📥 復元する</button>
+      </div>
+      <input type="file" id="backupRestoreInput" accept="application/json" style="display:none;" onchange="importBackupFile(event)">
+      <div style="font-size:11px;color:var(--muted);margin-top:6px;">機種変更の前にバックアップを保存しておくと、新しい端末で「復元する」から記録を戻せます。</div>
+    </div>
+  </div>
+
+</div><!-- end content -->
+
+<!-- 業務終了 記録モーダル -->
+<div class="modal-overlay" id="schedAddModal" onclick="if(event.target===this) closeSchedAdd()">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="schedAddTitle">業務終了を記録</div>
+    <div class="input-group">
+      <label class="input-label">🏁 業務終了時刻</label>
+      <input class="input-field" id="schedAddEndTime" type="time">
+    </div>
+    <div class="btn-row" style="margin-top:14px;">
+      <button class="btn btn-gray" onclick="closeSchedAdd()">キャンセル</button>
+      <button class="btn btn-primary" onclick="saveSchedAdd()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- 1日の記録まとめ（業務終了後にスクリーンショット用として表示） -->
+<div class="modal-overlay" id="dayReportModal" onclick="if(event.target===this) closeDayReport()">
+  <div class="modal" style="max-height:96vh;padding:14px 14px calc(14px + var(--safe-bottom));">
+    <div class="modal-title" id="dayReportTitle" style="margin-bottom:8px;font-size:16px;"></div>
+    <div id="dayReportSummary" style="display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12px;font-weight:700;color:var(--text);background:var(--bg);border-radius:10px;padding:8px 10px;margin-bottom:8px;"></div>
+    <div id="dayReportList" style="font-size:11.5px;line-height:1.5;overflow-y:auto;"></div>
+    <div class="btn-row" style="margin-top:10px;">
+      <button class="btn btn-gray" onclick="closeDayReport()">閉じる</button>
+    </div>
+  </div>
+</div>
+
+<!-- 休憩・給油 編集モーダル -->
+<div class="modal-overlay" id="schedItemEditModal" onclick="if(event.target===this) closeSchedItemEdit()">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="schedItemEditTitle">休憩を修正</div>
+    <div class="input-row" id="schedItemEditTimeRow">
+      <div class="input-group">
+        <label class="input-label">⏱ 開始</label>
+        <input class="input-field" id="schedItemEditStart" type="time">
+      </div>
+      <div class="input-group">
+        <label class="input-label">🏁 終了</label>
+        <input class="input-field" id="schedItemEditEnd" type="time">
+      </div>
+    </div>
+    <div id="schedItemEditFooter">
+      <div class="btn-row">
+        <button class="btn btn-gray" onclick="closeSchedItemEdit()">キャンセル</button>
+        <button class="btn btn-primary" onclick="saveSchedItemEdit()">保存</button>
+      </div>
+      <button class="btn btn-danger" style="margin-top:8px;" onclick="deleteSchedItemEdit()">🗑 削除</button>
+    </div>
+    <div class="input-group" id="schedItemEditPlaceRow" style="margin-top:14px;">
+      <label class="input-label">📍 場所</label>
+      <div class="place-chip-row" id="schedItemEditPlaceChips"></div>
+      <button type="button" class="place-chip" id="schedItemEditPlaceMoreBtn" style="display:none;margin-top:8px;" onclick="revealSchedItemEditPlaceInput()">✏️ 他の場所を入力</button>
+      <div id="schedItemEditPlaceInputWrap">
+        <input class="input-field" id="schedItemEditPlace" type="text" placeholder="" autocomplete="off" style="margin-top:8px;"
+               oninput="onLocInput('schedItemEditPlace','schedItemEditPlaceSuggest',getBreakPlaceSuggestions)"
+               onfocus="onLocInput('schedItemEditPlace','schedItemEditPlaceSuggest',getBreakPlaceSuggestions);scrollLocFieldToTop('schedItemEditPlace')"
+               onblur="hideLocSuggest('schedItemEditPlaceSuggest');onSchedItemEditPlaceBlur()"
+               onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}">
+        <div id="schedItemEditPlaceSuggest" class="loc-suggest"></div>
+      </div>
+    </div>
+    <div id="schedItemEditFuelNote" style="display:none;font-size:13px;color:var(--muted);margin-top:4px;">📍 場所は高岡町で記録されます</div>
+  </div>
+</div>
+
+<!-- この日の営収額 手動修正モーダル -->
+<div class="modal-overlay" id="daySalesEditModal" onclick="if(event.target===this) closeDaySalesEditModal()">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">この日の営収額を修正</div>
+    <div id="daySalesEditDateLabel" style="text-align:center;font-size:13px;color:var(--muted);margin-top:-8px;margin-bottom:10px;"></div>
+    <div class="input-group">
+      <label class="input-label">💴 営収額（税抜）</label>
+      <div class="fare-wrap">
+        <span class="yen">¥</span>
+        <input class="input-field" id="daySalesEditAmount" type="number" inputmode="numeric" placeholder="0">
+      </div>
+    </div>
+    <div id="daySalesEditAutoNote" style="font-size:12px;color:var(--muted);margin-top:6px;"></div>
+    <div class="btn-row" style="margin-top:14px;">
+      <button class="btn btn-gray" onclick="closeDaySalesEditModal()">キャンセル</button>
+      <button class="btn btn-primary" onclick="saveDaySalesEdit()">保存</button>
+    </div>
+    <button class="btn" style="margin-top:8px;background:var(--bg);color:var(--muted);" id="daySalesEditResetBtn" onclick="resetDaySalesEdit()">自動計算に戻す</button>
+  </div>
+</div>
+
+<!-- 統計「月」タブの期間 手動調整モーダル -->
+<div class="modal-overlay" id="periodEditModal" onclick="if(event.target===this) closePeriodEditModal()">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">集計期間を修正</div>
+    <div class="input-row">
+      <div class="input-group">
+        <label class="input-label">開始日</label>
+        <input class="input-field" id="periodEditStart" type="date">
+      </div>
+      <div class="input-group">
+        <label class="input-label">終了日</label>
+        <input class="input-field" id="periodEditEnd" type="date">
+      </div>
+    </div>
+    <div style="font-size:12px;color:var(--muted);margin-top:6px;">前後の期間の境目もあわせて自動調整されます</div>
+    <div class="btn-row" style="margin-top:14px;">
+      <button class="btn btn-gray" onclick="closePeriodEditModal()">キャンセル</button>
+      <button class="btn btn-primary" onclick="savePeriodEdit()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- Reading Hint (地名の読み方登録) Modal -->
+<div class="modal-overlay" id="readingHintModal" onclick="if(event.target===this) closeReadingHintModal()">
+  <div class="modal">
+    <div class="modal-title">地名の読み方（イニシャル）登録</div>
+
+    <div class="section-label">乗車・降車場所</div>
+    <div class="input-row">
+      <div class="input-group" style="flex:1.4;">
+        <input class="input-field" id="newPlaceReadingName" type="text" placeholder="地名（例：南斎院町）">
+      </div>
+      <div class="input-group" style="flex:1;">
+        <input class="input-field" id="newPlaceReadingInitial" type="text" placeholder="頭文字（例：み）" maxlength="4">
+      </div>
+    </div>
+    <button class="btn btn-gray" style="width:100%;margin-bottom:10px;" onclick="addUserPlaceReading()">＋ 追加</button>
+
+    <div style="font-size:12px;font-weight:700;color:var(--muted);margin-top:4px;margin-bottom:4px;">過去の記録にあるが読み方が未登録のもの</div>
+    <div id="unregisteredPlaceList"></div>
+
+    <div style="font-size:12px;font-weight:700;color:var(--muted);margin-top:16px;margin-bottom:4px;">登録済みの読み方（タップして確認・編集）</div>
+    <div class="dow-tabs" id="userPlaceReadingTabs"></div>
+    <div class="dow-tabs" id="userPlaceReadingCharTabs" style="margin-top:6px;"></div>
+    <div id="userPlaceReadingList"></div>
+
+    <div class="section-label" style="margin-top:16px;">降車場所詳細（店名・施設名など）</div>
+    <div class="input-row">
+      <div class="input-group" style="flex:1.4;">
+        <input class="input-field" id="newDropoffDetailReadingName" type="text" placeholder="店名・施設名（例：県民文化会館）">
+      </div>
+      <div class="input-group" style="flex:1;">
+        <input class="input-field" id="newDropoffDetailReadingInitial" type="text" placeholder="頭文字（例：け）" maxlength="4">
+      </div>
+    </div>
+    <button class="btn btn-gray" style="width:100%;margin-bottom:10px;" onclick="addUserDropoffDetailReading()">＋ 追加</button>
+
+    <div style="font-size:12px;font-weight:700;color:var(--muted);margin-top:4px;margin-bottom:4px;">過去の記録にあるが読み方が未登録のもの</div>
+    <div id="unregisteredDropoffDetailList"></div>
+
+    <div style="font-size:12px;font-weight:700;color:var(--muted);margin-top:16px;margin-bottom:4px;">登録済みの読み方（タップして確認・編集）</div>
+    <div class="dow-tabs" id="userDropoffDetailReadingTabs"></div>
+    <div class="dow-tabs" id="userDropoffDetailReadingCharTabs" style="margin-top:6px;"></div>
+    <div id="userDropoffDetailReadingList"></div>
+
+    <div class="btn-row" style="margin-top:14px;">
+      <button class="btn btn-primary" onclick="closeReadingHintModal()">閉じる</button>
+    </div>
+  </div>
+</div>
+
+<!-- Canceled Customer List Modal -->
+<div class="modal-overlay" id="canceledCustomerModal" onclick="if(event.target===this) closeCanceledCustomerModal()">
+  <div class="modal">
+    <div class="modal-title">キャンセルした人リスト</div>
+    <div class="input-group">
+      <input class="input-field" id="newCanceledName" type="text" placeholder="名前（例：とよた よしきみ／これだけでも登録できます）">
+    </div>
+    <div class="input-group">
+      <label class="input-label">性別（空欄可）</label>
+      <div style="display:flex;gap:6px;">
+        <button class="pay-btn" id="newCanceledGender-男性" onclick="selectNewCanceledGender('男性')" style="flex:1;">男性</button>
+        <button class="pay-btn" id="newCanceledGender-女性" onclick="selectNewCanceledGender('女性')" style="flex:1;">女性</button>
+      </div>
+    </div>
+    <div class="input-group">
+      <label class="input-label">年代（空欄可）</label>
+      <div class="pay-btns go-age-btns">
+        <button class="pay-btn" id="newCanceledAge-10代" onclick="selectNewCanceledAge('10代')">10代</button>
+        <button class="pay-btn" id="newCanceledAge-20代" onclick="selectNewCanceledAge('20代')">20代</button>
+        <button class="pay-btn" id="newCanceledAge-30代" onclick="selectNewCanceledAge('30代')">30代</button>
+        <button class="pay-btn" id="newCanceledAge-40代" onclick="selectNewCanceledAge('40代')">40代</button>
+        <button class="pay-btn" id="newCanceledAge-50代" onclick="selectNewCanceledAge('50代')">50代</button>
+        <button class="pay-btn" id="newCanceledAge-60代" onclick="selectNewCanceledAge('60代')">60代</button>
+        <button class="pay-btn" id="newCanceledAge-70代" onclick="selectNewCanceledAge('70代')">70代</button>
+      </div>
+    </div>
+    <div class="input-group">
+      <input class="input-field" id="newCanceledPlace" type="text" placeholder="地名（例：二番町／空欄可）" autocomplete="off"
+             oninput="onLocInput('newCanceledPlace','newCanceledPlaceSuggest')"
+             onfocus="onLocInput('newCanceledPlace','newCanceledPlaceSuggest');scrollLocFieldToTop('newCanceledPlace')"
+             onblur="hideLocSuggest('newCanceledPlaceSuggest')">
+      <div id="newCanceledPlaceSuggest" class="loc-suggest"></div>
+    </div>
+    <div class="input-row">
+      <div class="input-group">
+        <label class="input-label">📅 日付（空欄可）</label>
+        <input class="input-field" id="newCanceledDate" type="date">
+      </div>
+      <div class="input-group">
+        <label class="input-label">⏱ 時間（空欄可）</label>
+        <input class="input-field" id="newCanceledTime" type="time">
+      </div>
+    </div>
+    <button class="btn btn-gray" style="width:100%;margin-bottom:10px;" onclick="addCanceledCustomer()">＋ 追加</button>
+    <div id="canceledCustomerList"></div>
+    <div class="btn-row" style="margin-top:14px;">
+      <button class="btn btn-primary" onclick="closeCanceledCustomerModal()">閉じる</button>
+    </div>
+  </div>
+</div>
+
+<!-- Bottom Navigation -->
+<nav class="bottom-nav">
+  <button class="nav-btn active" id="nav-record" onclick="switchPage('record')">
+    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z"/></svg>
+    運行記録
+  </button>
+  <button class="nav-btn" id="nav-schedule" onclick="switchPage('schedule')">
+    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/></svg>
+    タイムライン
+  </button>
+  <button class="nav-btn" id="nav-summary" onclick="switchPage('summary')">
+    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-9 14H7v-7h3v7zm5 0h-3V7h3v10zm5 0h-3v-4h3v4z"/></svg>
+    サマリー
+  </button>
+  <button class="nav-btn" id="nav-recommend" onclick="switchPage('recommend')">
+    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z"/></svg>
+    エリア
+  </button>
+  <button class="nav-btn" id="nav-stats" onclick="switchPage('stats')">
+    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 3c1.93 0 3.5 1.57 3.5 3.5S13.93 13 12 13s-3.5-1.57-3.5-3.5S10.07 6 12 6zm7 13H5v-.23c0-.62.28-1.2.76-1.58C7.47 15.82 9.64 15 12 15s4.53.82 6.24 2.19c.48.38.76.97.76 1.58V19z"/></svg>
+    統計
+  </button>
+  <button class="nav-btn" id="nav-history" onclick="switchPage('history')">
+    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/></svg>
+    履歴
+  </button>
+
+</nav>
+
+<!-- Schedule Graph Modal -->
+<div class="modal-overlay" id="scheduleGraphModal" onclick="if(event.target===this) closeScheduleGraphModal()">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="graph-tab-bar" style="flex-shrink:0;">
+      <button class="graph-tab active" id="graphTabBtnSales" onclick="switchGraphTab('sales')">営収額比較</button>
+      <button class="graph-tab" id="graphTabBtnWork" onclick="switchGraphTab('work')">稼働状況</button>
+    </div>
+
+    <div id="graphTabWork" style="display:none;flex-direction:column;flex:1;min-height:0;">
+      <div style="display:flex;flex:1;min-height:0;">
+        <div id="scheduleGraphAxis" style="position:relative;width:44px;flex-shrink:0;height:100%;"></div>
+        <div id="scheduleGraphScroll" style="flex:1;overflow-x:auto;-webkit-overflow-scrolling:touch;">
+          <div id="scheduleGraphColumns" style="display:flex;align-items:flex-end;gap:8px;height:100%;padding:0 4px;"></div>
+        </div>
+      </div>
+      <div id="scheduleGraphLegend" style="margin-top:14px;text-align:center;flex-shrink:0;"></div>
+      <div style="text-align:center;font-size:11px;color:var(--muted);margin-top:12px;flex-shrink:0;">← 横にスクロールすると別日も見られます →</div>
+    </div>
+
+    <div id="graphTabSales" style="display:flex;flex-direction:column;flex:1;min-height:0;overflow-y:auto;">
+      <div class="dow-tabs" id="salesCompareDowTabs" style="flex-shrink:0;">
+        <div class="dow-tab active" data-dow="all" onclick="switchSalesCompareDow('all')">全体</div>
+        <div class="dow-tab" data-dow="1" onclick="switchSalesCompareDow('1')">月</div>
+        <div class="dow-tab" data-dow="3" onclick="switchSalesCompareDow('3')">水</div>
+        <div class="dow-tab" data-dow="5" onclick="switchSalesCompareDow('5')">金</div>
+      </div>
+      <div id="salesCompareHeadline" style="text-align:center;flex-shrink:0;margin-bottom:10px;"></div>
+      <div id="salesCompareChartWrap" style="position:relative;flex-shrink:0;touch-action:pan-y;"></div>
+      <div id="salesCompareLegend" style="margin-top:10px;text-align:center;flex-shrink:0;"></div>
+      <div style="margin-top:14px;flex-shrink:0;">
+        <div style="font-size:12px;font-weight:700;color:var(--muted);margin-bottom:6px;">日付を選んで重ねて表示（複数選択可）</div>
+        <div class="place-chip-row" id="salesCompareDateChips"></div>
+      </div>
+      <div id="salesCompareNote" style="text-align:center;font-size:11px;color:var(--muted);margin-top:10px;flex-shrink:0;"></div>
+    </div>
+
+    <div style="margin-top:16px;flex-shrink:0;">
+      <button class="btn btn-primary" onclick="closeScheduleGraphModal()">閉じる</button>
+    </div>
+  </div>
+</div>
+
+<!-- Hour Location Modal -->
+<div class="modal-overlay" id="hourLocationModal" onclick="if(event.target===this) closeHourLocationModal()">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title" style="text-align:center;" id="hourLocationTitle"></div>
+    <div id="hourLocationContent"></div>
+    <div style="margin-top:16px;">
+      <button class="btn btn-primary" onclick="closeHourLocationModal()">閉じる</button>
+    </div>
+  </div>
+</div>
+
+<!-- Customer History Modal -->
+<div class="modal-overlay" id="custHistoryModal" onclick="if(event.target===this) closeCustHistoryModal()">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title" style="text-align:center;" id="custHistoryTitle"></div>
+    <div id="custHistoryContent"></div>
+    <div style="margin-top:16px;">
+      <button class="btn btn-primary" onclick="closeCustHistoryModal()">閉じる</button>
+    </div>
+  </div>
+</div>
+
+<!-- サマリー詳細（未収額・流し合計）モーダル -->
+<div class="modal-overlay" id="summaryDetailModal" onclick="if(event.target===this) closeSummaryDetailModal()">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title" style="text-align:center;" id="summaryDetailTitle"></div>
+    <div id="summaryDetailContent"></div>
+    <div style="margin-top:16px;">
+      <button class="btn btn-primary" onclick="closeSummaryDetailModal()">閉じる</button>
+    </div>
+  </div>
+</div>
+
+<!-- Trip Edit Modal -->
+<div class="modal-overlay" id="tripEditModal" onclick="if(event.target===this) closeTripEditModal()">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">乗降記録を修正</div>
+
+    <div class="input-group">
+      <label class="input-label">🟢 乗車場所</label>
+      <input class="input-field" id="editPickupLoc" type="text" placeholder="例：渋谷駅前" autocomplete="off" oninput="onLocInput('editPickupLoc','editPickupLocSuggest')" onfocus="onLocInput('editPickupLoc','editPickupLocSuggest');scrollLocFieldToTop('editPickupLoc')" onblur="hideLocSuggest('editPickupLocSuggest')">
+      <div id="editPickupLocSuggest" class="loc-suggest"></div>
+    </div>
+    <div class="input-group">
+      <div class="fare-label-row">
+        <label class="input-label" style="margin-bottom:0;">🔴 降車場所</label>
+        <button type="button" class="discount-toggle-btn" id="editViaPointAddBtn" onclick="addEditViaPoint()" style="margin-left:auto;">経由地を追加</button>
+      </div>
+      <input class="input-field" id="editDropoffLoc" type="text" placeholder="例：新宿三丁目" autocomplete="off" oninput="onLocInput('editDropoffLoc','editDropoffLocSuggest')" onfocus="onLocInput('editDropoffLoc','editDropoffLocSuggest');scrollLocFieldToTop('editDropoffLoc')" onblur="hideLocSuggest('editDropoffLocSuggest')">
+      <div id="editDropoffLocSuggest" class="loc-suggest"></div>
+    </div>
+    <div id="editViaPointsContainer"></div>
+    <div class="input-row">
+      <div class="input-group">
+        <label class="input-label">⏱ 乗車時刻</label>
+        <input class="input-field" id="editPickupTime" type="time">
+      </div>
+      <div class="input-group">
+        <label class="input-label">🏁 降車時刻</label>
+        <input class="input-field" id="editDropoffTime" type="time">
+      </div>
+    </div>
+    <div class="input-group">
+      <label class="input-label">🚖 種別</label>
+      <div class="trip-type-row">
+        <button class="type-btn go" id="edittype-GO" onclick="selectEditType('GO')">GO</button>
+        <button class="type-btn active" id="edittype-流し" onclick="selectEditType('流し')">流　し</button>
+        <button class="type-btn haisha" id="edittype-配車" onclick="selectEditType('配車')">配　車</button>
+      </div>
+    </div>
+    <div class="input-row">
+      <div class="input-group">
+        <label class="input-label">💴 現金</label>
+        <div class="fare-wrap">
+          <span class="yen">¥</span>
+          <input class="input-field" id="editCashFare" type="number" placeholder="0" inputmode="numeric">
+        </div>
+      </div>
+      <div class="input-group">
+        <label class="input-label">📱 未収</label>
+        <div class="fare-wrap">
+          <span class="yen">¥</span>
+          <input class="input-field" id="editUncollectedFare" type="number" placeholder="0" inputmode="numeric">
+        </div>
+      </div>
+    </div>
+    <div class="input-row">
+      <div class="input-group">
+        <label class="input-label">🎁 チップ</label>
+        <div class="fare-wrap">
+          <span class="yen">¥</span>
+          <input class="input-field" id="editTipAmount" type="number" placeholder="0" inputmode="numeric">
+        </div>
+      </div>
+      <div class="input-group">
+        <label class="input-label">👥 人員</label>
+        <div style="display:flex;gap:6px;">
+          <button class="pay-btn active" id="editpax-male" onclick="incrementEditPax('male')" style="flex:1;padding:8px 2px;font-size:13px;">🚹 男性 <b id="editPaxMaleCount">1</b></button>
+          <button class="pay-btn" id="editpax-female" onclick="incrementEditPax('female')" style="flex:1;padding:8px 2px;font-size:13px;">🚺 女性 <b id="editPaxFemaleCount">0</b></button>
+        </div>
+        <div style="text-align:right;font-size:11px;color:var(--muted);margin-top:3px;">合計 <span id="editPaxTotalCount">1</span>名</div>
+        <input type="hidden" id="editPassengerCount" value="1">
+      </div>
+    </div>
+    <div class="input-group">
+      <label class="input-label">💳 支払方法</label>
+      <div class="pay-btns">
+        <button class="pay-btn active" id="editpay-現金" onclick="selectEditPay('現金')">現金</button>
+        <button class="pay-btn go" id="editpay-GO" onclick="selectEditPay('GO')">GO</button>
+        <button class="pay-btn paypay" id="editpay-PayPay" onclick="selectEditPay('PayPay')">PayPay</button>
+        <button class="pay-btn rakuten" id="editpay-楽天Pay" onclick="selectEditPay('楽天Pay')">楽天Pay</button>
+        <button class="pay-btn credit" id="editpay-クレジット" onclick="selectEditPay('クレジット')">クレジット</button>
+        <button class="pay-btn dpay" id="editpay-d払い" onclick="selectEditPay('d払い')">d払い</button>
+        <button class="pay-btn ticket" id="editpay-チケット" onclick="selectEditPay('チケット')">チケット</button>
+        <button class="pay-btn" id="editpay-その他" onclick="selectEditPay('その他')">その他</button>
+      </div>
+      <input type="hidden" id="editPayMethod" value="現金">
+    </div>
+    <div class="input-group" id="editGoMemoGroup" style="display:none;">
+      <label class="input-label">📝 乗客情報</label>
+      <div class="input-row" style="margin-bottom:6px;">
+        <div class="input-group" style="flex:1.4;margin-bottom:0;">
+          <input class="input-field" id="editGoPaxName" type="text" placeholder="お名前（例：田中）" autocomplete="off">
+        </div>
+        <div class="input-group" style="flex:1;margin-bottom:0;">
+          <select class="input-field" id="editGoPaxAge">
+            <option value="">年代</option>
+            <option value="10代">10代</option>
+            <option value="20代">20代</option>
+            <option value="30代">30代</option>
+            <option value="40代">40代</option>
+            <option value="50代">50代</option>
+            <option value="60代">60代</option>
+            <option value="70代以上">70代以上</option>
+          </select>
+        </div>
+      </div>
+      <input type="hidden" id="editGoPaxGender" value="男性">
+    </div>
+    <div class="input-group" id="editPlainMemoGroup">
+      <label class="input-label">📝 メモ</label>
+      <textarea class="input-field" id="editPlainMemo" rows="2" placeholder="自由記入" style="resize:vertical;"></textarea>
+      <input type="hidden" id="editPlainPaxGender" value="">
+    </div>
+    <div class="input-group">
+      <label class="input-label">🏢 降車場所詳細（店名・施設名など／空欄可）</label>
+      <input class="input-field" data-scroll-up="1" id="editDropoffDetail" type="text" placeholder="" autocomplete="off"
+             oninput="onLocInput('editDropoffDetail','editDropoffDetailSuggest',getDropoffDetailSuggestions)"
+             onfocus="onLocInput('editDropoffDetail','editDropoffDetailSuggest',getDropoffDetailSuggestions);scrollLocFieldToTop('editDropoffDetail')"
+             onblur="hideLocSuggest('editDropoffDetailSuggest')"
+             onkeydown="if(event.key==='Enter'){event.preventDefault();hideLocSuggest('editDropoffDetailSuggest');this.blur();}">
+      <div id="editDropoffDetailSuggest" class="loc-suggest"></div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-gray" onclick="closeTripEditModal()">キャンセル</button>
+      <button class="btn btn-primary" onclick="saveTripEdit()">保存</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// アプリの版数。ファイルを更新するたびにこの値を変えると、
+// 各端末が起動時に新しい版を検出して自動的に読み込み直す（checkForAppUpdate参照）
+const APP_VERSION = '2026-07-25a';
+
+// ==================== DATA STORAGE ====================
+const TRIPS_KEY = 'taxi_trips';
+const WAITS_KEY = 'taxi_waits';
+
+function getTrips() { try { return JSON.parse(localStorage.getItem(TRIPS_KEY) || '[]'); } catch(e) { return []; } }
+function saveTrips(d) { localStorage.setItem(TRIPS_KEY, JSON.stringify(d)); }
+function getWaits() { try { return JSON.parse(localStorage.getItem(WAITS_KEY) || '[]'); } catch(e) { return []; } }
+
+// 業務終了時刻の管理
+const DAY_END_KEY = 'taxi_day_end';
+// 保存済みの業務終了時刻を時刻入力欄用の HH:MM 形式で返す
+function getDayEndTimeValue(date) {
+  const d = getDayEndTime(date);
+  return d ? `${pad(d.getHours())}:${pad(d.getMinutes())}` : '';
+}
+function getDayEndTime(date) {
+  try {
+    const data = JSON.parse(localStorage.getItem(DAY_END_KEY) || '{}');
+    return data[date] ? new Date(data[date]) : null;
+  } catch(e) { return null; }
+}
+function saveDayEndTime(date, time) {
+  try {
+    const data = JSON.parse(localStorage.getItem(DAY_END_KEY) || '{}');
+    data[date] = time.toISOString();
+    localStorage.setItem(DAY_END_KEY, JSON.stringify(data));
+  } catch(e) {}
+}
+
+// 休憩時間の管理（日付ごとに複数登録可能）
+const BREAKS_KEY = 'taxi_breaks';
+function getScheduleBreaks(date) {
+  try {
+    const data = JSON.parse(localStorage.getItem(BREAKS_KEY) || '{}');
+    return data[date] || [];
+  } catch(e) { return []; }
+}
+function saveScheduleBreaks(date, breaks) {
+  try {
+    const data = JSON.parse(localStorage.getItem(BREAKS_KEY) || '{}');
+    data[date] = breaks;
+    localStorage.setItem(BREAKS_KEY, JSON.stringify(data));
+  } catch(e) {}
+}
+
+// 給油時間の管理（日付ごとに複数登録可能）
+const FUEL_STOPS_KEY = 'taxi_fuel_stops';
+function getScheduleFuelStops(date) {
+  try {
+    const data = JSON.parse(localStorage.getItem(FUEL_STOPS_KEY) || '{}');
+    return data[date] || [];
+  } catch(e) { return []; }
+}
+function saveScheduleFuelStops(date, stops) {
+  try {
+    const data = JSON.parse(localStorage.getItem(FUEL_STOPS_KEY) || '{}');
+    data[date] = stops;
+    localStorage.setItem(FUEL_STOPS_KEY, JSON.stringify(data));
+  } catch(e) {}
+}
+
+// キャンセルした人のリスト（名前・性別・年代・地名）。運行記録でGOの乗客情報を入力中、
+// 名前・性別・年代が一致したら警告を出せるようにする
+const CANCELED_CUSTOMERS_KEY = 'taxi_canceled_customers';
+function getCanceledCustomers() {
+  try {
+    const raw = localStorage.getItem(CANCELED_CUSTOMERS_KEY);
+    if (raw === null) {
+      // 初回起動時のみ、ご指定の初期データを登録する
+      const defaults = [
+        { name: 'とよた よしきみ', gender: '男性', age: '30代', place: '二番町' },
+        { name: 'よしだ てんせい', gender: '男性', age: '20代', place: '宮西' },
+      ];
+      localStorage.setItem(CANCELED_CUSTOMERS_KEY, JSON.stringify(defaults));
+      return defaults;
+    }
+    return JSON.parse(raw) || [];
+  } catch(e) { return []; }
+}
+function saveCanceledCustomers(list) { localStorage.setItem(CANCELED_CUSTOMERS_KEY, JSON.stringify(list)); }
+// 名前のみの登録にも対応する。性別・年代は、リスト側に記入がある場合だけ一致を求める
+function matchesCanceledCustomer(name, gender, age) {
+  if (!name) return null;
+  return getCanceledCustomers().find(c => {
+    if (c.name !== name) return false;
+    if (c.gender && c.gender !== gender) return false;
+    if (c.age && c.age !== age) return false;
+    return true;
+  }) || null;
+}
+
+// ==================== バックアップ / 復元 ====================
+// 機種変更などでlocalStorageのデータが失われないよう、全データをJSONファイルに書き出し／読み込みする
+// （HIDDEN_PLACES_KEYなど一部の定数はこのコードより後で宣言されるため、
+// 　配列は使用時に関数として組み立てる＝TDZエラーを避ける）
+function getBackupKeys() {
+  return [
+    TRIPS_KEY, WAITS_KEY, DAY_END_KEY, BREAKS_KEY, FUEL_STOPS_KEY,
+    HIDDEN_PLACES_KEY, DAY_SALES_OVERRIDE_KEY, USER_PERIODS_KEY,
+    USER_PLACE_READING_KEY, USER_DROPOFF_DETAIL_READING_KEY,
+    PLACE_READING_SUPPRESSED_KEY, USER_PLACE_READING_IGNORED_KEY, USER_DROPOFF_DETAIL_READING_IGNORED_KEY,
+    CANCELED_CUSTOMERS_KEY
+  ];
+}
+function exportBackup() {
+  const data = {};
+  getBackupKeys().forEach(key => { data[key] = localStorage.getItem(key); });
+  const backup = { app: 'taxi-app', version: APP_VERSION, exportedAt: new Date().toISOString(), data };
+  const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const today = new Date();
+  a.href = url;
+  a.download = `taxi-backup-${today.getFullYear()}${pad(today.getMonth()+1)}${pad(today.getDate())}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+function importBackupFile(event) {
+  const file = event.target.files[0];
+  event.target.value = '';
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    let backup;
+    try {
+      backup = JSON.parse(reader.result);
+    } catch(e) {
+      alert('ファイルの読み込みに失敗しました。正しいバックアップファイルを選択してください。');
+      return;
+    }
+    if (!backup || typeof backup.data !== 'object') {
+      alert('このファイルはバックアップデータの形式ではありません。');
+      return;
+    }
+    if (!confirm('現在この端末にあるデータを、バックアップファイルの内容で上書きします。\nよろしいですか？')) return;
+    getBackupKeys().forEach(key => {
+      if (backup.data[key] !== undefined && backup.data[key] !== null) {
+        localStorage.setItem(key, backup.data[key]);
+      } else {
+        localStorage.removeItem(key);
+      }
+    });
+    alert('復元が完了しました。アプリを再読み込みします。');
+    location.reload();
+  };
+  reader.onerror = () => {
+    alert('ファイルの読み込みに失敗しました。');
+  };
+  reader.readAsText(file);
+}
+
+// 月・水・金かどうか（待機時間表示対象日）
+function isWaitDay(date) {
+  return [1, 3, 5].includes(new Date(date).getDay()); // 月=1, 水=3, 金=5
+}
+
+// ==================== 操作ボタン ====================
+
+function pad(n) { return String(n).padStart(2,'0'); }
+
+// 「更新」ボタンでは保存済みのキャッシュを消してから読み込み直す。
+// 単なるリロードだとブラウザのキャッシュが使われ、古い画面のままになることがあるため。
+function triggerReload() {
+  const btn = document.getElementById('reloadBtn');
+  btn.classList.add('loading');
+  btn.innerHTML = '<span>↻</span> 更新中...';
+  const clearCaches = ('caches' in window)
+    ? caches.keys().then(keys => Promise.all(keys.map(k => caches.delete(k)))).catch(() => {})
+    : Promise.resolve();
+  clearCaches.then(() => {
+    // キャッシュを確実に回避するため、URLに現在時刻を付けて読み込み直す
+    const url = new URL(location.href);
+    url.searchParams.set('v', Date.now());
+    location.replace(url.toString());
+  });
+}
+
+// 非負整数の割り算を、浮動小数点誤差を一切出さずに切り捨てる。
+// a % b と (a - r) は整数同士の演算なので誤差が出ず、割り切れる数だけを
+// 11で割るため IEEE754 の除算も必ず厳密な整数になる
+function floorDivInt(a, b) {
+  const r = a % b;
+  return (a - r) / b;
+}
+// 消費税抜き。国税庁の内税処理と同じく、まず消費税額を1円未満切り捨てで求め
+// （tax = floor(amount/11)）、税込金額から引いて税抜金額を出す。
+// 表示は10円単位にしたいため、最後にその税抜金額を10円単位で四捨五入する。
+// 例：税込1000円 → 税額floor(90.9)=90円 → 税抜910円（910は10円単位なのでそのまま）
+// 　　税込1200円 → 税額floor(109.09)=109円 → 税抜1091円 → 四捨五入で1090円
+// floorDivIntのみを使った整数演算で求め、浮動小数点の割り算を経由しないことで
+// 数回に1回程度発生していた10円前後のずれを無くす
+function exTax(amount) {
+  const tax = floorDivInt(amount, 11);
+  const base = amount - tax;
+  return floorDivInt(base + 5, 10) * 10;
+}
+
+// ==================== GPS / LOCATION ====================
+function getLocation(type) {
+  if (!navigator.geolocation) {
+    showToast('この端末はGPSに対応していません');
+    return;
+  }
+  const btnId = type === 'pickup' ? 'gpsPickupBtn' : 'gpsDropoffBtn';
+  const fieldId = type === 'pickup' ? 'pickupLoc' : 'dropoffLoc';
+  const btn = document.getElementById(btnId);
+
+  // ローディング表示
+  btn.textContent = '⏳';
+  btn.classList.add('loading');
+  btn.disabled = true;
+
+  navigator.geolocation.getCurrentPosition(
+    async (pos) => {
+      const { latitude, longitude } = pos.coords;
+      try {
+        const addr = await reverseGeocode(latitude, longitude);
+        document.getElementById(fieldId).value = addr;
+        showToast(`📍 ${type === 'pickup' ? '乗車' : '降車'}場所を取得しました`);
+      } catch(e) {
+        // 住所取得失敗時は座標を表示
+        document.getElementById(fieldId).value = `${latitude.toFixed(5)}, ${longitude.toFixed(5)}`;
+        showToast('住所の取得に失敗しました（座標で記録）');
+      }
+      btn.textContent = '📍';
+      btn.classList.remove('loading');
+      btn.disabled = false;
+    },
+    (err) => {
+      btn.textContent = '📍';
+      btn.classList.remove('loading');
+      btn.disabled = false;
+      const msgs = {
+        1: '位置情報の使用が許可されていません。\n設定→プライバシーとセキュリティ→位置情報サービスでSafariを許可してください。',
+        2: '位置情報を取得できませんでした。',
+        3: '位置情報の取得がタイムアウトしました。'
+      };
+      showToast(msgs[err.code] || '位置情報の取得に失敗しました');
+    },
+    { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+  );
+}
+
+// 路線・道路名など地名以外を除外する判定
+function isNonPlaceName(name) {
+  if (!name) return true;
+  // 路線名・国道・県道・バス路線などを除外
+  return /線$|号線|国道|県道|バス|通り$|街道$/.test(name);
+}
+
+async function reverseGeocode(lat, lon) {
+  // 1st: 国土地理院API（日本国内・無料・制限なし）
+  try {
+    const res = await fetch(`https://mreversegeocoder.gsi.go.jp/reverse-geocoder/LonLatToStdAddress?lat=${lat}&lon=${lon}`);
+    if (res.ok) {
+      const data = await res.json();
+      const r = data.results;
+      if (r) {
+        // lv02Nm=町丁目が最も具体的な地名
+        if (r.lv02Nm) return r.lv02Nm;
+        if (r.lv01Nm) return r.lv01Nm;
+      }
+    }
+  } catch(e) {}
+
+  // 2nd: Nominatim
+  try {
+    const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&accept-language=ja&zoom=16`, { headers: { 'Accept-Language': 'ja' } });
+    if (res.ok) {
+      const data = await res.json();
+      const a = data.address || {};
+      const name = a.quarter || a.neighbourhood || a.suburb || a.hamlet
+                || a.city_district || a.district || a.road
+                || a.city || a.town || a.village || a.county;
+      if (name) return formatPlace(name);
+      if (data.display_name) return data.display_name.split(',')[0].trim();
+    }
+  } catch(e) {}
+
+  // 最終フォールバック：座標をそのまま表示
+  return `${lat.toFixed(4)},${lon.toFixed(4)}`;
+}
+
+// 地名を整形（丁目除去 + 漢数字変換）
+function formatPlace(str) {
+  if (!str) return str;
+  // 「〇番町」「一番町」など番町の名前は変換せずそのまま残す
+  // 丁目の数字部分（半角・漢数字）を除去
+  let result = str
+    .replace(/[0-9０-９]+丁目/g, '')           // 半角数字+丁目 を除去
+    .replace(/[〇一二三四五六七八九十]+丁目/g, '') // 漢数字+丁目 を除去
+    .trim();
+  return result || str; // 空になった場合は元の文字列を返す
+}
+
+// ==================== TRIP SAVE ====================
+// 種別選択
+// 時間帯によるデフォルト種別
+// 7:30〜12:00 → 配車、12:00〜17:00 → GO、17:00〜20:00 → 配車、20:00〜 → GO
+function getDefaultType() {
+  return 'GO';
+}
+
+let currentTripType = getDefaultType();
+function selectType(type) {
+  currentTripType = type;
+  const styles = { '流し': ' nashi', '配車': ' haisha', 'GO': '' };
+  ['流し','配車','GO'].forEach(t => {
+    const btn = document.getElementById(`type-${t}`);
+    if (!btn) return;
+    btn.className = `type-btn${styles[t]||''}${t === type ? ' active' : ''}`;
+  });
+  // 種別に応じて支払方法を自動設定
+  if (type === 'GO') selectPay('GO');
+  if (type === '配車' || type === '流し') selectPay('現金');
+  // GOの場合のみ乗客情報メモを表示、それ以外は自由記入メモを表示
+  document.getElementById('goMemoGroup').style.display = (type === 'GO') ? 'block' : 'none';
+  document.getElementById('plainMemoGroup').style.display = (type === 'GO') ? 'none' : 'block';
+  // 種別を切り替えたら、GOメモ欄の巻き上げが残っていても元の位置に戻す
+  resetFormScroll();
+}
+
+// GOアプリ乗客情報（メモ）
+// goGenderChosen: 利用者が自分で性別を選んだかどうか。既定値（男性）のままの状態で
+// 候補を性別で絞り込むと、まだ何も選んでいないのに女性の履歴が消えてしまうため区別する
+let goGenderChosen = false;
+// 同じ性別ボタンをもう一度押すと選択を解除できる（誤タップの取り消し用）
+function selectGoGender(g, userChose) {
+  const current = document.getElementById('goPaxGender').value;
+  const next = (userChose && current === g) ? '' : g;
+  if (userChose) goGenderChosen = next !== '';
+  document.getElementById('goPaxGender').value = next;
+  ['男性','女性'].forEach(x => {
+    document.getElementById(`goGender-${x}`).className = 'pay-btn' + (x === next ? ' active' : '');
+  });
+  // 候補は性別・年代でも絞り込むため、切り替え時に再表示する
+  if (document.getElementById('goPaxName').value.trim()) onGoPaxNameInput();
+}
+// タップ数を減らすため、年代もプルダウンではなくボタンで一発選択できるようにしている。
+// 同じボタンをもう一度押すと選択を解除する
+const GO_AGE_OPTIONS = ['10代','20代','30代','40代','50代','60代','70代'];
+function selectGoAge(age) {
+  const current = document.getElementById('goPaxAge').value;
+  const next = current === age ? '' : age;
+  document.getElementById('goPaxAge').value = next;
+  syncGoAgeButtons();
+  if (document.getElementById('goPaxName').value.trim()) onGoPaxNameInput();
+}
+function syncGoAgeButtons() {
+  const age = document.getElementById('goPaxAge').value;
+  GO_AGE_OPTIONS.forEach(a => {
+    const btn = document.getElementById(`goAge-${a}`);
+    if (btn) btn.className = 'pay-btn' + (a === age ? ' active' : '');
+  });
+}
+function buildGoMemo() {
+  const name = document.getElementById('goPaxName').value.trim();
+  if (!name) return '';
+  const gender = document.getElementById('goPaxGender').value;
+  const age = document.getElementById('goPaxAge').value;
+  const parts = [`${name}`];
+  if (gender) parts.push(gender);
+  if (age) parts.push(age);
+  return parts.join(' / ');
+}
+function resetGoMemo() {
+  document.getElementById('goPaxName').value = '';
+  document.getElementById('goPaxAge').value = '';
+  syncGoAgeButtons();
+  goGenderChosen = false;
+  selectGoGender('');  // 最初はどちらも選択されていない状態にする
+  const hist = document.getElementById('goPaxHistory');
+  hist.style.display = 'none';
+  hist.innerHTML = '';
+  updateGoPaxCancelWarning();
+}
+
+// 流し・配車の乗客の性別は入力欄を廃止したため、保存値だけを初期化する
+function resetPlainGender() {
+  document.getElementById('plainPaxGender').value = '';
+  const hist = document.getElementById('plainMemoHistory');
+  hist.style.display = 'none';
+  hist.innerHTML = '';
+}
+
+// GOメモ欄の定型文の予測変換（読みの頭文字 → 実際に入力する文字列）。
+// 名前の代わりに「待ち合わせ番号」等をメモしたいときに使う
+const GO_MEMO_HINTS = {
+  'まち': 'マチアワセバンゴウ',
+};
+function applyGoMemoHint(val) {
+  document.getElementById('goPaxName').value = val;
+  onGoPaxNameInput();
+}
+// 名前・性別・年代が「キャンセルした人リスト」と一致したら警告を表示する
+function updateGoPaxCancelWarning() {
+  const name = document.getElementById('goPaxName').value.trim();
+  const gender = document.getElementById('goPaxGender').value;
+  const age = document.getElementById('goPaxAge').value;
+  const box = document.getElementById('goPaxCancelWarning');
+  const match = matchesCanceledCustomer(name, gender, age);
+  if (match) {
+    box.textContent = `⚠️ キャンセルした人と一致します${match.place ? `（${match.place}）` : ''}`;
+    box.style.display = 'block';
+  } else {
+    box.style.display = 'none';
+    box.textContent = '';
+  }
+}
+// 名前入力中に過去のGO乗車履歴（日付・乗降場所）を候補表示。
+// 名前の頭文字が一致し、かつ現在選択中の性別・年代が一致する履歴のみを候補にする。
+function onGoPaxNameInput() {
+  const q = document.getElementById('goPaxName').value.trim();
+  const hist = document.getElementById('goPaxHistory');
+  updateGoPaxCancelWarning();
+  if (!q) { hist.style.display = 'none'; hist.innerHTML = ''; return; }
+
+  const hintMatches = Object.entries(GO_MEMO_HINTS).filter(([hint]) => hint.startsWith(q));
+  const hintHTML = hintMatches.length
+    ? `<div class="place-chip-row" style="margin-bottom:6px;">${hintMatches.map(([,val]) =>
+        `<button type="button" class="place-chip" onmousedown="event.preventDefault()" onclick="applyGoMemoHint('${val}')">${val}</button>`
+      ).join('')}</div>`
+    : '';
+
+  const gender = document.getElementById('goPaxGender').value;
+  const age = document.getElementById('goPaxAge').value;
+
+  // 入力した文字が先頭から一致する履歴のみを候補にする。
+  // 1文字目が一致すれば候補に出るが、2文字目を入力した時点でそこが違う履歴は候補から外れる。
+  // さらに年代・性別が選択されていれば、それでも絞り込む。
+  const allMatches = getTrips()
+    .filter(t => t.tripType === 'GO' && t.paxName && t.paxName.startsWith(q))
+    // 「70代以上」は旧ボタン表記の記録のため、現行の「70代」ボタンでも一致させる
+    .filter(t => !age || t.paxAge === age || (age === '70代' && t.paxAge === '70代以上'))
+    .filter(t => !goGenderChosen || t.paxGender === gender)
+    .sort((a,b) => (b.date + (b.pickupTime||'')).localeCompare(a.date + (a.pickupTime||'')));
+
+  if (allMatches.length === 0) {
+    if (!hintHTML) { hist.style.display = 'none'; hist.innerHTML = ''; return; }
+    hist.innerHTML = hintHTML;
+    hist.style.display = 'block';
+    return;
+  }
+
+  const totalFare = allMatches.reduce((s,t) => s + getTripFare(t), 0);
+  const shown = allMatches.slice(0, 5);
+  const restCount = allMatches.length - shown.length;
+
+  const summary = `<div style="font-size:12px;font-weight:700;color:var(--primary);margin-bottom:4px;">過去${allMatches.length}回のご利用（合計¥${totalFare.toLocaleString()}）</div>`;
+
+  const rows = shown.map(t => {
+    const [,mm,dd] = t.date.split('-');
+    const dow = ['日','月','火','水','木','金','土'][new Date(t.date + 'T00:00:00').getDay()];
+    const fare = getTripFare(t);
+    return `
+      <div class="pax-history-item" onclick="applyGoPaxHistory(${t.id})">
+        <span class="ph-date">${parseInt(mm)}/${parseInt(dd)}(${dow}) ${t.pickupTime||''}</span> ${t.paxName} ${t.paxGender||''}${t.paxAge||''}　<b>¥${fare.toLocaleString()}</b>
+        <div class="ph-route">${formatTripRoute(t)}</div>
+      </div>
+    `;
+  }).join('');
+
+  const more = restCount > 0
+    ? `<div style="text-align:center;font-size:11px;color:var(--muted);margin-top:4px;">ほか${restCount}件</div>`
+    : '';
+
+  hist.innerHTML = hintHTML + summary + rows + more;
+  hist.style.display = 'block';
+}
+function applyGoPaxHistory(id) {
+  const t = getTrips().find(x => x.id === id);
+  if (!t) return;
+  document.getElementById('goPaxName').value = t.paxName || '';
+  if (t.paxGender) selectGoGender(t.paxGender, true);
+  // 「70代以上」は旧ボタン表記の記録。現行のボタン（70代）に合わせて読み替える
+  if (t.paxAge) document.getElementById('goPaxAge').value = t.paxAge === '70代以上' ? '70代' : t.paxAge;
+  syncGoAgeButtons();
+  // 履歴は閉じずに、選んだ内容で絞り込み直して表示したままにする
+  onGoPaxNameInput();
+  showToast(`前回: ${t.date.split('-').slice(1).map(n=>parseInt(n)).join('/')} ${t.pickup||''} → ${t.dropoff||''}`);
+}
+
+// 流し・配車はメモが自由記入のため、括弧書きより前の部分を名前とみなして過去の乗車履歴を探す。
+// GO・流し・配車をまたいで、同じ名前のお客さんの記録を候補に出す
+function onPlainMemoInput() {
+  const q = parsePaxText(document.getElementById('plainMemo').value).name.trim();
+  const hist = document.getElementById('plainMemoHistory');
+  if (!q) { hist.style.display = 'none'; hist.innerHTML = ''; return; }
+
+  const allMatches = getTrips()
+    .filter(t => { const n = getPaxName(t); return n && n.startsWith(q); })
+    .sort((a,b) => (b.date + (b.pickupTime||'')).localeCompare(a.date + (a.pickupTime||'')));
+
+  if (allMatches.length === 0) { hist.style.display = 'none'; hist.innerHTML = ''; return; }
+
+  const totalFare = allMatches.reduce((s,t) => s + getTripFare(t), 0);
+  const shown = allMatches.slice(0, 5);
+  const restCount = allMatches.length - shown.length;
+
+  const summary = `<div style="font-size:12px;font-weight:700;color:var(--primary);margin-bottom:4px;">過去${allMatches.length}回のご利用（合計¥${totalFare.toLocaleString()}）</div>`;
+  const rows = shown.map(t => {
+    const [,mm,dd] = t.date.split('-');
+    const dow = ['日','月','火','水','木','金','土'][new Date(t.date + 'T00:00:00').getDay()];
+    const fare = getTripFare(t);
+    return `
+      <div class="pax-history-item" onclick="applyPlainMemoHistory(${t.id})">
+        <span class="ph-date">${parseInt(mm)}/${parseInt(dd)}(${dow}) ${t.pickupTime||''}</span> ${formatPaxLabel(t)}　<b>¥${fare.toLocaleString()}</b>
+        <div class="ph-route">${formatTripRoute(t)}</div>
+      </div>
+    `;
+  }).join('');
+  const more = restCount > 0
+    ? `<div style="text-align:center;font-size:11px;color:var(--muted);margin-top:4px;">ほか${restCount}件</div>`
+    : '';
+
+  hist.innerHTML = summary + rows + more;
+  hist.style.display = 'block';
+}
+function applyPlainMemoHistory(id) {
+  const t = getTrips().find(x => x.id === id);
+  if (!t) return;
+  let text;
+  if (t.tripType === 'GO' && t.paxName) {
+    const parts = [t.paxGender, t.paxAge].filter(Boolean).join('　');
+    text = parts ? `${t.paxName}（${parts}）` : t.paxName;
+  } else {
+    text = t.memo || '';
+  }
+  document.getElementById('plainMemo').value = text;
+  // 履歴は閉じずに、選んだ内容で絞り込み直して表示したままにする
+  onPlainMemoInput();
+  showToast(`前回: ${t.date.split('-').slice(1).map(n=>parseInt(n)).join('/')} ${t.pickup||''} → ${t.dropoff||''}`);
+}
+
+// ==================== 乗車/降車場所の予測変換 ====================
+// 過去の乗車場所・降車場所を1つの候補プールとして扱い、一致したものを
+// 使用回数の多い順（同数なら直近利用順）に並べて表示する
+
+// 松山市周辺の地名について、実際の読みの頭文字を直接登録した対応表（ユーザー提供）。
+// 漢字1文字から一般的な読みを推測する方式は、同じ漢字でも地名によって読みが異なるため
+// 誤った候補（例：空港通が「そら」の読みで「そ」に一致してしまう等）が出てしまうことがわかり廃止した。
+// 現在はこの対応表に登録された地名のみが、ひらがな入力による読み一致の対象になる。
+// 値は頭文字1文字でもよいが、読みを長く登録するほど文字を打ち足したときに絞り込める
+// （例：喜与町は「きよ」まで登録しているので、「き」でも「きよ」でも候補に出る）。
+const PLACE_NAME_READING_HINT = {
+  '鷹子町':'た', '一番町':'い', '勝山町':'か', '小坂':'こ', '南久米町':'み', '中村':'な',
+  '平井町':'ひ', '立花':'た', '久米窪田町':'く', '千舟町':'ち', '枝松':'え', '桑原':'く',
+  '来住町':'き', '湊町':'み', '朝生田町':'あ', '道後湯之町':'ど', '平和通':'へ', '六軒家町':'ろ',
+  '富久町':'と', '湯渡町':'ゆ', '畑寺':'は', '石手':'い', '正円寺':'し', '本町':'ほ',
+  '道後今市':'ど', '高砂町':'た', '山越':'や', '西石井':'に', '土居田町':'ど', '溝辺町':'み',
+  '北土居':'き', '此花町':'こ', '河原町':'か', '末広町':'す', '南吉田町':'み', '南持田町':'み',
+  '道後一万':'ど', '樽味':'た', '松前町':'ま', '道後町':'ど', '北吉田町':'き', '北斎院町':'き',
+  '持田町':'も', '旭町':'あ', '堀之内':'ほ', '古川西':'ふ', '保免上':'ほ', '三町':'さ',
+  '道後姫塚':'ど', '東野':'ひ', '清住':'き', '南高井町':'み', '古川北':'ふ', '新石手':'し',
+  '中央':'ち', '高岡町':'た', '三津':'み', '宮西':'み', '大手町':'お', '衣山':'き', '越智':'お',
+  '道後喜多町':'ど', '生石町':'い', '文京町':'ぶ', '小栗':'お', '古三津':'ふ', '錦町':'に',
+  '築山町':'つ', '和泉南':'い', '白水台':'は', '東温市見奈良':'と', '高井町':'た', '松末':'ま',
+  '味酒町':'み', '安城寺町':'あ', '福音寺町':'ふ', '余戸南':'よ', '花園町':'は', '柳井町':'や',
+  '東一万町':'ひ', '空港通':'く', '和泉北':'い', '雄郡':'ゆ', '束本':'つ', '御宝町':'み',
+  '岩崎町':'い', '中一万町':'な',
+  '愛光町':'あ', '朝美':'あ', '朝日ケ丘':'あ', '祝谷':'い', '祝谷東町':'い', '祝谷西町':'い',
+  '大街道':'お', '上市':'か', '萱町':'か', '北久米町':'き', '紅葉町':'も', '南堀端町':'み',
+  '二番町':'に', '三番町':'さ', '歩行町':'か', '喜与町':'きよ', '東雲町':'し', '昭和町':'し',
+  '西一万町':'に', '北持田町':'き', '北立花町':'き', '永木町':'な', '新立町':'し',
+  '道後公園':'ど', '道後北代':'ど', '道後樋又':'ど', '道後緑台':'ど', '道後多幸町':'ど',
+  '道後鷺谷町':'ど', '道後湯月町':'ど', '南町':'み', '石手白石':'い', '日の出町':'ひ',
+  '祇園町':'き', '拓川町':'た', '水泥町':'み', '南梅本町':'み', '北梅本町':'き', '星岡':'ほ',
+  '今在家':'い', '天山':'あ', '居相':'い', '古川南':'ふ', '森松町':'も', '保免中':'ほ',
+  '保免西':'ほ', '余戸東':'よ', '余戸中':'よ', '余戸西':'よ', '東垣生町':'ひ', '西垣生町':'に',
+  '勝岡町':'か', '藤原町':'ふ', '藤原':'ふ', '北藤原町':'き', '春日町':'か', '室町':'む',
+  '真砂町':'ま', '土橋町':'どばし', '竹原町':'た', '針田町':'は', '若草町':'わ', '木屋町':'き',
+  '緑町':'み', '鉄炮町':'て', '清水町':'し', '姫原':'ひ',
+  '東温市牛渕':'と', '別府町':'へ', '祓川':'は', '竹原':'た', '内浜町':'う', '市坪南':'い', '鴨川':'か',
+  '北井門':'き', '久万ノ台':'く', '市坪北':'い', '宮田町':'み',
+  '山西町':'や', '東長戸':'ひ', '吉藤':'よ', '南江戸':'み', '東石井':'ひ', '高浜町':'た', '南白水':'み', '泉町':'い', '内宮町':'う', '堀江町':'ほ', '西長戸町':'に',
+  '南斎院町':'み',
+};
+
+// 特定のひらがな入力に対して誤って候補に出てしまう地名を除外する対応表（ユーザー指摘分）。
+// 文字列に該当のひらがなが含まれる場合でも、ここに登録されていれば候補から外す。
+const PLACE_NAME_READING_EXCLUDE = {
+  'う': ['上市','海岸通'],
+  'お': ['大字西高柳'],
+  'か': ['上野町'],
+  'こ': ['高井町','高砂町','小栗','高浜町'],
+  'さ': ['山越','三津','山西町','山越町'],
+  'し': ['小栗','市坪西町'],
+  'せ': ['千舟町','西石井','西一万町','西長戸町'],
+  'そ': ['空港通'],
+  'ち': ['中村','中一万町','中野町','中一万','みなとまち'],
+  'と': ['東石井','東野','東長戸','みなとまち'],
+  'な': ['南吉田町','南梅本町','南高井町','南江戸','みなとまち'],
+  'の': ['野田','日の出町'],
+  'は': ['原町','八倉'],
+  'ひ': ['一番町'],
+  'ほ': ['北梅本町','北久米町','北土居','北斎院町'],
+  'ま': ['みなとまち'],
+  'み': ['道後湯之町','道後町'],
+  'も': ['本町','文京町'],
+  'や': ['野田'],
+  'ろ': ['六軒屋町'],
+};
+
+// 「ど」を「と」で入力しても候補に出せるように、濁点・半濁点を取り除いて比較する
+function stripDakuten(str) {
+  return str.normalize('NFD').replace(/[゙゚]/g, '');
+}
+
+// アプリ内で登録した「地名の読み方（頭文字）」。コードを書き換えなくても
+// 新しい地名の予測変換を追加できるように、ハードコードのPLACE_NAME_READING_HINTとは別にlocalStorageで管理する
+const USER_PLACE_READING_KEY = 'taxi_user_place_reading';
+function getUserPlaceReadings() {
+  try { return JSON.parse(localStorage.getItem(USER_PLACE_READING_KEY) || '{}'); } catch(e) { return {}; }
+}
+function saveUserPlaceReadings(map) { localStorage.setItem(USER_PLACE_READING_KEY, JSON.stringify(map)); }
+
+// ハードコードされたPLACE_NAME_READING_HINTの読み方を、アプリ内から「削除」できるようにするための除外リスト。
+// コードそのものは書き換えられないため、ここに載っている地名は読み方が登録されていない扱いにする
+const PLACE_READING_SUPPRESSED_KEY = 'taxi_place_reading_suppressed';
+function getSuppressedPlaceReadings() {
+  try { return JSON.parse(localStorage.getItem(PLACE_READING_SUPPRESSED_KEY) || '[]'); } catch(e) { return []; }
+}
+function saveSuppressedPlaceReadings(list) { localStorage.setItem(PLACE_READING_SUPPRESSED_KEY, JSON.stringify(list)); }
+
+// 運行記録の予測変換に実際に使われている読み方（ハードコード＋アプリ内登録分、削除されたものは除く）
+function getMergedPlaceReadingHints() {
+  const merged = { ...PLACE_NAME_READING_HINT, ...getUserPlaceReadings() };
+  getSuppressedPlaceReadings().forEach(name => { delete merged[name]; });
+  return merged;
+}
+
+// 過去の記録にはあるが、まだ読み方（イニシャル）の登録が不要と判断して見送ったもの。
+// 「未登録」一覧から消すためだけに使い、予測変換自体には影響しない
+const USER_PLACE_READING_IGNORED_KEY = 'taxi_user_place_reading_ignored';
+function getIgnoredPlaceNames() {
+  try { return JSON.parse(localStorage.getItem(USER_PLACE_READING_IGNORED_KEY) || '[]'); } catch(e) { return []; }
+}
+function saveIgnoredPlaceNames(list) { localStorage.setItem(USER_PLACE_READING_IGNORED_KEY, JSON.stringify(list)); }
+const USER_DROPOFF_DETAIL_READING_IGNORED_KEY = 'taxi_user_dropoff_detail_reading_ignored';
+function getIgnoredDropoffDetails() {
+  try { return JSON.parse(localStorage.getItem(USER_DROPOFF_DETAIL_READING_IGNORED_KEY) || '[]'); } catch(e) { return []; }
+}
+function saveIgnoredDropoffDetails(list) { localStorage.setItem(USER_DROPOFF_DETAIL_READING_IGNORED_KEY, JSON.stringify(list)); }
+
+// 降車場所詳細（店名・施設名など）の読み方。こちらは地名と違って固定の一覧がないため、
+// すべてアプリ内で登録したものだけを使う
+const USER_DROPOFF_DETAIL_READING_KEY = 'taxi_user_dropoff_detail_reading';
+function getUserDropoffDetailReadings() {
+  try { return JSON.parse(localStorage.getItem(USER_DROPOFF_DETAIL_READING_KEY) || '{}'); } catch(e) { return {}; }
+}
+function saveUserDropoffDetailReadings(map) { localStorage.setItem(USER_DROPOFF_DETAIL_READING_KEY, JSON.stringify(map)); }
+
+function locationMatchesQuery(name, q, hintMap) {
+  const hints = hintMap || getMergedPlaceReadingHints();
+  const qBase = stripDakuten(q);
+  for (const [key, names] of Object.entries(PLACE_NAME_READING_EXCLUDE)) {
+    if (stripDakuten(key) === qBase && names.includes(name)) return false;
+  }
+  if (stripDakuten(name).includes(qBase)) return true;
+  const hint = hints[name];
+  return !!hint && stripDakuten(hint).startsWith(qBase);
+}
+let locSuggestCache = {};
+function getLocationSuggestions(query) {
+  const q = query.trim();
+  if (!q) return [];
+  const hints = getMergedPlaceReadingHints();
+  // 並び順は統計「場所」タブの乗車回数（＝乗車場所としての利用回数）に合わせる
+  const freq = new Map();
+  const touch = (loc, key, isPickup) => {
+    if (!loc || !locationMatchesQuery(loc, q, hints)) return;
+    let entry = freq.get(loc);
+    if (!entry) { entry = { count: 0, lastKey: '' }; freq.set(loc, entry); }
+    if (isPickup) entry.count++;
+    if (key > entry.lastKey) entry.lastKey = key;
+  };
+  getTrips().forEach(t => {
+    const key = t.date + (t.pickupTime || '');
+    touch(t.pickup, key, true);
+    touch(t.dropoff, key, false);
+  });
+  // 登録済みの地名は、まだ利用実績がなくても候補に含める（実績があるものより下位に表示）
+  Object.keys(hints).forEach(name => {
+    if (!locationMatchesQuery(name, q, hints)) return;
+    if (!freq.has(name)) freq.set(name, { count: 0, lastKey: '' });
+  });
+  const hidden = getHiddenPlaces();
+  return [...freq.entries()]
+    .filter(([name]) => name !== q && !hidden.includes(name))
+    // 最近使用した場所を優先し、利用実績がない場合のみ乗車回数で補う
+    .sort((a,b) => b[1].lastKey.localeCompare(a[1].lastKey) || b[1].count - a[1].count)
+    .map(([name]) => name)
+    .slice(0, 20);
+}
+
+// 降車場所詳細（店名・施設名など）の予測変換。過去の記録＋アプリ内で登録した読み方をもとに候補を出す
+function dropoffDetailMatchesQuery(name, q, hintMap) {
+  const hints = hintMap || getUserDropoffDetailReadings();
+  const qBase = stripDakuten(q);
+  if (stripDakuten(name).includes(qBase)) return true;
+  const hint = hints[name];
+  return !!hint && stripDakuten(hint).startsWith(qBase);
+}
+function getDropoffDetailSuggestions(query) {
+  const q = (query || '').trim();
+  if (!q) return [];
+  const hints = getUserDropoffDetailReadings();
+  const freq = new Map();
+  getTrips().forEach(t => {
+    const detail = t.dropoffDetail && t.dropoffDetail.trim();
+    if (!detail || !dropoffDetailMatchesQuery(detail, q, hints)) return;
+    const key = t.date + (t.pickupTime || '');
+    let entry = freq.get(detail);
+    if (!entry) { entry = { count: 0, lastKey: '' }; freq.set(detail, entry); }
+    entry.count++;
+    if (key > entry.lastKey) entry.lastKey = key;
+  });
+  // 登録済みの読み方は、まだ利用実績がなくても候補に含める
+  Object.keys(hints).forEach(name => {
+    if (!dropoffDetailMatchesQuery(name, q, hints)) return;
+    if (!freq.has(name)) freq.set(name, { count: 0, lastKey: '' });
+  });
+  return [...freq.entries()]
+    .filter(([name]) => name !== q)
+    .sort((a,b) => b[1].lastKey.localeCompare(a[1].lastKey) || b[1].count - a[1].count)
+    .map(([name]) => name)
+    .slice(0, 20);
+}
+
+// ==================== 地名・降車場所詳細の読み方登録モーダル ====================
+// 登録済みの読み方は五十音の行（あ・か・さ…）ごとにタブを分けて表示し、探しやすくする
+const GOJUON_ROWS = ['あ','か','さ','た','な','は','ま','や','ら','わ'];
+const GOJUON_ROW_CHARS = {
+  'あ':'あいうえお', 'か':'かきくけこ', 'さ':'さしすせそ', 'た':'たちつてと', 'な':'なにぬねの',
+  'は':'はひふへほ', 'ま':'まみむめも', 'や':'やゆよ', 'ら':'らりるれろ', 'わ':'わをん',
+};
+function renderGojuonTabs(containerId, activeRow, onclickFnName) {
+  document.getElementById(containerId).innerHTML = GOJUON_ROWS.map(row =>
+    `<div class="dow-tab${row === activeRow ? ' active' : ''}" onclick="${onclickFnName}('${row}')">${row}</div>`
+  ).join('');
+}
+// 行を選んだ後、さらにその行の文字（あ行なら あ・い・う・え・お）で絞り込めるようにする
+function renderGojuonCharTabs(containerId, row, activeChar, onclickFnName) {
+  document.getElementById(containerId).innerHTML = GOJUON_ROW_CHARS[row].split('').map(ch =>
+    `<div class="dow-tab${ch === activeChar ? ' active' : ''}" onclick="${onclickFnName}('${ch}')">${ch}</div>`
+  ).join('');
+}
+
+// 地名・降車場所詳細ごとに、最後に使われた日時（記録の日付＋乗車時刻）を調べる。
+// 登録済みの読み方は、この値が新しいものから並べる（実績がないものは末尾）
+function getPlaceLastUsedMap() {
+  const map = new Map();
+  getTrips().forEach(t => {
+    const key = t.date + (t.pickupTime || '');
+    const touch = (name) => {
+      name = (name || '').trim();
+      if (!name) return;
+      if (!map.has(name) || key > map.get(name)) map.set(name, key);
+    };
+    touch(t.pickup);
+    touch(t.dropoff);
+    getTripViaPoints(t).forEach(touch);
+  });
+  return map;
+}
+function getDropoffDetailLastUsedMap() {
+  const map = new Map();
+  getTrips().forEach(t => {
+    const name = (t.dropoffDetail || '').trim();
+    if (!name) return;
+    const key = t.date + (t.pickupTime || '');
+    if (!map.has(name) || key > map.get(name)) map.set(name, key);
+  });
+  return map;
+}
+function sortByLastUsed(names, lastUsedMap) {
+  return names.slice().sort((a,b) => {
+    const la = lastUsedMap.get(a) || '';
+    const lb = lastUsedMap.get(b) || '';
+    if (la !== lb) return lb.localeCompare(la); // 新しく使ったものが先
+    return a.localeCompare(b, 'ja');
+  });
+}
+
+function openReadingHintModal() {
+  renderUserPlaceReadingList();
+  renderUserDropoffDetailReadingList();
+  renderUnregisteredPlaceList();
+  renderUnregisteredDropoffDetailList();
+  document.getElementById('readingHintModal').classList.add('open');
+}
+function closeReadingHintModal() {
+  document.getElementById('readingHintModal').classList.remove('open');
+}
+
+// ==================== キャンセルした人リスト ====================
+let newCanceledGender = '';
+let newCanceledAge = '';
+function selectNewCanceledGender(g) {
+  newCanceledGender = (newCanceledGender === g) ? '' : g;
+  ['男性','女性'].forEach(x => {
+    const btn = document.getElementById(`newCanceledGender-${x}`);
+    if (btn) btn.className = 'pay-btn' + (x === newCanceledGender ? ' active' : '');
+  });
+}
+function selectNewCanceledAge(age) {
+  newCanceledAge = (newCanceledAge === age) ? '' : age;
+  GO_AGE_OPTIONS.forEach(a => {
+    const btn = document.getElementById(`newCanceledAge-${a}`);
+    if (btn) btn.className = 'pay-btn' + (a === newCanceledAge ? ' active' : '');
+  });
+}
+function resetNewCanceledSelections() {
+  newCanceledGender = '';
+  newCanceledAge = '';
+  ['男性','女性'].forEach(x => {
+    const btn = document.getElementById(`newCanceledGender-${x}`);
+    if (btn) btn.className = 'pay-btn';
+  });
+  GO_AGE_OPTIONS.forEach(a => {
+    const btn = document.getElementById(`newCanceledAge-${a}`);
+    if (btn) btn.className = 'pay-btn';
+  });
+}
+function openCanceledCustomerModal() {
+  renderCanceledCustomerList();
+  // 入力しやすいよう、日付は今日を既定値にしておく
+  document.getElementById('newCanceledDate').value = todayStr();
+  document.getElementById('canceledCustomerModal').classList.add('open');
+}
+function closeCanceledCustomerModal() {
+  document.getElementById('canceledCustomerModal').classList.remove('open');
+}
+function addCanceledCustomer() {
+  const nameInput = document.getElementById('newCanceledName');
+  const placeInput = document.getElementById('newCanceledPlace');
+  const dateInput = document.getElementById('newCanceledDate');
+  const timeInput = document.getElementById('newCanceledTime');
+  const name = nameInput.value.trim();
+  const place = placeInput.value.trim();
+  const date = dateInput.value;
+  const time = timeInput.value;
+  if (!name) { alert('名前を入力してください。'); return; }
+  const list = getCanceledCustomers();
+  list.push({ name, gender: newCanceledGender, age: newCanceledAge, place, date, time });
+  saveCanceledCustomers(list);
+  nameInput.value = '';
+  placeInput.value = '';
+  dateInput.value = todayStr();
+  timeInput.value = '';
+  resetNewCanceledSelections();
+  renderCanceledCustomerList();
+}
+function removeCanceledCustomer(idx) {
+  const list = getCanceledCustomers();
+  const target = list[idx];
+  if (!target) return;
+  if (!confirm(`「${target.name}」をキャンセルした人リストから削除しますか？`)) return;
+  list.splice(idx, 1);
+  saveCanceledCustomers(list);
+  renderCanceledCustomerList();
+}
+function renderCanceledCustomerList() {
+  const list = getCanceledCustomers();
+  const box = document.getElementById('canceledCustomerList');
+  if (list.length === 0) {
+    box.innerHTML = `<div style="font-size:12px;color:var(--muted);padding:6px 0;">登録がありません</div>`;
+    return;
+  }
+  box.innerHTML = list.map((c, i) => {
+    let whenLabel = '';
+    if (c.date) {
+      const [,mm,dd] = c.date.split('-');
+      whenLabel = `${parseInt(mm)}/${parseInt(dd)}`;
+      if (c.time) whenLabel += ` ${c.time}`;
+    }
+    const details = [c.gender, c.age, c.place].filter(Boolean).join('・');
+    return `
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);">
+      <div>
+        <span style="font-weight:800;font-size:15px;color:var(--danger);">${c.name}</span>
+        ${details ? `<span style="color:var(--muted);font-size:13px;margin-left:6px;">${details}</span>` : ''}
+        ${whenLabel ? `<div style="color:var(--muted);font-size:12px;margin-top:2px;">📅 ${whenLabel}</div>` : ''}
+      </div>
+      <button type="button" class="discount-toggle-btn" onclick="removeCanceledCustomer(${i})">削除</button>
+    </div>
+  `;
+  }).join('');
+}
+
+let placeReadingTab = 'あ';
+let placeReadingChar = 'あ';
+let placeReadingExpanded = true;
+let editingPlaceReadingName = null;
+function switchPlaceReadingTab(row) {
+  // 選択中の行タブをもう一度押すと、候補をたたんで隠す
+  if (row === placeReadingTab && placeReadingExpanded) {
+    placeReadingExpanded = false;
+  } else {
+    placeReadingTab = row;
+    placeReadingChar = GOJUON_ROW_CHARS[row][0];
+    placeReadingExpanded = true;
+  }
+  editingPlaceReadingName = null;
+  renderUserPlaceReadingList();
+}
+function switchPlaceReadingChar(ch) {
+  placeReadingChar = ch;
+  editingPlaceReadingName = null;
+  renderUserPlaceReadingList();
+}
+function togglePlaceReadingEdit(encodedName) {
+  const name = decodeURIComponent(encodedName);
+  editingPlaceReadingName = (editingPlaceReadingName === name) ? null : name;
+  renderUserPlaceReadingList();
+}
+function renderUserPlaceReadingList() {
+  renderGojuonTabs('userPlaceReadingTabs', placeReadingExpanded ? placeReadingTab : null, 'switchPlaceReadingTab');
+  const charTabsBox = document.getElementById('userPlaceReadingCharTabs');
+  const box = document.getElementById('userPlaceReadingList');
+  if (!placeReadingExpanded) {
+    charTabsBox.innerHTML = '';
+    box.innerHTML = '';
+    return;
+  }
+  renderGojuonCharTabs('userPlaceReadingCharTabs', placeReadingTab, placeReadingChar, 'switchPlaceReadingChar');
+  // 運行記録の予測変換に実際に使われている読み方（ハードコード分＋アプリ内登録分）をすべて表示する
+  const map = getMergedPlaceReadingHints();
+  const names = sortByLastUsed(
+    Object.keys(map).filter(name => stripDakuten((map[name] || '')[0] || '') === placeReadingChar),
+    getPlaceLastUsedMap()
+  );
+  if (names.length === 0) {
+    box.innerHTML = `<div style="font-size:12px;color:var(--muted);padding:6px 0;">「${placeReadingChar}」で始まる読み方の登録はありません</div>`;
+    return;
+  }
+  box.innerHTML = names.map(name => {
+    const encoded = encodeURIComponent(name);
+    if (editingPlaceReadingName === name) {
+      return `
+        <div style="padding:6px 0;border-bottom:1px solid var(--border);">
+          <div class="input-row" style="margin-bottom:0;">
+            <div class="input-group" style="flex:1.4;margin-bottom:6px;">
+              <input class="input-field" style="padding:6px 8px;font-size:13px;" id="placeReadingEditName_${encoded}" value="${name}">
+            </div>
+            <div class="input-group" style="flex:1;margin-bottom:6px;">
+              <input class="input-field" style="padding:6px 8px;font-size:13px;" id="placeReadingEdit_${encoded}" maxlength="4" value="${map[name]}">
+            </div>
+          </div>
+          <div style="display:flex;gap:6px;justify-content:flex-end;">
+            <button type="button" class="discount-toggle-btn" onclick="updateUserPlaceReading('${encoded}')">更新</button>
+            <button type="button" class="discount-toggle-btn" onclick="removeUserPlaceReading('${encoded}')">削除</button>
+          </div>
+        </div>
+      `;
+    }
+    return `
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border);cursor:pointer;" onclick="togglePlaceReadingEdit('${encoded}')">
+        <span style="font-weight:800;font-size:16px;color:var(--primary);">${name}</span>
+        <span style="color:var(--muted);font-size:14px;font-weight:700;">（${map[name]}）</span>
+      </div>
+    `;
+  }).join('');
+}
+function addUserPlaceReading() {
+  const nameInput = document.getElementById('newPlaceReadingName');
+  const initialInput = document.getElementById('newPlaceReadingInitial');
+  const name = nameInput.value.trim();
+  const initial = initialInput.value.trim();
+  if (!name || !initial) { alert('地名と頭文字の両方を入力してください。'); return; }
+  const map = getUserPlaceReadings();
+  map[name] = initial;
+  saveUserPlaceReadings(map);
+  // 以前このアプリから削除していた場合は、登録し直したので除外を解除する
+  saveSuppressedPlaceReadings(getSuppressedPlaceReadings().filter(n => n !== name));
+  nameInput.value = '';
+  initialInput.value = '';
+  renderUserPlaceReadingList();
+  renderUnregisteredPlaceList();
+}
+function updateUserPlaceReading(encodedName) {
+  const oldName = decodeURIComponent(encodedName);
+  const newName = document.getElementById(`placeReadingEditName_${encodedName}`).value.trim();
+  const initial = document.getElementById(`placeReadingEdit_${encodedName}`).value.trim();
+  if (!newName || !initial) { alert('地名と頭文字の両方を入力してください。'); return; }
+  const map = getUserPlaceReadings();
+  if (newName !== oldName) {
+    delete map[oldName];
+    // ハードコードされた読み方から改名した場合、元の名前は除外リストへ・新しい名前は除外を解除する
+    saveSuppressedPlaceReadings([...new Set([...getSuppressedPlaceReadings(), oldName])]);
+    saveSuppressedPlaceReadings(getSuppressedPlaceReadings().filter(n => n !== newName));
+  }
+  map[newName] = initial;
+  saveUserPlaceReadings(map);
+  showToast(`「${newName}」の読み方を更新しました`);
+  editingPlaceReadingName = null;
+  renderUserPlaceReadingList();
+  renderUnregisteredPlaceList();
+}
+function removeUserPlaceReading(encodedName) {
+  const name = decodeURIComponent(encodedName);
+  const map = getUserPlaceReadings();
+  delete map[name];
+  saveUserPlaceReadings(map);
+  // ハードコードされた読み方はコードから消せないため、除外リストに載せて「未登録」扱いにする
+  const suppressed = getSuppressedPlaceReadings();
+  if (!suppressed.includes(name)) { suppressed.push(name); saveSuppressedPlaceReadings(suppressed); }
+  if (editingPlaceReadingName === name) editingPlaceReadingName = null;
+  renderUserPlaceReadingList();
+  renderUnregisteredPlaceList();
+}
+
+let dropoffDetailReadingTab = 'あ';
+let dropoffDetailReadingChar = 'あ';
+let dropoffDetailReadingExpanded = true;
+let editingDropoffDetailReadingName = null;
+function switchDropoffDetailReadingTab(row) {
+  if (row === dropoffDetailReadingTab && dropoffDetailReadingExpanded) {
+    dropoffDetailReadingExpanded = false;
+  } else {
+    dropoffDetailReadingTab = row;
+    dropoffDetailReadingChar = GOJUON_ROW_CHARS[row][0];
+    dropoffDetailReadingExpanded = true;
+  }
+  editingDropoffDetailReadingName = null;
+  renderUserDropoffDetailReadingList();
+}
+function switchDropoffDetailReadingChar(ch) {
+  dropoffDetailReadingChar = ch;
+  editingDropoffDetailReadingName = null;
+  renderUserDropoffDetailReadingList();
+}
+function toggleDropoffDetailReadingEdit(encodedName) {
+  const name = decodeURIComponent(encodedName);
+  editingDropoffDetailReadingName = (editingDropoffDetailReadingName === name) ? null : name;
+  renderUserDropoffDetailReadingList();
+}
+function renderUserDropoffDetailReadingList() {
+  renderGojuonTabs('userDropoffDetailReadingTabs', dropoffDetailReadingExpanded ? dropoffDetailReadingTab : null, 'switchDropoffDetailReadingTab');
+  const charTabsBox = document.getElementById('userDropoffDetailReadingCharTabs');
+  const box = document.getElementById('userDropoffDetailReadingList');
+  if (!dropoffDetailReadingExpanded) {
+    charTabsBox.innerHTML = '';
+    box.innerHTML = '';
+    return;
+  }
+  renderGojuonCharTabs('userDropoffDetailReadingCharTabs', dropoffDetailReadingTab, dropoffDetailReadingChar, 'switchDropoffDetailReadingChar');
+  const map = getUserDropoffDetailReadings();
+  const names = sortByLastUsed(
+    Object.keys(map).filter(name => stripDakuten((map[name] || '')[0] || '') === dropoffDetailReadingChar),
+    getDropoffDetailLastUsedMap()
+  );
+  if (names.length === 0) {
+    box.innerHTML = `<div style="font-size:12px;color:var(--muted);padding:6px 0;">「${dropoffDetailReadingChar}」で始まる読み方の登録はありません</div>`;
+    return;
+  }
+  box.innerHTML = names.map(name => {
+    const encoded = encodeURIComponent(name);
+    if (editingDropoffDetailReadingName === name) {
+      return `
+        <div style="padding:6px 0;border-bottom:1px solid var(--border);">
+          <div class="input-row" style="margin-bottom:0;">
+            <div class="input-group" style="flex:1.4;margin-bottom:6px;">
+              <input class="input-field" style="padding:6px 8px;font-size:13px;" id="dropoffDetailReadingEditName_${encoded}" value="${name}">
+            </div>
+            <div class="input-group" style="flex:1;margin-bottom:6px;">
+              <input class="input-field" style="padding:6px 8px;font-size:13px;" id="dropoffDetailReadingEdit_${encoded}" maxlength="4" value="${map[name]}">
+            </div>
+          </div>
+          <div style="display:flex;gap:6px;justify-content:flex-end;">
+            <button type="button" class="discount-toggle-btn" onclick="updateUserDropoffDetailReading('${encoded}')">更新</button>
+            <button type="button" class="discount-toggle-btn" onclick="removeUserDropoffDetailReading('${encoded}')">削除</button>
+          </div>
+        </div>
+      `;
+    }
+    return `
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border);cursor:pointer;" onclick="toggleDropoffDetailReadingEdit('${encoded}')">
+        <span style="font-weight:800;font-size:16px;color:var(--primary);">${name}</span>
+        <span style="color:var(--muted);font-size:14px;font-weight:700;">（${map[name]}）</span>
+      </div>
+    `;
+  }).join('');
+}
+function addUserDropoffDetailReading() {
+  const nameInput = document.getElementById('newDropoffDetailReadingName');
+  const initialInput = document.getElementById('newDropoffDetailReadingInitial');
+  const name = nameInput.value.trim();
+  const initial = initialInput.value.trim();
+  if (!name || !initial) { alert('店名・施設名と頭文字の両方を入力してください。'); return; }
+  const map = getUserDropoffDetailReadings();
+  map[name] = initial;
+  saveUserDropoffDetailReadings(map);
+  nameInput.value = '';
+  initialInput.value = '';
+  renderUserDropoffDetailReadingList();
+  renderUnregisteredDropoffDetailList();
+}
+function updateUserDropoffDetailReading(encodedName) {
+  const oldName = decodeURIComponent(encodedName);
+  const newName = document.getElementById(`dropoffDetailReadingEditName_${encodedName}`).value.trim();
+  const initial = document.getElementById(`dropoffDetailReadingEdit_${encodedName}`).value.trim();
+  if (!newName || !initial) { alert('店名・施設名と頭文字の両方を入力してください。'); return; }
+  if (newName !== oldName) {
+    // 名前そのものを変えた場合は、過去の運行記録の降車場所詳細も書き換える。
+    // そうしないと統計「場所」タブの降車詳細順に古い名前が残ってしまう
+    const trips = getTrips();
+    const affected = trips.filter(t => (t.dropoffDetail || '').trim() === oldName);
+    if (affected.length > 0) {
+      if (!confirm(`過去の記録にある「${oldName}」（${affected.length}件）も「${newName}」に書き換えます。よろしいですか？`)) return;
+      affected.forEach(t => { t.dropoffDetail = newName; });
+      saveTrips(trips);
+    }
+  }
+  const map = getUserDropoffDetailReadings();
+  if (newName !== oldName) delete map[oldName];
+  map[newName] = initial;
+  saveUserDropoffDetailReadings(map);
+  showToast(`「${newName}」の読み方を更新しました`);
+  editingDropoffDetailReadingName = null;
+  renderUserDropoffDetailReadingList();
+  renderUnregisteredDropoffDetailList();
+}
+function removeUserDropoffDetailReading(encodedName) {
+  const name = decodeURIComponent(encodedName);
+  const map = getUserDropoffDetailReadings();
+  delete map[name];
+  saveUserDropoffDetailReadings(map);
+  if (editingDropoffDetailReadingName === name) editingDropoffDetailReadingName = null;
+  renderUserDropoffDetailReadingList();
+  renderUnregisteredDropoffDetailList();
+}
+
+// 過去の記録にある地名・降車場所詳細のうち、まだ読み方（イニシャル）が登録されていないものを一覧にする。
+// 手動で登録すると、その場でこの一覧から消える。
+// 「町」の有無など表記ゆれで同じ場所が別項目として出ることがあるため、登録するほどではないものは
+// 「削除」でこの一覧からだけ消せるようにする（予測変換や記録そのものには影響しない）
+let unregisteredPlaceCache = [];
+let unregisteredDropoffDetailCache = [];
+function getUnregisteredPlaceNames() {
+  const hints = getMergedPlaceReadingHints();
+  const ignored = getIgnoredPlaceNames();
+  const names = new Set();
+  getTrips().forEach(t => {
+    if (t.pickup && t.pickup.trim()) names.add(t.pickup.trim());
+    if (t.dropoff && t.dropoff.trim()) names.add(t.dropoff.trim());
+    getTripViaPoints(t).forEach(v => { if (v && v.trim()) names.add(v.trim()); });
+  });
+  return [...names].filter(n => !hints[n] && !ignored.includes(n)).sort((a,b) => a.localeCompare(b, 'ja'));
+}
+function getUnregisteredDropoffDetails() {
+  const hints = getUserDropoffDetailReadings();
+  const ignored = getIgnoredDropoffDetails();
+  const names = new Set();
+  getTrips().forEach(t => {
+    if (t.dropoffDetail && t.dropoffDetail.trim()) names.add(t.dropoffDetail.trim());
+  });
+  return [...names].filter(n => !hints[n] && !ignored.includes(n)).sort((a,b) => a.localeCompare(b, 'ja'));
+}
+function renderUnregisteredPlaceList() {
+  unregisteredPlaceCache = getUnregisteredPlaceNames();
+  const box = document.getElementById('unregisteredPlaceList');
+  if (unregisteredPlaceCache.length === 0) {
+    box.innerHTML = `<div style="font-size:12px;color:var(--muted);padding:6px 0;">未登録の地名はありません</div>`;
+    return;
+  }
+  box.innerHTML = unregisteredPlaceCache.map((name, i) => `
+    <div style="display:flex;align-items:center;gap:6px;padding:6px 0;border-bottom:1px solid var(--border);">
+      <div style="flex:1;font-size:15px;font-weight:700;color:var(--primary);overflow-wrap:anywhere;">${name}</div>
+      <input class="input-field" style="width:64px;flex:none;padding:6px 8px;font-size:13px;" id="unregPlaceInitial_${i}" maxlength="4" placeholder="頭文字">
+      <button type="button" class="discount-toggle-btn" onclick="registerUnregisteredPlace(${i})">登録</button>
+      <button type="button" class="discount-toggle-btn" onclick="ignoreUnregisteredPlace(${i})">削除</button>
+    </div>
+  `).join('');
+}
+function registerUnregisteredPlace(i) {
+  const name = unregisteredPlaceCache[i];
+  const initial = document.getElementById(`unregPlaceInitial_${i}`).value.trim();
+  if (name === undefined) return;
+  if (!initial) { alert('頭文字を入力してください。'); return; }
+  const map = getUserPlaceReadings();
+  map[name] = initial;
+  saveUserPlaceReadings(map);
+  saveSuppressedPlaceReadings(getSuppressedPlaceReadings().filter(n => n !== name));
+  renderUserPlaceReadingList();
+  renderUnregisteredPlaceList();
+}
+function ignoreUnregisteredPlace(i) {
+  const name = unregisteredPlaceCache[i];
+  if (name === undefined) return;
+  if (!confirm(`「${name}」をこの一覧から消しますか？\n（読み方は登録されません。予測変換や記録には影響しません）`)) return;
+  const ignored = getIgnoredPlaceNames();
+  if (!ignored.includes(name)) { ignored.push(name); saveIgnoredPlaceNames(ignored); }
+  renderUnregisteredPlaceList();
+}
+function renderUnregisteredDropoffDetailList() {
+  unregisteredDropoffDetailCache = getUnregisteredDropoffDetails();
+  const box = document.getElementById('unregisteredDropoffDetailList');
+  if (unregisteredDropoffDetailCache.length === 0) {
+    box.innerHTML = `<div style="font-size:12px;color:var(--muted);padding:6px 0;">未登録の降車場所詳細はありません</div>`;
+    return;
+  }
+  box.innerHTML = unregisteredDropoffDetailCache.map((name, i) => `
+    <div style="display:flex;align-items:center;gap:6px;padding:6px 0;border-bottom:1px solid var(--border);">
+      <div style="flex:1;font-size:15px;font-weight:700;color:var(--primary);overflow-wrap:anywhere;">${name}</div>
+      <input class="input-field" style="width:64px;flex:none;padding:6px 8px;font-size:13px;" id="unregDetailInitial_${i}" maxlength="4" placeholder="頭文字">
+      <button type="button" class="discount-toggle-btn" onclick="registerUnregisteredDropoffDetail(${i})">登録</button>
+      <button type="button" class="discount-toggle-btn" onclick="ignoreUnregisteredDropoffDetail(${i})">削除</button>
+    </div>
+  `).join('');
+}
+function registerUnregisteredDropoffDetail(i) {
+  const name = unregisteredDropoffDetailCache[i];
+  const initial = document.getElementById(`unregDetailInitial_${i}`).value.trim();
+  if (name === undefined) return;
+  if (!initial) { alert('頭文字を入力してください。'); return; }
+  const map = getUserDropoffDetailReadings();
+  map[name] = initial;
+  saveUserDropoffDetailReadings(map);
+  renderUserDropoffDetailReadingList();
+  renderUnregisteredDropoffDetailList();
+}
+function ignoreUnregisteredDropoffDetail(i) {
+  const name = unregisteredDropoffDetailCache[i];
+  if (name === undefined) return;
+  if (!confirm(`「${name}」をこの一覧から消しますか？\n（読み方は登録されません。予測変換や記録には影響しません）`)) return;
+  const ignored = getIgnoredDropoffDetails();
+  if (!ignored.includes(name)) { ignored.push(name); saveIgnoredDropoffDetails(ignored); }
+  renderUnregisteredDropoffDetailList();
+}
+// 乗車場所・降車場所をタップしたとき、入力欄を画面の上の方へ巻き上げて
+// 地名の候補リストがキーボードに隠れないようにする
+function scrollLocFieldToTop(inputId) {
+  const input = document.getElementById(inputId);
+  if (!input) return;
+  const modal = input.closest('.modal');
+  // ページ末尾の入力欄でもスクロールしきれるよう、入力中だけ下に余白を足す
+  if (!modal) document.querySelector('.content').classList.add('loc-focus');
+  const align = () => {
+    if (modal) {
+      // モーダル内はモーダル自身がスクロールするため、その中で位置を合わせる
+      const offset = input.getBoundingClientRect().top - modal.getBoundingClientRect().top;
+      modal.scrollTo({ top: Math.max(0, modal.scrollTop + offset - 12), behavior: 'smooth' });
+    } else {
+      const header = document.querySelector('.header');
+      const headerH = header ? header.offsetHeight : 0;
+      const top = input.getBoundingClientRect().top + window.scrollY - headerH - 12;
+      window.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
+    }
+  };
+  align();
+  // 端末のキーボードが出たあとに表示領域が変わるため、少し待ってもう一度合わせる
+  setTimeout(align, 300);
+}
+
+// 休憩でよく使う場所。空欄でタップしたときの候補として出し、
+// 文字を打ったときも一致すれば通常の候補より先に並べる
+const BREAK_PLACE_PRESETS = ['桑原','紅葉町','二番町','大街道'];
+// 給油の場所は常にここで記録する
+const FUEL_PLACE = '高岡町';
+
+function getBreakPlaceSuggestions(query) {
+  const hidden = getHiddenPlaces();
+  const presets0 = BREAK_PLACE_PRESETS.filter(n => !hidden.includes(n));
+  const q = (query || '').trim();
+  if (!q) return presets0;
+  const hints = getMergedPlaceReadingHints();
+  const presets = presets0.filter(n => n !== q && locationMatchesQuery(n, q, hints));
+  const rest = getLocationSuggestions(q).filter(n => !presets.includes(n));
+  return [...presets, ...rest].slice(0, 6);
+}
+
+// 候補から消した地名。記録そのものは残したまま、候補に出さないようにする
+const HIDDEN_PLACES_KEY = 'taxi_hidden_places';
+function getHiddenPlaces() {
+  try { return JSON.parse(localStorage.getItem(HIDDEN_PLACES_KEY) || '[]'); } catch(e) { return []; }
+}
+function hidePlaceFromSuggestions(name) {
+  const list = getHiddenPlaces();
+  if (!list.includes(name)) list.push(name);
+  try { localStorage.setItem(HIDDEN_PLACES_KEY, JSON.stringify(list)); } catch(e) {}
+}
+
+// 候補の出し方を覚えておき、削除したあと同じ条件で出し直せるようにする
+let locSuggesterCache = {};
+
+// suggester を渡すと候補の出し方を差し替えられる（既定は乗車・降車場所の候補）
+function onLocInput(inputId, suggestId, suggester) {
+  const input = document.getElementById(inputId);
+  const box = document.getElementById(suggestId);
+  locSuggesterCache[suggestId] = suggester || null;
+  const suggestions = (suggester || getLocationSuggestions)(input.value);
+  locSuggestCache[suggestId] = suggestions;
+  if (suggestions.length === 0) { box.style.display = 'none'; box.innerHTML = ''; return; }
+  box.innerHTML = suggestions.map((name, i) =>
+    `<div class="loc-suggest-item"
+          onmousedown="event.preventDefault();selectLocSuggest('${inputId}','${suggestId}',${i})"
+          ontouchstart="startLocSuggestLongPress('${inputId}','${suggestId}',${i})"
+          ontouchend="cancelLocSuggestLongPress()"
+          ontouchmove="cancelLocSuggestLongPress()"
+          ontouchcancel="cancelLocSuggestLongPress()"
+          oncontextmenu="event.preventDefault();removeLocSuggestion('${inputId}','${suggestId}',${i})">${name}</div>`
+  ).join('');
+  box.style.display = 'block';
+}
+
+// 候補を長押しすると、その地名を候補から削除できる
+let locLongPressTimer = null;
+let locLongPressFired = false;
+function startLocSuggestLongPress(inputId, suggestId, idx) {
+  locLongPressFired = false;
+  clearTimeout(locLongPressTimer);
+  locLongPressTimer = setTimeout(() => {
+    locLongPressFired = true;
+    removeLocSuggestion(inputId, suggestId, idx);
+  }, 600);
+}
+function cancelLocSuggestLongPress() {
+  clearTimeout(locLongPressTimer);
+}
+function removeLocSuggestion(inputId, suggestId, idx) {
+  clearTimeout(locLongPressTimer);
+  const name = (locSuggestCache[suggestId] || [])[idx];
+  if (name === undefined) return;
+  if (!confirm(`「${name}」を候補から削除しますか？\n（これまでの乗車記録は残ります）`)) return;
+  hidePlaceFromSuggestions(name);
+  showToast(`「${name}」を候補から削除しました`);
+  onLocInput(inputId, suggestId, locSuggesterCache[suggestId]);
+}
+
+function selectLocSuggest(inputId, suggestId, idx) {
+  // 長押しで削除したときは、続けて届くタップを選択として扱わない
+  if (locLongPressFired) { locLongPressFired = false; return; }
+  const name = (locSuggestCache[suggestId] || [])[idx];
+  if (name === undefined) return;
+  document.getElementById(inputId).value = name;
+  hideLocSuggest(suggestId);
+  // 休憩開始直後の簡易入力中なら、候補を選んだ時点でそのまま保存して閉じる
+  if (schedQuickPlaceMode && inputId === 'schedItemEditPlace') { saveSchedItemEdit(); return; }
+  openNextTimeField(inputId);
+}
+function hideLocSuggest(suggestId) {
+  const box = document.getElementById(suggestId);
+  box.style.display = 'none';
+  box.innerHTML = '';
+  releaseLocFocus();
+}
+// 入力欄を巻き上げるために足していた余白を戻す。
+// ただし、続けて別の巻き上げ対象の欄へ移ったときは残す。
+// （前の欄の blur は次の欄のスクロールより後に届くため、
+//   ここで消すと移動先のスクロールが巻き戻ってしまう）
+function releaseLocFocus() {
+  setTimeout(() => {
+    const el = document.activeElement;
+    if (el && el.dataset && el.dataset.scrollUp === '1') return;
+    resetFormScroll();
+  }, 0);
+}
+// GOメモの氏名・年代欄は、性別ボタンや保存ボタンを押す一連の操作の間、
+// 画面がその都度元の位置に戻ってしまわないよう blur では巻き戻さない。
+// 保存や種別の切り替えなど、入力が確定したタイミングでまとめて元の位置へ戻す。
+function resetFormScroll() {
+  document.querySelector('.content').classList.remove('loc-focus');
+  if (document.querySelector('#page-record.active')) window.scrollTo({ top: 0, behavior: 'auto' });
+}
+
+// 場所を選び終えたら、続けて入力する時刻欄を開く。
+// showPicker が使えない環境ではフォーカスのみ当てる
+const NEXT_TIME_FIELD = { pickupLoc: 'pickupTime', dropoffLoc: 'dropoffTime' };
+function openNextTimeField(inputId) {
+  const nextId = NEXT_TIME_FIELD[inputId];
+  if (!nextId) return;
+  const next = document.getElementById(nextId);
+  if (!next) return;
+  next.focus();
+  try { next.showPicker(); } catch (e) { /* 対応していない環境では何もしない */ }
+}
+
+// 支払方法選択
+let currentPayMethod = '現金';
+
+// 障害者割引: 現金払いでも、別途未収額（後日自治体等から精算される割引分）を記入できるようにする
+let disabilityDiscountOn = false;
+function toggleDisabilityDiscount() {
+  disabilityDiscountOn = !disabilityDiscountOn;
+  document.getElementById('disabilityToggleBtn').classList.toggle('active', disabilityDiscountOn);
+  document.getElementById('disabilityUncollectedRow').style.display = disabilityDiscountOn ? '' : 'none';
+  if (!disabilityDiscountOn) document.getElementById('disabilityUncollectedAmount').value = '';
+  updateDisabilityFareDisplay();
+  updateFareDisplay();
+}
+
+// 経由地：ボタンを押すたびに入力欄を1つ追加する（2ヶ所・3ヶ所など複数箇所に対応）。
+// 各欄には乗車場所・降車場所と同じ地名の予測候補を表示する
+let viaPointCount = 0;
+function addViaPoint() {
+  const idx = viaPointCount++;
+  const row = document.createElement('div');
+  row.className = 'input-group';
+  row.id = `viaPointRow_${idx}`;
+  row.innerHTML = `
+    <div class="fare-label-row">
+      <label class="input-label" style="margin-bottom:0;">🚏 経由地</label>
+      <button type="button" class="discount-toggle-btn" onclick="removeViaPoint(${idx})">削除</button>
+    </div>
+    <input class="input-field" data-scroll-up="1" id="viaPointLoc_${idx}" type="text" placeholder="" autocomplete="off"
+           oninput="onLocInput('viaPointLoc_${idx}','viaPointLocSuggest_${idx}')"
+           onfocus="onLocInput('viaPointLoc_${idx}','viaPointLocSuggest_${idx}');scrollLocFieldToTop('viaPointLoc_${idx}')"
+           onblur="hideLocSuggest('viaPointLocSuggest_${idx}')"
+           onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur();}">
+    <div id="viaPointLocSuggest_${idx}" class="loc-suggest"></div>
+  `;
+  document.getElementById('viaPointsContainer').appendChild(row);
+  document.getElementById(`viaPointLoc_${idx}`).focus();
+}
+function removeViaPoint(idx) {
+  const row = document.getElementById(`viaPointRow_${idx}`);
+  if (row) row.remove();
+}
+function resetViaPoints() {
+  document.getElementById('viaPointsContainer').innerHTML = '';
+  viaPointCount = 0;
+}
+// 乗車場所→経由地(複数可)→降車場所の順で並ぶよう、追加した順番のまま値を取り出す
+function getViaPointValues() {
+  return [...document.querySelectorAll('#viaPointsContainer input[id^="viaPointLoc_"]')]
+    .map(el => el.value.trim())
+    .filter(v => v);
+}
+
+// 人員（男性・女性ボタンをタップするたびに人数が増える。5でリセットして0に戻る）。
+// 合計は必ず4名以下になるよう、増やした側で溢れる分だけもう一方を自動で減らす
+let paxMale = 0, paxFemale = 0;
+function incrementPax(gender) {
+  if (gender === 'male') {
+    paxMale = (paxMale + 1) % 5;
+    if (paxMale + paxFemale > 4) paxFemale = Math.max(0, 4 - paxMale);
+  } else {
+    paxFemale = (paxFemale + 1) % 5;
+    if (paxMale + paxFemale > 4) paxMale = Math.max(0, 4 - paxFemale);
+  }
+  updatePaxDisplay();
+}
+function updatePaxDisplay() {
+  document.getElementById('paxMaleCount').textContent = paxMale;
+  document.getElementById('paxFemaleCount').textContent = paxFemale;
+  document.getElementById('paxTotalCount').textContent = paxMale + paxFemale;
+  document.getElementById('passengerCount').value = paxMale + paxFemale;
+  document.getElementById('pax-male').className = 'pay-btn' + (paxMale > 0 ? ' active' : '');
+  document.getElementById('pax-female').className = 'pay-btn' + (paxFemale > 0 ? ' active' : '');
+}
+function resetPax() {
+  paxMale = 0; paxFemale = 0;
+  updatePaxDisplay();
+}
+
+// こちらも合計は必ず4名以下になるようにする
+let editPaxMale = 1, editPaxFemale = 0;
+function incrementEditPax(gender) {
+  if (gender === 'male') {
+    editPaxMale = (editPaxMale + 1) % 5;
+    if (editPaxMale + editPaxFemale > 4) editPaxFemale = Math.max(0, 4 - editPaxMale);
+  } else {
+    editPaxFemale = (editPaxFemale + 1) % 5;
+    if (editPaxMale + editPaxFemale > 4) editPaxMale = Math.max(0, 4 - editPaxFemale);
+  }
+  updateEditPaxDisplay();
+  // 性別タグ用の専用ボタンは廃止したため、人員（男性・女性の人数）から自動で決める
+  const derived = deriveEditPaxGender();
+  selectEditGoGender(derived);
+  setEditPlainGender(derived);
+}
+function updateEditPaxDisplay() {
+  document.getElementById('editPaxMaleCount').textContent = editPaxMale;
+  document.getElementById('editPaxFemaleCount').textContent = editPaxFemale;
+  document.getElementById('editPaxTotalCount').textContent = editPaxMale + editPaxFemale;
+  document.getElementById('editPassengerCount').value = editPaxMale + editPaxFemale;
+  document.getElementById('editpax-male').className = 'pay-btn' + (editPaxMale > 0 ? ' active' : '');
+  document.getElementById('editpax-female').className = 'pay-btn' + (editPaxFemale > 0 ? ' active' : '');
+}
+function setEditPax(total) {
+  editPaxMale = total || 1;
+  editPaxFemale = 0;
+  updateEditPaxDisplay();
+}
+function setEditPaxCounts(male, female) {
+  editPaxMale = male || 0;
+  editPaxFemale = female || 0;
+  updateEditPaxDisplay();
+}
+
+function selectPay(method) {
+  currentPayMethod = method;
+  document.getElementById('payMethod').value = method;
+  ['現金','GO','PayPay','楽天Pay','クレジット','d払い','チケット','その他'].forEach(m => {
+    const btn = document.getElementById(`pay-${m}`);
+    if (!btn) return;
+    btn.className = 'pay-btn' + ({GO:' go', PayPay:' paypay', '楽天Pay':' rakuten', クレジット:' credit', 'd払い':' dpay', 'チケット':' ticket'}[m]||'');
+    if (m === method) btn.className += ' active';
+  });
+  // 支払方法GOを選んだら種別もGOに
+  if (method === 'GO' && currentTripType !== 'GO') selectType('GO');
+  // 料金ラベルを支払方法に応じて更新
+  const label = document.getElementById('fareLabelMain');
+  if (label) {
+    label.textContent = method === '現金' ? '💴 料金（現金）' : `💴 料金（未収 / ${method}）`;
+  }
+  // 障害者割引の未収記入は、現金払いのときだけ使う機能のため、現金以外では隠す
+  const discBtn = document.getElementById('disabilityToggleBtn');
+  if (discBtn) {
+    discBtn.style.display = method === '現金' ? '' : 'none';
+    if (method !== '現金' && disabilityDiscountOn) toggleDisabilityDiscount();
+  }
+}
+
+// 料金合計ヘルパー（後方互換）
+// 料金欄の表示を「入力値＋固定の末尾」の1つの文字列として描画する。
+// 数字と末尾を同じ文字列として描くことで、間隔が通常の数字同士と完全に同じになる。
+function updateMaskedFareDisplay(inputId, dispId, suffix) {
+  const input = document.getElementById(inputId);
+  const disp = document.getElementById(dispId);
+  if (!input || !disp) return;
+  const cs = getComputedStyle(input);
+  disp.textContent = `${input.value}${suffix}`;
+  disp.style.font = cs.font;
+  disp.style.letterSpacing = cs.letterSpacing;
+  // 入力欄の文字と同じ位置・高さに重ねる
+  disp.style.lineHeight = cs.lineHeight;
+  disp.style.left = `${input.offsetLeft + parseFloat(cs.borderLeftWidth) + parseFloat(cs.paddingLeft)}px`;
+  disp.style.top = `${input.offsetTop + parseFloat(cs.borderTopWidth) + parseFloat(cs.paddingTop)}px`;
+  disp.style.height = `${input.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom)}px`;
+}
+// 料金（現金）は下2桁「00」を固定。ただし障害者割引（障割）を使うときは、
+// 割引後の端数が10円単位になることが多いため、下1桁「0」のみ固定に切り替える
+function updateFareDisplay() { updateMaskedFareDisplay('fareAmount', 'fareDisplay', disabilityDiscountOn ? '0' : '00'); }
+// 障害者割引の未収額は下1桁「0」のみ固定（料金より細かい単位で記入することが多いため）
+function updateDisabilityFareDisplay() { updateMaskedFareDisplay('disabilityUncollectedAmount', 'disabilityFareDisplay', '0'); }
+
+function getTripFare(t) {
+  if (t.cashFare !== undefined || t.uncollectedFare !== undefined) {
+    return (t.cashFare||0) + (t.uncollectedFare||0);
+  }
+  return t.fare || 0;
+}
+// 経由地の配列を返す（複数箇所対応前の旧データはviaPointという単一の文字列だったため、
+// その場合も配列に読み替える）
+function getTripViaPoints(t) {
+  if (Array.isArray(t.viaPoints)) return t.viaPoints.filter(v => v && v.trim());
+  if (t.viaPoint) return [t.viaPoint];
+  return [];
+}
+// 経由地・降車場所詳細を含めた1行のルート表示（履歴・乗客情報・タイムラインで共通して使う）
+function formatTripRoute(t) {
+  const dropoffLabel = t.dropoffDetail ? `${t.dropoff||'?'}（${t.dropoffDetail}）` : (t.dropoff || '?');
+  return [t.pickup||'?', ...getTripViaPoints(t), dropoffLabel].join(' → ');
+}
+
+function saveTrip() {
+  const pickup = document.getElementById('pickupLoc').value.trim();
+  const dropoff = document.getElementById('dropoffLoc').value.trim();
+  const viaPoints = getViaPointValues();
+  const fareRaw = document.getElementById('fareAmount').value.trim();
+  const payMethod = document.getElementById('payMethod').value || '現金';
+  const tip = parseInt(document.getElementById('tipAmount').value) || 0;
+  const pickupTime = document.getElementById('pickupTime').value;
+  const dropoffTime = document.getElementById('dropoffTime').value;
+  const passengers = paxMale + paxFemale;
+  const tripType = currentTripType;
+  const memo = tripType === 'GO' ? buildGoMemo() : document.getElementById('plainMemo').value.trim();
+  const paxName = tripType === 'GO' ? document.getElementById('goPaxName').value.trim() : '';
+  const paxGender = tripType === 'GO' ? document.getElementById('goPaxGender').value : document.getElementById('plainPaxGender').value;
+  const paxAge = tripType === 'GO' ? document.getElementById('goPaxAge').value : '';
+  const dropoffDetail = document.getElementById('dropoffDetail').value.trim();
+
+  const missing = [];
+  if (!fareRaw) missing.push('料金');
+  if (passengers === 0) missing.push('人員');
+  if (!pickup) missing.push('乗車場所');
+  if (!dropoff) missing.push('降車場所');
+  if (!pickupTime) missing.push('乗車時刻');
+  if (!dropoffTime) missing.push('降車時刻');
+  if (missing.length > 0) {
+    showToast(`⚠️ 未入力の項目があります: ${missing.join('・')}`);
+    return;
+  }
+
+  // 料金は通常100円単位のため下2桁の「00」は入力不要（例：「15」→1500円）。
+  // 障割使用時は10円単位になることが多いため下1桁の「0」のみ固定（例：「150」→1500円）
+  const fareAmount = (parseInt(fareRaw) || 0) * (disabilityDiscountOn ? 10 : 100);
+  const cashFare = payMethod === '現金' ? fareAmount : 0;
+  // 障害者割引: 現金払いでも、別途未収額（割引分）を上乗せできる。下1桁「0」を固定にしているため×10する
+  const disabilityAmount = disabilityDiscountOn ? (parseInt(document.getElementById('disabilityUncollectedAmount').value) || 0) * 10 : 0;
+  const uncollectedFare = (payMethod !== '現金' ? fareAmount : 0) + disabilityAmount;
+
+  const trips = getTrips();
+  trips.unshift({
+    id: Date.now(),
+    date: todayStr(),
+    pickup, dropoff, viaPoints,
+    cashFare, uncollectedFare, tip,
+    fare: cashFare + uncollectedFare, // 後方互換
+    pickupTime, dropoffTime,
+    payMethod, passengers, tripType, memo,
+    paxName, paxGender, paxAge, dropoffDetail,
+    paxMaleCount: paxMale, paxFemaleCount: paxFemale,
+    createdAt: new Date().toISOString()
+  });
+  saveTrips(trips);
+
+  // フォームリセット
+  ['pickupLoc','dropoffLoc','fareAmount','tipAmount','plainMemo','dropoffDetail'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  updateFareDisplay();
+  document.getElementById('pickupTime').value = '';
+  document.getElementById('dropoffTime').value = '';
+  resetPax();
+  resetGoMemo();
+  resetPlainGender();
+  resetViaPoints();
+  selectPay('現金');
+  selectType(getDefaultType());
+  if (disabilityDiscountOn) toggleDisabilityDiscount();
+  resetFormScroll();
+
+  syncViewDatesToLatest();
+  updateTodaySummary();
+  showToast('乗降記録を保存しました ✓');
+}
+
+// ==================== TODAY SUMMARY ====================
+function todayStr() {
+  const d = new Date();
+  // シフト日計算: 深夜0:00〜4:59は前日のシフトとして扱う
+  if (d.getHours() < 5) {
+    d.setDate(d.getDate() - 1);
+  }
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+}
+
+// 当日の記録がなければ、記録がある直近の日を返す（サマリー・履歴のデフォルト表示用）
+function resolveDefaultViewDate() {
+  const today = todayStr();
+  const trips = getTrips();
+  if (trips.some(t => t.date === today)) return today;
+  const pastDates = [...new Set(trips.map(t => t.date))].filter(d => d < today).sort();
+  return pastDates.length > 0 ? pastDates[pastDates.length - 1] : today;
+}
+
+// 記録を追加・削除したときに、履歴・統計・サマリーの表示日を
+// 最新の記録がある日に必ず合わせ直す（表示中の日に古いまま取り残さない）
+function syncViewDatesToLatest() {
+  summaryCurrentDate = resolveDefaultViewDate();
+  if (typeof histShowAll !== 'undefined' && !histShowAll) histCurrentDate = resolveDefaultViewDate();
+  if (typeof statPeriodOffset !== 'undefined') statPeriodOffset = 0;
+  // タイムラインが「本日の記録なし」で前回分に自動フォールバック中だった場合、
+  // 本日の記録ができた時点で自動的に本日表示に戻す（手動選択中の過去日はそのまま維持）
+  if (typeof schedAutoFallback !== 'undefined' && schedAutoFallback && getTrips().some(t => t.date === todayStr())) {
+    schedCurrentDate = todayStr();
+    schedAutoFallback = false;
+  }
+}
+
+// 待機時間を自動計算（7:30起点 − 乗車時間合計）
+function calcWaitMinutes(date, endTime) {
+  const shiftStart = new Date(date + 'T07:30:00');
+  // 終了時刻の優先順位: 引数 > 保存済み業務終了時刻 > 現在時刻
+  const savedEnd = getDayEndTime(date);
+  const now = endTime || savedEnd || new Date();
+  if (now <= shiftStart) return 0;
+
+  const totalShiftMin = Math.floor((now - shiftStart) / 60000);
+
+  // 乗車時間の合計（pickupTime〜dropoffTimeが揃っているものだけ）
+  const trips = getTrips().filter(t => t.date === date && t.pickupTime && t.dropoffTime);
+  let tripMin = 0;
+  trips.forEach(t => {
+    const [ph, pm] = t.pickupTime.split(':').map(Number);
+    const [dh, dm] = t.dropoffTime.split(':').map(Number);
+    let diff = (dh * 60 + dm) - (ph * 60 + pm);
+    if (diff < 0) diff += 24 * 60; // 深夜をまたぐ場合
+    if (diff > 0) tripMin += diff;
+  });
+
+  // 休憩時間・給油時間は待機時間から除外する。
+  // 終了時刻が未記録のもの（進行中）は現在時刻までとして数える
+  const sumTimeRanges = (list) => list.reduce((s, item) => {
+    const [sh, sm] = item.start.split(':').map(Number);
+    const endStr = item.end || nowHM();
+    const [eh, em] = endStr.split(':').map(Number);
+    let diff = (eh * 60 + em) - (sh * 60 + sm);
+    if (diff < 0) diff += 24 * 60;
+    return s + diff;
+  }, 0);
+  const breakMin = sumTimeRanges(getScheduleBreaks(date));
+  const fuelMin = sumTimeRanges(getScheduleFuelStops(date));
+
+  return Math.max(0, totalShiftMin - tripMin - breakMin - fuelMin);
+}
+
+// タイムラインと同じ考え方で、この日の空車時間計算に使う終端時刻を求める
+// （業務終了時刻が未記録の過去日は最後の降車時刻まで、今日は現在時刻まで）
+function getScheduleEndTime(date) {
+  const trips = getTrips()
+    .filter(t => t.date === date && t.pickupTime && t.dropoffTime)
+    .sort((a,b) => tripSortKey(a) - tripSortKey(b));
+  if (trips.length === 0) return null;
+
+  const isToday = date === todayStr();
+  const savedEnd = getDayEndTime(date);
+  let cursor = new Date(date + 'T07:30:00');
+  function toDate(timeStr) {
+    const d = new Date(date + 'T' + timeStr + ':00');
+    while (d < cursor) d.setDate(d.getDate() + 1);
+    return d;
+  }
+  trips.forEach(t => {
+    const p = toDate(t.pickupTime);
+    let d = toDate(t.dropoffTime);
+    if (d < p) d.setDate(d.getDate() + 1);
+    if (d > cursor) cursor = d;
+  });
+
+  return savedEnd || (isToday ? new Date() : cursor);
+}
+
+function fmtWait(min) {
+  if (min < 60) return `${min}分`;
+  return `${Math.floor(min/60)}時間${min%60 > 0 ? min%60+'分' : ''}`;
+}
+
+let summaryCurrentDate = resolveDefaultViewDate();
+
+function summaryNavPrev() {
+  const allDates = [...new Set(getTrips().map(t=>t.date))].filter(d => d < summaryCurrentDate).sort();
+  if (allDates.length === 0) return;
+  summaryCurrentDate = allDates[allDates.length - 1];
+  updateTodaySummary();
+}
+function summaryNavNext() {
+  if (summaryCurrentDate >= todayStr()) return;
+  const allDates = [...new Set(getTrips().map(t=>t.date))].filter(d => d > summaryCurrentDate && d < todayStr()).sort();
+  summaryCurrentDate = allDates.length > 0 ? allDates[0] : todayStr();
+  updateTodaySummary();
+}
+function summaryPickDate(v) {
+  if (!v) return;
+  summaryCurrentDate = v;
+  updateTodaySummary();
+}
+
+function updateTodaySummary() {
+  updateHeader();
+  const today = summaryCurrentDate;
+  const isToday = today === todayStr();
+
+  // 日付ナビ（記録がある日＋今日）をプルダウンに表示
+  const workDates = [...new Set(getTrips().map(t=>t.date))];
+  if (!workDates.includes(todayStr())) workDates.push(todayStr());
+  workDates.sort().reverse();
+  document.getElementById('summaryFilter').innerHTML = workDates.map(wd => {
+    const wdd = new Date(wd + 'T00:00:00');
+    const wDow = ['日','月','火','水','木','金','土'][wdd.getDay()];
+    const label = `${wdd.getMonth()+1}月${wdd.getDate()}日（${wDow}）` + (wd === todayStr() ? ' 今日' : '');
+    return `<option value="${wd}"${wd === today ? ' selected' : ''}>${label}</option>`;
+  }).join('');
+  const allDates = [...new Set(getTrips().map(t=>t.date))].sort();
+  document.getElementById('summaryNavPrevBtn').disabled = !allDates.some(dt => dt < today);
+  document.getElementById('summaryNavNextBtn').disabled = today >= todayStr();
+  document.getElementById('summaryTitle').textContent = isToday ? '本日サマリー' : 'サマリー';
+  document.getElementById('todaySalesLabel').textContent = isToday ? '本日営収額' : '営収額';
+  document.getElementById('todayHourlyLabel').textContent = '現在の時給';
+
+  const trips = getTrips().filter(t => t.date === today);
+  const sumF   = arr => arr.reduce((s,t) => s + getTripFare(t), 0);
+
+  const totalSales = sumF(trips);
+  // 営収額はタイムラインでの手動修正（dayTotalExTax）を優先して使い、常に一致させる
+  const totalExTax = dayTotalExTax(today);
+  const avgExTax = trips.length ? floorDivInt(totalExTax, trips.length * 10) * 10 : 0;
+  const waitMin = trips.length === 0 ? 0 : calcWaitMinutes(today, getScheduleEndTime(today));
+
+  // 実車時間（乗車〜降車の合計）
+  const jisshaMin = trips.reduce((s,t) => {
+    if (!t.pickupTime || !t.dropoffTime) return s;
+    const [ph,pm] = t.pickupTime.split(':').map(Number);
+    const [dh,dm] = t.dropoffTime.split(':').map(Number);
+    let diff = (dh*60+dm) - (ph*60+pm);
+    if (diff < 0) diff += 24*60;
+    return s + (diff > 0 ? diff : 0);
+  }, 0);
+
+  // 時給 = 営収額（税抜） ÷ 実働時間（タイムラインの合計時間） × 0.5
+  // （スプレッドシートの計算式 =IF(AND(ISNUMBER(F40),ISNUMBER(H34),H34<>0),F40/(H34*24)*0.5,"") に準拠）
+  // サマリーの他の項目は閲覧中の日付（today）に従うが、時給だけはタイムライン画面と
+  // 常に完全一致させるため、タイムラインが表示している日付（schedCurrentDate）と
+  // 全く同じ計算方法で求める
+  const hourlyDate = schedCurrentDate;
+  const hourlyScheduleResult = computeScheduleSegments(hourlyDate);
+  const totalWorkMin = hourlyScheduleResult ? hourlyScheduleResult.allMin : 0;
+  const hourlyWage = totalWorkMin > 0 ? Math.round(dayTotalExTax(hourlyDate) / (totalWorkMin / 60) * 0.5) : null;
+
+  // 未収額 = 支払方法が現金以外の記録の全額 ＋ 現金払いでも障害者割引で別途未収にした分
+  // （uncollectedFareは保存時点でこの2種類の合計として計算済みのため、そのまま合計すればよい）
+  const totalUncollected = trips.reduce((s,t) => s + (t.uncollectedFare||0), 0);
+  const totalTip = trips.reduce((s,t) => s + (t.tip||0), 0);
+  const goCount = trips.filter(t => (t.tripType||'流し') === 'GO').length;
+  const totalPax = trips.reduce((s,t) => s + (t.passengers||1), 0);
+  const nashiTotal = sumF(trips.filter(t => (t.tripType||'流し') === '流し'));
+
+  document.getElementById('todaySales').textContent = `¥${totalExTax.toLocaleString()}`;
+  document.getElementById('todayAvg').textContent = `¥${avgExTax.toLocaleString()}`;
+  document.getElementById('todayJissha').textContent = fmtWait(jisshaMin);
+  document.getElementById('todayHourly').textContent = hourlyWage !== null ? `¥${hourlyWage.toLocaleString()}` : '---';
+  document.getElementById('todayUncollected').textContent = `¥${totalUncollected.toLocaleString()}`;
+  document.getElementById('todayTip').textContent = `¥${totalTip.toLocaleString()}`;
+  document.getElementById('todayGoCount').textContent = `${goCount}件`;
+  document.getElementById('todayNashiTotal').textContent = `¥${nashiTotal.toLocaleString()}`;
+  document.getElementById('todayPax').textContent = `${totalPax}名`;
+
+  // 待機時間は月・水・金のみ表示
+  const waitCard = document.getElementById('todayWaitCard');
+  if (isWaitDay(today)) {
+    if (waitCard) waitCard.style.display = '';
+    document.getElementById('todayWait').textContent = fmtWait(waitMin);
+  } else {
+    if (waitCard) waitCard.style.display = 'none';
+  }
+}
+
+// ==================== HISTORY ====================
+let histCurrentDate = resolveDefaultViewDate(); // currently viewed date
+let histShowAll = false;          // true = show all dates
+
+function renderHistory() {
+  const el = document.getElementById('historyList');
+  let trips = getTrips();
+
+  if (histShowAll) {
+    // ---- 全期間モード ----
+    document.getElementById('histNavLabel').textContent = '全期間';
+    document.getElementById('histNavSub').textContent = `全${trips.length}件`;
+    document.getElementById('histNavNextBtn').disabled = false;
+    document.getElementById('histAllBtn').textContent = '日別表示に戻す';
+    document.getElementById('historyFilter').value = '';
+
+    if (trips.length === 0) { el.innerHTML = emptyState('記録がありません'); return; }
+    const grouped = {};
+    trips.forEach(t => { if (!grouped[t.date]) grouped[t.date] = []; grouped[t.date].push(t); });
+    el.innerHTML = Object.keys(grouped).sort((a,b)=>b.localeCompare(a)).map(date => {
+      const dayTrips = grouped[date].sort((a,b)=>tripSortKey(b) - tripSortKey(a));
+      const dayTotal = dayTrips.reduce((s,t)=>s+(t.cashFare!==undefined?t.cashFare+(t.uncollectedFare||0):(t.fare||0)),0);
+      return `
+        <div class="section-label">${fmtDate(date)} <span style="float:right;color:var(--success);font-size:13px;">合計 ¥${dayTotal.toLocaleString()}</span></div>
+        ${dayTrips.map(t => tripCard(t)).join('')}
+      `;
+    }).join('');
+    return;
+  }
+
+  // ---- 日別モード ----
+  document.getElementById('histAllBtn').textContent = '全期間表示';
+  document.getElementById('historyFilter').value = histCurrentDate;
+
+  // 有効な日付一覧を取得
+  const allDates = [...new Set(trips.map(t=>t.date))].sort();
+  const curIdx = allDates.indexOf(histCurrentDate);
+  const hasPrev = allDates.some(d => d < histCurrentDate);
+  const hasNext = allDates.some(d => d > histCurrentDate) || histCurrentDate < todayStr();
+
+  // ナビラベル更新
+  const d = new Date(histCurrentDate + 'T00:00:00');
+  const dow = ['日','月','火','水','木','金','土'][d.getDay()];
+  const isToday = histCurrentDate === todayStr();
+  const label = `${d.getMonth()+1}月${d.getDate()}日（${dow}）`;
+  document.getElementById('histNavLabel').textContent = label + (isToday ? ' 🔵 今日' : '');
+
+  const dayTrips = trips.filter(t => t.date === histCurrentDate)
+                        .sort((a,b)=>tripSortKey(b) - tripSortKey(a));
+  document.getElementById('histNavSub').textContent = dayTrips.length > 0
+    ? `${dayTrips.length}件 ／ ¥${dayTotalExTax(histCurrentDate).toLocaleString()}`
+    : '記録なし';
+
+  // 前後ナビ ボタン状態
+  document.getElementById('histNavNextBtn').disabled = histCurrentDate >= todayStr();
+
+  if (dayTrips.length === 0) {
+    el.innerHTML = `<div class="empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 8v4m0 4h.01"/></svg><p>この日の記録はありません</p></div>`;
+    return;
+  }
+  el.innerHTML = dayTrips.map(t => tripCard(t)).join('');
+}
+
+function histNavPrev() {
+  if (histShowAll) return;
+  const trips = getTrips();
+  const allDates = [...new Set(trips.map(t=>t.date))].filter(d => d < histCurrentDate).sort();
+  if (allDates.length > 0) {
+    histCurrentDate = allDates[allDates.length - 1];
+  } else {
+    // 記録がなくても前日に移動
+    const d = new Date(histCurrentDate + 'T00:00:00');
+    d.setDate(d.getDate() - 1);
+    histCurrentDate = d.toISOString().slice(0,10);
+  }
+  renderHistory();
+}
+
+function histNavNext() {
+  if (histShowAll) return;
+  if (histCurrentDate >= todayStr()) return;
+  const trips = getTrips();
+  const allDates = [...new Set(trips.map(t=>t.date))].filter(d => d > histCurrentDate).sort();
+  if (allDates.length > 0) {
+    histCurrentDate = allDates[0];
+  } else {
+    const d = new Date(histCurrentDate + 'T00:00:00');
+    d.setDate(d.getDate() + 1);
+    histCurrentDate = d.toISOString().slice(0,10);
+  }
+  renderHistory();
+}
+
+function histGoToday() {
+  histShowAll = false;
+  histCurrentDate = resolveDefaultViewDate();
+  renderHistory();
+}
+
+function histToggleAll() {
+  histShowAll = !histShowAll;
+  if (!histShowAll) histCurrentDate = resolveDefaultViewDate();
+  renderHistory();
+}
+
+function histPickDate(val) {
+  if (!val) return;
+  histShowAll = false;
+  histCurrentDate = val;
+  renderHistory();
+}
+
+// 以前の記録にはメモに「様」が付いて保存されているため、表示時に取り除く
+function stripSama(text) {
+  return String(text || '').replace(/様(?=\s*\/)|様$/g, '');
+}
+
+// 「田中（女性　２０代）」のように括弧書きで記録された乗客情報を、名前・性別・年代に分解する。
+// 括弧がなければ全体を名前として扱う
+function parsePaxText(text) {
+  const s = stripSama(text).trim();
+  const m = s.match(/^(.*?)[（(]([^（）()]*)[）)]\s*$/);
+  if (!m) return { name: s, gender: '', age: '' };
+  let gender = '', age = '';
+  m[2].split(/[\s　/／・,、]+/).filter(Boolean).forEach(part => {
+    if (/[男女]/.test(part)) gender = part;
+    else if (/[0-9０-９]|代/.test(part)) age = part;
+  });
+  return { name: m[1].trim() || s, gender, age };
+}
+
+// 乗客情報を「名前 / 性別 / 年代」の形式にそろえる。
+// 専用の欄（GOの氏名・性別・年代）があればそれを優先し、
+// なければメモの括弧書きから読み取る
+function formatPaxLabel(t) {
+  if (!t) return '';
+  const src = (t.tripType === 'GO' && t.paxName) ? t.paxName : (t.memo || '');
+  const p = parsePaxText(src);
+  return [p.name, t.paxGender || p.gender, t.paxAge || p.age].filter(Boolean).join(' / ');
+}
+
+function tripCard(t) {
+  const duration = t.pickupTime && t.dropoffTime ? calcDuration(t.pickupTime, t.dropoffTime) : '';
+  const payColors = {GO:'#ff6b00', PayPay:'#e00', '楽天Pay':'#bf0000', クレジット:'#34a853', 現金:'#1a73e8', 'd払い':'#b00068', その他:'#888'};
+  const pay = t.payMethod || '現金';
+  const payColor = payColors[pay] || '#888';
+  const pax = t.passengers || 1;
+  const paxLabel = (t.paxMaleCount !== undefined || t.paxFemaleCount !== undefined)
+    ? `${pax}名（男${t.paxMaleCount||0}・女${t.paxFemaleCount||0}）`
+    : `${pax}名`;
+  const type = t.tripType || '流し';
+  const typeColors = { '配車': '#ff6b00', 'GO': '#1a73e8', '流し': '#00a152' };
+  const typeColor = typeColors[type] || '#1a73e8';
+  const cashF = t.cashFare !== undefined ? t.cashFare : (t.fare||0);
+  const uncollF = t.uncollectedFare || 0;
+  const tip = t.tip || 0;
+  const total = cashF + uncollF;
+  const fareStr = total > 0
+    ? `¥${total.toLocaleString()}${tip > 0 ? `<span style="font-size:11px;color:#666;"> (+チップ¥${tip.toLocaleString()})</span>` : ''}`
+    : '未設定';
+  const fareDetail = (cashF > 0 && uncollF > 0)
+    ? `<span class="meta-chip">💴 現金¥${cashF.toLocaleString()}</span><span class="meta-chip">📱 未収¥${uncollF.toLocaleString()}</span>`
+    : (uncollF > 0 ? `<span class="meta-chip">📱 未収¥${uncollF.toLocaleString()}</span>` : '');
+  return `
+    <div class="trip-item">
+      <div class="trip-header">
+        <div class="trip-fare">${fareStr}</div>
+        <div style="text-align:right;">
+          <span style="display:inline-block;padding:3px 10px;border-radius:6px;font-size:13px;font-weight:700;background:${typeColor}22;color:${typeColor};margin-bottom:3px;">${type}</span><br>
+          <span style="display:inline-block;padding:3px 10px;border-radius:6px;font-size:13px;font-weight:700;background:${payColor}22;color:${payColor};">${pay}</span>
+          <div class="trip-time" style="margin-top:4px;">${t.pickupTime||'--:--'} → ${t.dropoffTime||'--:--'}${duration ? `<br><span style="font-size:13px;color:var(--muted);">${duration}</span>` : ''}</div>
+        </div>
+      </div>
+      <div class="trip-route">
+        <div class="route-item"><span class="route-dot route-dot-start"></span>${t.pickup||'（乗車場所未設定）'}</div>
+        <div style="margin-left:3.25px"><div class="route-line"></div></div>
+        ${getTripViaPoints(t).map(v => `
+        <div class="route-item"><span class="route-dot" style="background:var(--muted);"></span>${v}（経由）</div>
+        <div style="margin-left:3.25px"><div class="route-line"></div></div>
+        `).join('')}
+        <div class="route-item"><span class="route-dot route-dot-end"></span>${t.dropoff||'（降車場所未設定）'}</div>
+      </div>
+      <div class="trip-meta">
+        <span class="meta-chip">👥 ${paxLabel}</span>
+        ${fareDetail}
+        ${t.dropoffDetail ? `<span class="meta-chip">🏢 ${t.dropoffDetail}</span>` : ''}
+        ${t.memo ? `<span class="meta-chip">📝 ${stripSama(t.memo)}</span>` : ''}
+      </div>
+      <div class="trip-actions">
+        <button class="btn-edit" onclick="openTripEditModal(${t.id})">✏️ 修正</button>
+        <button class="btn-del" onclick="deleteTrip(${t.id})">🗑 削除</button>
+      </div>
+    </div>
+  `;
+}
+
+function calcDuration(s, e) {
+  const [sh,sm] = s.split(':').map(Number);
+  const [eh,em] = e.split(':').map(Number);
+  let min = (eh*60+em) - (sh*60+sm);
+  if (min < 0) min += 24*60;
+  if (min <= 0) return '';
+  return `${Math.floor(min/60)?Math.floor(min/60)+'時間':''}${min%60}分`;
+}
+
+function deleteTrip(id) {
+  showConfirm('この乗降記録を削除しますか？', '削除すると元に戻せません', () => {
+    const trips = getTrips().filter(t => t.id !== id);
+    saveTrips(trips);
+    syncViewDatesToLatest();
+    renderHistory();
+    updateTodaySummary();
+    showToast('記録を削除しました');
+  });
+}
+
+// ==================== TRIP EDIT ====================
+let editTripId = null;
+
+function selectEditType(type, isUserAction = true) {
+  const styles = { '流し': ' nashi', '配車': ' haisha', 'GO': '' };
+  ['流し','配車','GO'].forEach(t => {
+    const btn = document.getElementById(`edittype-${t}`);
+    if (!btn) return;
+    btn.className = `type-btn${styles[t]||''}${t === type ? ' active' : ''}`;
+  });
+  const prev = document.getElementById('tripEditModal').dataset.tripType;
+  document.getElementById('tripEditModal').dataset.tripType = type;
+  if (type === 'GO') selectEditPay('GO', isUserAction);
+  document.getElementById('editGoMemoGroup').style.display = (type === 'GO') ? 'block' : 'none';
+  document.getElementById('editPlainMemoGroup').style.display = (type === 'GO') ? 'none' : 'block';
+  if (prev !== type) carryOverEditPaxInfo(prev, type);
+}
+
+// 種別を切り替えたとき、入力済みのお客様情報を引き継ぐ。
+// 流し・配車ではメモ、GOでは氏名・性別・年代と欄が分かれているため、
+// 切り替えるたびに入力し直さなくて済むよう移し替える
+function carryOverEditPaxInfo(prev, type) {
+  const goName = document.getElementById('editGoPaxName');
+  const goAge = document.getElementById('editGoPaxAge');
+  const plainMemo = document.getElementById('editPlainMemo');
+  if (type === 'GO') {
+    // メモに書かれたお客様名（「佐藤（女性 20代）」なども解釈する）をGOの欄へ
+    if (!goName.value.trim() && plainMemo.value.trim()) {
+      const p = parsePaxText(plainMemo.value);
+      goName.value = p.name;
+      const gender = document.getElementById('editPlainPaxGender').value || p.gender;
+      if (gender) selectEditGoGender(gender);
+      if (p.age && [...goAge.options].some(o => o.value === p.age)) goAge.value = p.age;
+    }
+  } else if (prev === 'GO') {
+    // GOの氏名をメモへ戻す（性別は流し・配車側の欄で保持する）
+    if (!plainMemo.value.trim() && goName.value.trim()) {
+      plainMemo.value = goName.value.trim();
+      const g = document.getElementById('editGoPaxGender').value;
+      if (g) setEditPlainGender(g);
+    }
+  }
+}
+
+// GOアプリ乗客情報（メモ・修正画面）。性別は専用ボタンを廃止し、人員（男性・女性の人数）から自動で決める
+function selectEditGoGender(g) {
+  document.getElementById('editGoPaxGender').value = g;
+}
+function setEditPlainGender(g) {
+  document.getElementById('editPlainPaxGender').value = g;
+}
+// 人員（男性・女性の人数）から性別タグを決める。片方だけなら明確に判定でき、
+// 両方いる・どちらも0人のときは単一の性別に決められないため空にする
+function deriveEditPaxGender() {
+  if (editPaxMale > 0 && editPaxFemale === 0) return '男性';
+  if (editPaxFemale > 0 && editPaxMale === 0) return '女性';
+  return '';
+}
+function buildEditGoMemo() {
+  const name = document.getElementById('editGoPaxName').value.trim();
+  if (!name) return '';
+  const gender = document.getElementById('editGoPaxGender').value;
+  const age = document.getElementById('editGoPaxAge').value;
+  const parts = [`${name}`];
+  if (gender) parts.push(gender);
+  if (age) parts.push(age);
+  return parts.join(' / ');
+}
+
+function selectEditPay(method, isUserAction = true) {
+  const prevMethod = document.getElementById('editPayMethod').value || '現金';
+  document.getElementById('editPayMethod').value = method;
+  ['現金','GO','PayPay','楽天Pay','クレジット','d払い','チケット','その他'].forEach(m => {
+    const btn = document.getElementById(`editpay-${m}`);
+    if (!btn) return;
+    btn.className = 'pay-btn' + ({GO:' go', PayPay:' paypay', '楽天Pay':' rakuten', クレジット:' credit', 'd払い':' dpay', 'チケット':' ticket'}[m]||'');
+    if (m === method) btn.className += ' active';
+  });
+  if (method === 'GO' && document.getElementById('tripEditModal').dataset.tripType !== 'GO') {
+    selectEditType('GO', isUserAction);
+  }
+  // 支払方法を現金⇔現金以外に変更したときは、金額を正しい欄（現金／未収）に移し替える。
+  // そうしないと、料金は現金欄に残ったままになり、サマリーの未収額に反映されない
+  if (isUserAction && prevMethod !== method) {
+    const cashInput = document.getElementById('editCashFare');
+    const uncollInput = document.getElementById('editUncollectedFare');
+    const wasCash = prevMethod === '現金';
+    const isCash = method === '現金';
+    if (wasCash && !isCash) {
+      const cashVal = parseInt(cashInput.value) || 0;
+      if (cashVal > 0) {
+        uncollInput.value = (parseInt(uncollInput.value) || 0) + cashVal;
+        cashInput.value = '';
+      }
+    } else if (!wasCash && isCash) {
+      const uncollVal = parseInt(uncollInput.value) || 0;
+      if (uncollVal > 0) {
+        cashInput.value = (parseInt(cashInput.value) || 0) + uncollVal;
+        uncollInput.value = '';
+      }
+    }
+  }
+}
+
+function openTripEditModal(id) {
+  const trip = getTrips().find(t => t.id === id);
+  if (!trip) return;
+  editTripId = id;
+  document.getElementById('editPickupLoc').value = trip.pickup || '';
+  document.getElementById('editDropoffLoc').value = trip.dropoff || '';
+  document.getElementById('editPickupTime').value = trip.pickupTime || '';
+  document.getElementById('editDropoffTime').value = trip.dropoffTime || '';
+  // 記録済みの経由地（複数可）をそのまま入力欄として並べる
+  resetEditViaPoints();
+  getTripViaPoints(trip).forEach(v => addEditViaPoint(v));
+  // 後方互換: 旧データは fare フィールドのみ
+  const cf = trip.cashFare !== undefined ? trip.cashFare : (trip.fare||0);
+  document.getElementById('editCashFare').value = cf || '';
+  document.getElementById('editUncollectedFare').value = trip.uncollectedFare || '';
+  document.getElementById('editTipAmount').value = trip.tip || '';
+  if (trip.paxMaleCount !== undefined || trip.paxFemaleCount !== undefined) {
+    setEditPaxCounts(trip.paxMaleCount || 0, trip.paxFemaleCount || 0);
+  } else {
+    setEditPax(trip.passengers || 1);
+  }
+  document.getElementById('editGoPaxName').value = (trip.tripType === 'GO') ? (trip.paxName || trip.memo || '') : '';
+  document.getElementById('editGoPaxAge').value = (trip.tripType === 'GO') ? (trip.paxAge || '') : '';
+  document.getElementById('editDropoffDetail').value = trip.dropoffDetail || '';
+  document.getElementById('editPlainMemo').value = (trip.tripType !== 'GO') ? (trip.memo || '') : '';
+  selectEditGoGender((trip.tripType === 'GO' && trip.paxGender) ? trip.paxGender : '男性');
+  setEditPlainGender((trip.tripType !== 'GO' && trip.paxGender) ? trip.paxGender : '');
+  // 開いた時点の種別を先に記録しておき、引き継ぎ処理が誤って走らないようにする
+  document.getElementById('tripEditModal').dataset.tripType = trip.tripType || '流し';
+  selectEditType(trip.tripType || '流し', false);
+  // selectEditTypeはGOのとき支払方法を自動でGOにする副作用があるため、
+  // 記録時の実際の支払方法を必ず最後に上書きする（falseは金額の移し替えを行わないマーク）
+  selectEditPay(trip.payMethod || '現金', false);
+  document.getElementById('tripEditModal').classList.add('open');
+}
+// 経由地（修正画面）：記録画面のaddViaPointと同じ考え方。prefillを渡すと値を入れた状態で追加する
+let editViaPointCount = 0;
+function addEditViaPoint(prefill) {
+  const idx = editViaPointCount++;
+  const row = document.createElement('div');
+  row.className = 'input-group';
+  row.id = `editViaPointRow_${idx}`;
+  row.innerHTML = `
+    <div class="fare-label-row">
+      <label class="input-label" style="margin-bottom:0;">🚏 経由地</label>
+      <button type="button" class="discount-toggle-btn" onclick="removeEditViaPoint(${idx})">削除</button>
+    </div>
+    <input class="input-field" id="editViaPointLoc_${idx}" type="text" placeholder="" autocomplete="off"
+           oninput="onLocInput('editViaPointLoc_${idx}','editViaPointLocSuggest_${idx}')"
+           onfocus="onLocInput('editViaPointLoc_${idx}','editViaPointLocSuggest_${idx}');scrollLocFieldToTop('editViaPointLoc_${idx}')"
+           onblur="hideLocSuggest('editViaPointLocSuggest_${idx}')">
+    <div id="editViaPointLocSuggest_${idx}" class="loc-suggest"></div>
+  `;
+  document.getElementById('editViaPointsContainer').appendChild(row);
+  const input = document.getElementById(`editViaPointLoc_${idx}`);
+  if (prefill) input.value = prefill;
+  else input.focus();
+}
+function removeEditViaPoint(idx) {
+  const row = document.getElementById(`editViaPointRow_${idx}`);
+  if (row) row.remove();
+}
+function resetEditViaPoints() {
+  document.getElementById('editViaPointsContainer').innerHTML = '';
+  editViaPointCount = 0;
+}
+function getEditViaPointValues() {
+  return [...document.querySelectorAll('#editViaPointsContainer input[id^="editViaPointLoc_"]')]
+    .map(el => el.value.trim())
+    .filter(v => v);
+}
+
+function closeTripEditModal() {
+  document.getElementById('tripEditModal').classList.remove('open');
+  editTripId = null;
+}
+
+function saveTripEdit() {
+  if (!editTripId) return;
+  const trips = getTrips();
+  const idx = trips.findIndex(t => t.id === editTripId);
+  if (idx === -1) return;
+  const cashFare = parseInt(document.getElementById('editCashFare').value) || 0;
+  const uncollectedFare = parseInt(document.getElementById('editUncollectedFare').value) || 0;
+  const tip = parseInt(document.getElementById('editTipAmount').value) || 0;
+  const tripType = document.getElementById('tripEditModal').dataset.tripType || '流し';
+  trips[idx] = {
+    ...trips[idx],
+    pickup: document.getElementById('editPickupLoc').value.trim(),
+    dropoff: document.getElementById('editDropoffLoc').value.trim(),
+    viaPoints: getEditViaPointValues(),
+    pickupTime: document.getElementById('editPickupTime').value,
+    dropoffTime: document.getElementById('editDropoffTime').value,
+    cashFare, uncollectedFare, tip,
+    fare: cashFare + uncollectedFare, // 後方互換
+    passengers: parseInt(document.getElementById('editPassengerCount').value) || 1,
+    paxMaleCount: editPaxMale, paxFemaleCount: editPaxFemale,
+    payMethod: document.getElementById('editPayMethod').value || '現金',
+    tripType,
+    memo: tripType === 'GO' ? buildEditGoMemo() : document.getElementById('editPlainMemo').value.trim(),
+    paxName: tripType === 'GO' ? document.getElementById('editGoPaxName').value.trim() : '',
+    paxGender: tripType === 'GO' ? document.getElementById('editGoPaxGender').value : document.getElementById('editPlainPaxGender').value,
+    paxAge: tripType === 'GO' ? document.getElementById('editGoPaxAge').value : '',
+    dropoffDetail: document.getElementById('editDropoffDetail').value.trim(),
+    updatedAt: new Date().toISOString()
+  };
+  saveTrips(trips);
+  closeTripEditModal();
+  renderHistory();
+  updateTodaySummary();
+  // 統計・エリア・タイムラインからも修正できるため、表示中の画面を更新する
+  const activePage = document.querySelector('.page.active');
+  if (activePage) {
+    if (activePage.id === 'page-stats') renderStats();
+    if (activePage.id === 'page-recommend') renderRecommend();
+    if (activePage.id === 'page-schedule') renderSchedule();
+  }
+  showToast('記録を修正しました ✓');
+}
+
+document.getElementById('tripEditModal').addEventListener('click', function(e) {
+  if (e.target === this) closeTripEditModal();
+});
+
+function clearHistoryFilter() {
+  histShowAll = false;
+  histCurrentDate = resolveDefaultViewDate();
+  renderHistory();
+}
+
+// 深夜シフト対応ソート：0〜5時台は24時以降として扱う
+function tripSortKey(t) {
+  const time = t.pickupTime || '';
+  if (!time) return 0;
+  const [h, m] = time.split(':').map(Number);
+  const mins = h * 60 + m;
+  return mins < 360 ? mins + 1440 : mins; // 0〜5:59 → 1440〜1799分
+}
+
+function fmtDate(str) {
+  const d = new Date(str);
+  const days = ['日','月','火','水','木','金','土'];
+  return `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日（${days[d.getDay()]}）`;
+}
+
+// ==================== STATS ====================
+let currentStatTab = 'day';
+let statPeriodOffset = 0; // 0=現在の期間、1つ戻るごとに+1
+let currentStatPeriod = null; // 月別タブで現在表示中の締め期間（期間タップでの編集用）
+
+function switchStatTab(tab) {
+  currentStatTab = tab;
+  statPeriodOffset = 0;
+  ['day','week','month','hourly','location'].forEach(t => {
+    document.getElementById(`statTab-${t}`).className = 'tab-item' + (t === tab ? ' active' : '');
+  });
+  document.getElementById('statMain').style.display = ['day','week','month'].includes(tab) ? 'block' : 'none';
+  document.getElementById('statHourly').style.display = tab === 'hourly' ? 'block' : 'none';
+  document.getElementById('statLocation').style.display = tab === 'location' ? 'block' : 'none';
+  if (tab === 'hourly') { applyTodayHourlyDow(); renderHourlyChart(); }
+  else if (tab === 'location') renderLocationRanking();
+  else renderStats();
+}
+
+// 日別タブでは記録がある日だけを行き来する（記録のない日は飛ばす）
+function findStatDayOffsetWithData(fromOffset, direction) {
+  const today = todayStr();
+  const dates = [...new Set(getTrips().map(t => t.date))];
+  if (dates.length === 0) return null;
+  const offsetOf = d => Math.round((new Date(today + 'T00:00:00') - new Date(d + 'T00:00:00')) / 86400000);
+  const offsets = dates.map(offsetOf).sort((a,b) => a - b);
+  return direction > 0
+    ? (offsets.filter(o => o > fromOffset)[0] ?? null)                 // 過去へ
+    : (offsets.filter(o => o < fromOffset).pop() ?? null);             // 未来へ
+}
+
+function statPeriodPrev() {
+  if (currentStatTab === 'day') {
+    const next = findStatDayOffsetWithData(statPeriodOffset, 1);
+    if (next === null) return;
+    statPeriodOffset = next;
+  } else {
+    statPeriodOffset++;
+  }
+  renderStats();
+}
+function statPeriodNext() {
+  if (currentStatTab === 'day') {
+    const next = findStatDayOffsetWithData(statPeriodOffset, -1);
+    if (next === null) return;
+    statPeriodOffset = next;
+  } else {
+    if (statPeriodOffset <= 0) return;
+    statPeriodOffset--;
+  }
+  renderStats();
+}
+
+// 締め日ベースの月を offset 回分さかのぼった期間を返す
+function getShiftedBillingPeriod(offset) {
+  let period = getBillingPeriod(todayStr());
+  for (let i = 0; i < offset; i++) {
+    const prevDate = new Date(period.startStr + 'T00:00:00');
+    prevDate.setDate(prevDate.getDate() - 1);
+    period = getBillingPeriod(`${prevDate.getFullYear()}-${pad(prevDate.getMonth()+1)}-${pad(prevDate.getDate())}`);
+  }
+  return period;
+}
+
+// ==================== 時間帯分析 ====================
+let hourlyChartInstance = null;
+let currentHourlyDow = 'all';
+const DOW_LABELS = ['日','月','火','水','木','金','土'];
+
+// 勤務時間順の時間帯（7時〜翌5時）
+const SHIFT_HOURS = [7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,0,1,2,3,4,5];
+
+function switchHourlyDow(dow) {
+  currentHourlyDow = dow;
+  document.querySelectorAll('#hourlyDowTabs .dow-tab').forEach(el => {
+    el.className = 'dow-tab' + (el.dataset.dow === dow ? ' active' : '');
+  });
+  renderHourlyChart();
+}
+
+// 時間帯タブを開いたときは当日の曜日を自動選択する。
+// 専用タブがない土・日・火・木曜日は「全体」を表示する。
+function applyTodayHourlyDow() {
+  const dow = new Date(todayStr() + 'T00:00:00').getDay();
+  const target = [1, 3, 5].includes(dow) ? String(dow) : 'all';
+  currentHourlyDow = target;
+  document.querySelectorAll('#hourlyDowTabs .dow-tab').forEach(el => {
+    el.className = 'dow-tab' + (el.dataset.dow === target ? ' active' : '');
+  });
+}
+
+function filterTripsByHourlyDow(trips) {
+  if (currentHourlyDow === 'all') return trips;
+  const dow = parseInt(currentHourlyDow);
+  return trips.filter(t => new Date(t.date + 'T00:00:00').getDay() === dow);
+}
+
+function renderHourlyChart() {
+  document.getElementById('hourlyChartTitle').textContent = currentHourlyDow === 'all'
+    ? '時間帯別 乗車件数（全期間）'
+    : `時間帯別 乗車件数（${DOW_LABELS[parseInt(currentHourlyDow)]}曜日）`;
+
+  const trips = filterTripsByHourlyDow(getTrips().filter(t => t.pickupTime));
+  const counts = Array(24).fill(0);
+  trips.forEach(t => {
+    const h = parseInt(t.pickupTime.split(':')[0]);
+    if (!isNaN(h)) counts[h]++;
+  });
+
+  // 勤務時間順に並び替え
+  const shiftCounts = SHIFT_HOURS.map(h => counts[h]);
+
+  // 全時間帯ランキング（0件除く）
+  const ranked = SHIFT_HOURS.map((h,i) => ({h, c: shiftCounts[i]}))
+    .filter(r => r.c > 0).sort((a,b) => b.c - a.c);
+  const currentHour = new Date().getHours();
+  document.getElementById('hourlyTop').innerHTML = ranked.length === 0
+    ? `<div style="color:var(--muted);text-align:center;padding:16px;">まだデータがありません</div>`
+    : ranked.map((r,i) => {
+      const medalClasses = ['gold','silver','bronze'];
+      const isCurrent = r.h === currentHour;
+      return `<div class="loc-rank-item" style="cursor:pointer;${isCurrent ? 'background:#e3f2fd;' : ''}" onclick="showHourLocations(${r.h})">
+        <div class="loc-rank-num ${medalClasses[i]||''}">${i+1}</div>
+        <div class="loc-rank-body">
+          <div class="loc-rank-name">${r.h}時台${isCurrent ? ' <span style="color:var(--primary);font-size:11px;font-weight:700;">● 現在</span>' : ''}</div>
+        </div>
+        <span style="font-weight:700;color:var(--primary);">${r.c}件</span>
+        <span style="color:var(--muted);">›</span>
+      </div>`;
+    }).join('');
+
+  // Chart.js
+  if (typeof Chart === 'undefined') {
+    const s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js';
+    s.onload = () => drawHourlyChart(shiftCounts);
+    document.head.appendChild(s);
+  } else {
+    drawHourlyChart(shiftCounts);
+  }
+}
+
+function drawHourlyChart(shiftCounts) {
+  const ctx = document.getElementById('hourlyChart').getContext('2d');
+  if (hourlyChartInstance) hourlyChartInstance.destroy();
+  // 濃い青は現在時刻の時間帯を示す（件数が最も多い時間帯ではない）
+  const currentHour = new Date().getHours();
+  hourlyChartInstance = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: SHIFT_HOURS.map(h => `${h}時`),
+      datasets: [{
+        data: shiftCounts,
+        backgroundColor: SHIFT_HOURS.map(h => h === currentHour ? '#1a73e8' : '#93c4f7'),
+        borderRadius: 4,
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false } },
+      scales: {
+        y: { beginAtZero: true, ticks: { stepSize: 1 } },
+        x: { ticks: { font: { size: 10 } } }
+      }
+    }
+  });
+}
+
+// 時間帯タップでその時間帯によく行くエリアを表示
+function showHourLocations(h) {
+  const trips = filterTripsByHourlyDow(getTrips().filter(t => t.pickupTime && t.pickup && t.pickup.trim() !== '' && parseInt(t.pickupTime.split(':')[0]) === h));
+
+  const map = {};
+  trips.forEach(t => {
+    const loc = t.pickup.trim();
+    if (!map[loc]) map[loc] = { count: 0, total: 0 };
+    map[loc].count++;
+    map[loc].total += getTripFare(t);
+  });
+  const items = Object.entries(map).map(([loc, d]) => ({ loc, count: d.count, total: d.total }))
+    .sort((a,b) => b.count - a.count);
+
+  const dowSuffix = currentHourlyDow === 'all' ? '' : `（${DOW_LABELS[parseInt(currentHourlyDow)]}曜日）`;
+  document.getElementById('hourLocationTitle').textContent = `${h}時台によく行くエリア${dowSuffix}`;
+  document.getElementById('hourLocationContent').innerHTML = items.length === 0
+    ? `<div style="text-align:center;padding:24px;color:var(--muted);">データがありません</div>`
+    : items.map((it,i) => `
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);">
+        <div style="font-size:14px;font-weight:700;">${i+1}. ${it.loc}</div>
+        <div style="text-align:right;">
+          <div style="font-size:14px;font-weight:700;color:var(--primary);">${it.count}回</div>
+          <div style="font-size:11px;color:var(--muted);">合計¥${it.total.toLocaleString()}</div>
+        </div>
+      </div>
+    `).join('');
+  document.getElementById('hourLocationModal').classList.add('open');
+}
+function closeHourLocationModal() {
+  document.getElementById('hourLocationModal').classList.remove('open');
+}
+
+// ==================== 場所分析 ====================
+let currentLocTab = 'count';
+
+function switchLocTab(tab) {
+  currentLocTab = tab;
+  ['count','avg','total','dropoffDetail'].forEach(t => {
+    document.getElementById(`locTab-${t}`).className = 'analysis-tab' + (t === tab ? ' active' : '');
+  });
+  renderLocationRanking();
+}
+
+// 種別の内訳バッジ。色はタイムラインと同じ（GO=青／流し=緑／配車=橙）
+function typeBadges(types) {
+  return ['GO','流し','配車']
+    .filter(tp => types[tp])
+    .map(tp => {
+      const c = { '配車': '#ff6b00', 'GO': '#1a73e8', '流し': '#00a152' }[tp];
+      return `<span class="sched-type-badge" style="background:${c}22;color:${c};">${tp} ${types[tp]}</span>`;
+    }).join('');
+}
+
+// 降車場所詳細（店名・施設名など）ごとの利用回数ランキング
+function renderDropoffDetailRanking() {
+  const trips = getTrips().filter(t => t.dropoffDetail && t.dropoffDetail.trim() !== '');
+  if (trips.length === 0) {
+    document.getElementById('locationRanking').innerHTML =
+      `<div style="text-align:center;padding:40px;color:var(--muted);">まだデータがありません<br><small>降車場所詳細を記入すると分析できます</small></div>`;
+    return;
+  }
+  const map = {};
+  trips.forEach(t => {
+    const detail = t.dropoffDetail.trim();
+    if (!map[detail]) map[detail] = { count: 0, total: 0, fares: [], types: {}, dropoffCounts: {} };
+    const f = getTripFare(t);
+    map[detail].count++;
+    map[detail].total += f;
+    if (f > 0) map[detail].fares.push(f);
+    const type = t.tripType || '流し';
+    map[detail].types[type] = (map[detail].types[type] || 0) + 1;
+    const dropoff = (t.dropoff || '').trim();
+    if (dropoff) map[detail].dropoffCounts[dropoff] = (map[detail].dropoffCounts[dropoff] || 0) + 1;
+  });
+  const items = Object.entries(map)
+    .map(([detail, d]) => {
+      // 同じ店名・施設名でも複数の地名が紐づく場合があるため、一番件数の多い地名を代表として表示する
+      const dropoffEntries = Object.entries(d.dropoffCounts).sort((a,b) => b[1] - a[1]);
+      const dropoff = dropoffEntries.length ? dropoffEntries[0][0] : '';
+      return {
+        detail, count: d.count, total: d.total, types: d.types, dropoff,
+        avg: d.fares.length ? Math.round(d.fares.reduce((s,v)=>s+v,0)/d.fares.length) : 0
+      };
+    })
+    .sort((a,b) => b.count - a.count);
+  const medals = ['gold','silver','bronze'];
+  document.getElementById('locationRanking').innerHTML = items.map((item, i) => `
+    <div class="loc-rank-item" style="cursor:pointer;" onclick="showDropoffDetailHistory('${encodeURIComponent(item.detail)}')">
+      <div class="loc-rank-num ${medals[i]||''}">${i+1}</div>
+      <div class="loc-rank-body">
+        <div class="loc-rank-name">${item.detail}${item.dropoff ? `（${item.dropoff}）` : ''}</div>
+        <div class="loc-rank-meta">${item.count}回 ／ 平均 ¥${item.avg.toLocaleString()} ／ 合計 ¥${item.total.toLocaleString()}</div>
+        <div style="margin-top:3px;">${typeBadges(item.types)}</div>
+      </div>
+      <div class="loc-rank-fare">${item.count}回</div>
+    </div>
+  `).join('');
+}
+function showDropoffDetailHistory(encodedDetail) {
+  const detail = decodeURIComponent(encodedDetail);
+  const trips = getTrips().filter(t => t.dropoffDetail && t.dropoffDetail.trim() === detail)
+    .sort((a,b) => (b.date + (b.pickupTime||'')).localeCompare(a.date + (a.pickupTime||'')));
+  const totalFare = trips.reduce((s,t) => s + getTripFare(t), 0);
+  document.getElementById('hourLocationTitle').textContent = `${detail}の過去の記録（${trips.length}件）`;
+  document.getElementById('hourLocationContent').innerHTML =
+    `<div style="text-align:center;font-size:13px;color:var(--muted);margin-bottom:10px;">合計¥${totalFare.toLocaleString()}</div>` +
+    trips.map(t => {
+      const [,mm,dd] = t.date.split('-');
+      const dow = ['日','月','火','水','木','金','土'][new Date(t.date + 'T00:00:00').getDay()];
+      const fare = getTripFare(t);
+      const name = formatPaxLabel(t);
+      const type = t.tripType || '流し';
+      const typeColor = { '配車': '#ff6b00', 'GO': '#1a73e8', '流し': '#00a152' }[type] || '#1a73e8';
+      return `
+        <div style="padding:8px;border-bottom:1px solid var(--border);cursor:pointer;" onclick="closeHourLocationModal();openTripEditModal(${t.id})">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <span style="font-size:13px;font-weight:700;">
+              <span class="sched-type-badge" style="background:${typeColor}22;color:${typeColor};">${type}</span>${parseInt(mm)}/${parseInt(dd)}(${dow}) ${t.pickupTime||''}
+            </span>
+            <span style="font-weight:700;color:var(--success);">¥${fare.toLocaleString()}</span>
+          </div>
+          <div style="font-size:12px;color:var(--muted);margin-top:2px;">${formatTripRoute(t)}</div>
+          ${name ? `<div style="font-size:12px;font-weight:700;color:var(--primary);margin-top:2px;">👤 ${name}</div>` : ''}
+        </div>
+      `;
+    }).join('');
+  document.getElementById('hourLocationModal').classList.add('open');
+}
+
+function renderLocationRanking() {
+  if (currentLocTab === 'dropoffDetail') { renderDropoffDetailRanking(); return; }
+  const trips = getTrips().filter(t => t.pickup && t.pickup.trim() !== '');
+  if (trips.length === 0) {
+    document.getElementById('locationRanking').innerHTML =
+      `<div style="text-align:center;padding:40px;color:var(--muted);">まだデータがありません<br><small>記録を重ねると分析できます</small></div>`;
+    return;
+  }
+
+  // 乗車場所ごとに集計
+  const map = {};
+  trips.forEach(t => {
+    const loc = t.pickup.trim();
+    if (!map[loc]) map[loc] = { count:0, total:0, fares:[], types:{} };
+    const f = getTripFare(t);
+    map[loc].count++;
+    map[loc].total += f;
+    if (f > 0) map[loc].fares.push(f);
+    // その場所がGO中心か流し中心かがわかるように、種別ごとの件数も数える
+    const type = t.tripType || '流し';
+    map[loc].types[type] = (map[loc].types[type] || 0) + 1;
+  });
+
+  const items = Object.entries(map).map(([loc, d]) => ({
+    loc,
+    count: d.count,
+    total: d.total,
+    types: d.types,
+    avg: d.fares.length ? Math.round(d.fares.reduce((s,v)=>s+v,0)/d.fares.length) : 0
+  }));
+
+  if (currentLocTab === 'count') items.sort((a,b) => b.count - a.count);
+  else if (currentLocTab === 'avg') items.sort((a,b) => b.avg - a.avg);
+  else items.sort((a,b) => b.total - a.total);
+
+  const medals = ['gold','silver','bronze'];
+  document.getElementById('locationRanking').innerHTML = items.map((item, i) => `
+    <div class="loc-rank-item" style="cursor:pointer;" onclick="showLocationHistory('${encodeURIComponent(item.loc)}')">
+      <div class="loc-rank-num ${medals[i]||''}">${i+1}</div>
+      <div class="loc-rank-body">
+        <div class="loc-rank-name">${item.loc}</div>
+        <div class="loc-rank-meta">${item.count}回 ／ 平均 ¥${item.avg.toLocaleString()} ／ 合計 ¥${item.total.toLocaleString()}</div>
+        <div style="margin-top:3px;">${typeBadges(item.types)}</div>
+      </div>
+      <div class="loc-rank-fare">
+        ${currentLocTab === 'count' ? `${item.count}回`
+          : currentLocTab === 'avg' ? `¥${item.avg.toLocaleString()}`
+          : `¥${item.total.toLocaleString()}`}
+      </div>
+    </div>
+  `).join('');
+}
+
+// 場所ランキングをタップしたときの過去記録一覧
+function showLocationHistory(encodedLoc) {
+  const loc = decodeURIComponent(encodedLoc);
+  const trips = getTrips().filter(t => t.pickup && t.pickup.trim() === loc)
+    .sort((a,b) => (b.date + (b.pickupTime||'')).localeCompare(a.date + (a.pickupTime||'')));
+  const totalFare = trips.reduce((s,t) => s + getTripFare(t), 0);
+  document.getElementById('hourLocationTitle').textContent = `${loc}の過去の記録（${trips.length}件）`;
+  document.getElementById('hourLocationContent').innerHTML =
+    `<div style="text-align:center;font-size:13px;color:var(--muted);margin-bottom:10px;">合計¥${totalFare.toLocaleString()}</div>` +
+    trips.map(t => {
+      const [,mm,dd] = t.date.split('-');
+      const dow = ['日','月','火','水','木','金','土'][new Date(t.date + 'T00:00:00').getDay()];
+      const fare = getTripFare(t);
+      // 各乗車記録ではお客様の名前を表示する（一覧では非表示）
+      const name = formatPaxLabel(t);
+      // 種別バッジ。色はタイムラインと同じ（GO=青／流し=緑／配車=橙）
+      const type = t.tripType || '流し';
+      const typeColor = { '配車': '#ff6b00', 'GO': '#1a73e8', '流し': '#00a152' }[type] || '#1a73e8';
+      // 記録をタップするとそのまま修正できるようにする（見た目は変えない）
+      return `
+        <div style="padding:8px;border-bottom:1px solid var(--border);cursor:pointer;" onclick="closeHourLocationModal();openTripEditModal(${t.id})">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <span style="font-size:13px;font-weight:700;">
+              <span class="sched-type-badge" style="background:${typeColor}22;color:${typeColor};">${type}</span>${parseInt(mm)}/${parseInt(dd)}(${dow}) ${t.pickupTime||''}
+            </span>
+            <span style="font-weight:700;color:var(--success);">¥${fare.toLocaleString()}</span>
+          </div>
+          <div style="font-size:12px;color:var(--muted);margin-top:2px;">→ ${t.dropoff||'?'}</div>
+          ${name ? `<div style="font-size:12px;font-weight:700;color:var(--primary);margin-top:2px;">👤 ${name}</div>` : ''}
+        </div>
+      `;
+    }).join('');
+  document.getElementById('hourLocationModal').classList.add('open');
+}
+
+// 売上ランキング（日別）の日付をタップして、その日の乗車記録を一覧する。
+// 場所の履歴と同じ体裁で、各記録をタップするとそのまま修正できる
+// 統計のランキングから開く記録一覧。日付を出すかどうかだけ切り替える
+function renderTripHistoryModal(title, trips, showDate) {
+  const totalFare = trips.reduce((s,t) => s + getTripFare(t), 0);
+  const weekdays = ['日','月','火','水','木','金','土'];
+  document.getElementById('hourLocationTitle').textContent = `${title}（${trips.length}件）`;
+  document.getElementById('hourLocationContent').innerHTML =
+    `<div style="text-align:center;font-size:13px;color:var(--muted);margin-bottom:10px;">合計¥${totalFare.toLocaleString()}</div>` +
+    (trips.length === 0
+      ? `<div style="text-align:center;padding:24px;color:var(--muted);">データがありません</div>`
+      : trips.map(t => {
+        const fare = getTripFare(t);
+        const name = formatPaxLabel(t);
+        const type = t.tripType || '流し';
+        const typeColor = { '配車': '#ff6b00', 'GO': '#1a73e8', '流し': '#00a152' }[type] || '#1a73e8';
+        const d = new Date(t.date + 'T00:00:00');
+        const dateLabel = showDate ? `${d.getMonth()+1}/${d.getDate()}(${weekdays[d.getDay()]}) ` : '';
+        return `
+          <div style="padding:8px;border-bottom:1px solid var(--border);cursor:pointer;" onclick="closeHourLocationModal();openTripEditModal(${t.id})">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <span style="font-size:13px;font-weight:700;">
+                <span class="sched-type-badge" style="background:${typeColor}22;color:${typeColor};">${type}</span>${dateLabel}${t.pickupTime||''}${t.dropoffTime ? `〜${t.dropoffTime}` : ''}
+              </span>
+              <span style="font-weight:700;color:var(--success);">¥${fare.toLocaleString()}</span>
+            </div>
+            <div style="font-size:12px;color:var(--muted);margin-top:2px;">${formatTripRoute(t)}</div>
+            ${name ? `<div style="font-size:12px;font-weight:700;color:var(--primary);margin-top:2px;">${name}</div>` : ''}
+          </div>
+        `;
+      }).join(''));
+  document.getElementById('hourLocationModal').classList.add('open');
+}
+
+// 売上ランキング（日別）の日付をタップして、その日の乗車記録を一覧する
+function showDayHistory(date) {
+  const trips = getTrips().filter(t => t.date === date).sort((a,b) => tripSortKey(a) - tripSortKey(b));
+  renderTripHistoryModal(`${fmtDate(date)}の記録`, trips, false);
+}
+
+// 売上ランキング（週別・月別）をタップして、その期間の乗車記録を一覧する
+function showPeriodHistory(kind, key) {
+  const keyOf = t => kind === 'week' ? getWeekKeyOf(t.date) : getBillingPeriod(t.date).startStr;
+  const trips = getTrips().filter(t => keyOf(t) === key)
+    .sort((a,b) => (a.date + (a.pickupTime||'')).localeCompare(b.date + (b.pickupTime||'')));
+  const title = kind === 'week' ? `${fmtWeekLabel(key)}の記録` : `${getBillingPeriod(key).label}の記録`;
+  renderTripHistoryModal(title, trips, true);
+}
+
+// ==================== エリア（現在時刻のおすすめ） ====================
+function renderRecommend() {
+  const now = new Date();
+  document.getElementById('recommendNow').textContent = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
+
+  // 現在時刻を起点とした「分」単位のローリングウィンドウで集計（時計の1時間区切りをまたいでも必ずフルの長さになる）
+  const nowKey = now.getHours() * 60 + now.getMinutes();
+  const fmtTimeOfDay = m => `${pad(Math.floor((m % 1440) / 60))}:${pad(m % 60)}`;
+
+  const rankingWindowLen = 60;  // おすすめエリアランキングは現在時刻から1時間
+  const listWindowLen = 180;    // 一覧表示は現在時刻から3時間
+
+  document.getElementById('recommendRange').textContent =
+    `${fmtTimeOfDay(nowKey)}〜${fmtTimeOfDay(nowKey + rankingWindowLen)}の過去データから算出`;
+  document.getElementById('recommendListRange').textContent =
+    `${fmtTimeOfDay(nowKey)}〜${fmtTimeOfDay(nowKey + listWindowLen)}の記録`;
+
+  const trips = getTrips().filter(t => t.pickup && t.pickup.trim() !== '' && t.pickupTime && t.tripType !== '配車');
+  // 現在時刻からの経過分数（日をまたぐ場合も0〜1439の範囲でループするよう調整）
+  const minutesFromNow = t => {
+    const [h, m] = t.pickupTime.split(':').map(Number);
+    let diff = (h * 60 + m) - nowKey;
+    if (diff < 0) diff += 1440;
+    return diff;
+  };
+
+  const rankingWindowTrips = trips.filter(t => minutesFromNow(t) < rankingWindowLen);
+  const matched = trips.filter(t => minutesFromNow(t) < listWindowLen);
+
+  // おすすめエリアランキング（乗車回数順、上位3件）
+  const areaMap = {};
+  rankingWindowTrips.forEach(t => {
+    const loc = t.pickup.trim();
+    if (!areaMap[loc]) areaMap[loc] = { count: 0, total: 0 };
+    areaMap[loc].count++;
+    areaMap[loc].total += getTripFare(t);
+  });
+  const areaRanking = Object.entries(areaMap)
+    .map(([loc, d]) => ({ loc, count: d.count, total: d.total }))
+    .sort((a,b) => b.count - a.count || b.total - a.total)
+    .slice(0, 3);
+  const medals = ['🥇','🥈','🥉'];
+  document.getElementById('recommendAreaRanking').innerHTML = areaRanking.length === 0
+    ? `<div style="color:var(--muted);text-align:center;padding:12px;">まだデータがありません</div>`
+    : areaRanking.map((r,i) => `
+      <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);">
+        <span style="font-size:22px;">${medals[i]}</span>
+        <div style="flex:1;font-size:15px;font-weight:700;">${r.loc}</div>
+        <div style="text-align:right;">
+          <div style="font-weight:700;color:var(--primary);">${r.count}回</div>
+          <div style="font-size:11px;color:var(--muted);">合計¥${r.total.toLocaleString()}</div>
+        </div>
+      </div>
+    `).join('');
+
+  if (matched.length === 0) {
+    document.getElementById('recommendList').innerHTML =
+      `<div style="text-align:center;padding:40px;color:var(--muted);">この時間帯のデータがまだありません<br><small>記録を重ねると表示されます</small></div>`;
+    return;
+  }
+
+  const sorted = matched.slice().sort((a,b) => minutesFromNow(a) - minutesFromNow(b));
+
+  const weekdays = ['日','月','火','水','木','金','土'];
+  const typeColors = { '配車': '#ff6b00', 'GO': '#1a73e8', '流し': '#00a152' };
+  document.getElementById('recommendList').innerHTML = sorted.map(t => {
+    const [,mm,dd] = t.date.split('-');
+    const dow = weekdays[new Date(t.date + 'T00:00:00').getDay()];
+    const type = t.tripType || '流し';
+    // 乗客情報は「名前 / 性別 / 年代」の形式にそろえて表示する
+    const name = formatPaxLabel(t);
+    const typeColor = typeColors[type] || '#1a73e8';
+    const fare = getTripFare(t);
+    return `
+      <div class="loc-rank-item" style="cursor:pointer;" onclick="openTripEditModal(${t.id})">
+        <div class="loc-rank-body">
+          <div class="loc-rank-name">${t.pickupTime}　${t.pickup.trim()}${t.dropoff && t.dropoff.trim() ? ` → ${t.dropoff.trim()}` : ''}</div>
+          <div class="loc-rank-meta">
+            <span style="display:inline-block;padding:2px 8px;border-radius:6px;font-weight:700;background:${typeColor}22;color:${typeColor};margin-right:6px;">${type}</span>
+            ${parseInt(mm)}/${parseInt(dd)}(${dow})
+            ${name ? `<div style="margin-top:2px;">${name}</div>` : ''}
+          </div>
+        </div>
+        <div class="loc-rank-fare">¥${fare.toLocaleString()}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+// ==================== タイムライン（実車・空車） ====================
+let schedCurrentDate = todayStr();
+// 本日の記録がまだ無いために自動で前回分にさかのぼって表示している状態かどうか。
+// この状態のときだけ、本日の記録ができ次第、自動で本日表示に戻す（手動で過去日を
+// 選んで閲覧している場合は勝手に戻さない）
+let schedAutoFallback = false;
+
+// 記録がある日だけを対象に前後移動する（記録のない日は表示しない）
+function schedNavPrev() {
+  const allDates = [...new Set(getTrips().map(t=>t.date))].filter(d => d < schedCurrentDate).sort();
+  if (allDates.length === 0) return;
+  schedCurrentDate = allDates[allDates.length - 1];
+  schedAutoFallback = false;
+  renderSchedule();
+}
+function schedNavNext() {
+  if (schedCurrentDate >= todayStr()) return;
+  const allDates = [...new Set(getTrips().map(t=>t.date))].filter(d => d > schedCurrentDate && d < todayStr()).sort();
+  schedCurrentDate = allDates.length > 0 ? allDates[0] : todayStr();
+  schedAutoFallback = false;
+  renderSchedule();
+}
+function schedPickDate(v) {
+  if (!v) return;
+  schedCurrentDate = v;
+  schedAutoFallback = false;
+  renderSchedule();
+}
+
+// 現在時刻を HH:MM で返す
+function nowHM() {
+  const d = new Date();
+  return `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+// 休憩・給油をワンタップで開始／終了する。
+// 開始すると終了時刻を空のまま保存し（＝進行中）、もう一度押すと現在時刻を終了として記録する
+function toggleSchedStop(kind) {
+  const date = schedCurrentDate;
+  const label = kind === 'break' ? '休憩' : '給油';
+  const list = kind === 'break' ? getScheduleBreaks(date) : getScheduleFuelStops(date);
+  const save = l => kind === 'break' ? saveScheduleBreaks(date, l) : saveScheduleFuelStops(date, l);
+
+  const ongoingIdx = list.findIndex(item => !item.end);
+  if (ongoingIdx >= 0) {
+    list[ongoingIdx].end = nowHM();
+    save(list);
+    showToast(`${label}を終了しました ✓`);
+  } else {
+    if (date !== todayStr()) { showToast(`${label}の開始は当日の記録でのみできます`); return; }
+    // 給油は高岡町で固定のため場所欄は不要
+    list.push({ start: nowHM(), end: '', place: kind === 'fuel' ? FUEL_PLACE : '' });
+    save(list);
+    showToast(`${label}を開始しました`);
+    // 休憩は開始時にどこにいるか分かっているため、開始と同時に場所の入力欄だけを開く
+    if (kind === 'break') {
+      renderSchedule();
+      openSchedBreakQuickPlace(list.length - 1);
+      return;
+    }
+  }
+  renderSchedule();
+}
+
+// 進行中かどうかに応じてタブの表示を切り替える
+function renderSchedTabs() {
+  const date = schedCurrentDate;
+  [['break', 'schedTabBreak', '休憩'], ['fuel', 'schedTabFuel', '給油']].forEach(([kind, id, label]) => {
+    const list = kind === 'break' ? getScheduleBreaks(date) : getScheduleFuelStops(date);
+    const ongoing = list.some(item => !item.end);
+    const done = !ongoing && list.some(item => item.end);
+    const btn = document.getElementById(id);
+    if (!btn) return;
+    // 給油は基本1日1回のため、済んだ日はそれとわかるようにする。
+    // それでも押せば2回目を記録できる
+    btn.textContent = ongoing ? `${label}中` : (kind === 'fuel' && done ? '給油済' : label);
+    btn.classList.toggle('ongoing-break', ongoing && kind === 'break');
+    btn.classList.toggle('ongoing-fuel', ongoing && kind === 'fuel');
+    btn.classList.toggle('done', kind === 'fuel' && done);
+    // 「休憩時間」カードも休憩タブと同じ色にし、休憩が終わると元の表示に戻す
+    if (kind === 'break') {
+      document.getElementById('schedBreakCard').classList.toggle('ongoing-break', ongoing);
+    }
+  });
+}
+
+// ---- 業務終了の記録モーダル ----
+function openSchedAdd() {
+  document.getElementById('schedAddEndTime').value = getDayEndTimeValue(schedCurrentDate) || '';
+  document.getElementById('schedAddModal').classList.add('open');
+}
+function closeSchedAdd() {
+  document.getElementById('schedAddModal').classList.remove('open');
+}
+function saveSchedAdd() {
+  if (saveSchedEndTimeValue(document.getElementById('schedAddEndTime').value)) {
+    closeSchedAdd();
+    // 業務終了を記録したら、そのままスクリーンショットに使える1日のまとめを表示する
+    openDayReport(schedCurrentDate);
+  }
+}
+
+// ==================== 1日の記録まとめ（スクリーンショット用） ====================
+function openDayReport(date) {
+  renderDayReport(date);
+  document.getElementById('dayReportModal').classList.add('open');
+}
+function closeDayReport() {
+  document.getElementById('dayReportModal').classList.remove('open');
+}
+function renderDayReport(date) {
+  const trips = getTrips().filter(t => t.date === date).sort((a,b) => tripSortKey(a) - tripSortKey(b));
+  const d = new Date(date + 'T00:00:00');
+  const dow = ['日','月','火','水','木','金','土'][d.getDay()];
+  document.getElementById('dayReportTitle').textContent = `${d.getMonth()+1}月${d.getDate()}日（${dow}）の記録`;
+
+  const totalFareEx = dayTotalExTax(date);
+  const totalUncollected = trips.reduce((s,t) => s + (t.uncollectedFare||0), 0);
+  const totalTip = trips.reduce((s,t) => s + (t.tip||0), 0);
+  const goCount = trips.filter(t => (t.tripType||'流し') === 'GO').length;
+  const nashiCount = trips.filter(t => (t.tripType||'流し') === '流し').length;
+  const haishaCount = trips.filter(t => t.tripType === '配車').length;
+
+  document.getElementById('dayReportSummary').innerHTML = `
+    <span>件数 ${trips.length}件</span>
+    <span>営収額(税抜) ¥${totalFareEx.toLocaleString()}</span>
+    <span>未収額 ¥${totalUncollected.toLocaleString()}</span>
+    <span>チップ ¥${totalTip.toLocaleString()}</span>
+    <span>GO ${goCount}・流し ${nashiCount}・配車 ${haishaCount}</span>
+  `;
+
+  const typeColors = { '配車': '#ff6b00', 'GO': '#1a73e8', '流し': '#00a152' };
+  document.getElementById('dayReportList').innerHTML = trips.length ? trips.map(t => {
+    const type = t.tripType || '流し';
+    const color = typeColors[type] || '#1a73e8';
+    const fare = getTripFare(t);
+    const route = formatTripRoute(t);
+    const payLabel = (t.payMethod && t.payMethod !== '現金') ? `<span style="color:var(--muted);">（${t.payMethod}）</span>` : '';
+    return `
+      <div style="display:flex;gap:6px;padding:3px 0;border-bottom:1px solid var(--border);align-items:baseline;">
+        <span style="flex:none;width:36px;color:var(--muted);">${t.pickupTime||''}</span>
+        <span style="flex:none;width:26px;color:${color};font-weight:800;">${type}</span>
+        <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${route}</span>
+        <span style="flex:none;font-weight:700;color:var(--success);">¥${fare.toLocaleString()}</span>
+        ${payLabel}
+      </div>
+    `;
+  }).join('') : `<div style="text-align:center;color:var(--muted);padding:20px;">この日の記録はありません</div>`;
+}
+
+// 休憩の場所ごとに、これまでの利用回数と合計時間を集計し、回数が多い順に返す
+// （進行中で終了時刻が無いものは集計に含めない）
+function getBreakPlaceRanking() {
+  let data;
+  try { data = JSON.parse(localStorage.getItem(BREAKS_KEY) || '{}'); } catch(e) { data = {}; }
+  const hidden = getHiddenPlaces();
+  const map = {};
+  Object.values(data).forEach(list => {
+    (list || []).forEach(b => {
+      if (!b.place || !b.end || hidden.includes(b.place)) return;
+      const [sh,sm] = b.start.split(':').map(Number);
+      const [eh,em] = b.end.split(':').map(Number);
+      let min = (eh*60+em) - (sh*60+sm);
+      if (min < 0) min += 24*60;
+      if (!map[b.place]) map[b.place] = { count: 0, totalMin: 0 };
+      map[b.place].count++;
+      map[b.place].totalMin += min;
+    });
+  });
+  return Object.entries(map)
+    .map(([place, d]) => ({ place, count: d.count, totalMin: d.totalMin }))
+    .sort((a,b) => b.count - a.count);
+}
+// 休憩でよく使う場所を、利用回数が多い順に1行1件のランキング形式で表示する。
+// 過去の記録がまだ無ければ既定の候補を表示する
+function renderPlaceChips(containerId, inputId) {
+  const hidden = getHiddenPlaces();
+  const ranking = getBreakPlaceRanking();
+  const container = document.getElementById(containerId);
+  if (ranking.length === 0) {
+    const names = BREAK_PLACE_PRESETS.filter(n => !hidden.includes(n));
+    container.innerHTML = names.map(name =>
+      `<button type="button" class="place-chip" onmousedown="event.preventDefault()" onclick="pickPlace('${inputId}','${name}')">${name}</button>`
+    ).join('');
+    return;
+  }
+  const medals = ['gold','silver','bronze'];
+  container.innerHTML = ranking.map((r, i) => `
+    <div class="loc-rank-item" style="padding:10px 14px;cursor:pointer;" onmousedown="event.preventDefault()" onclick="pickPlace('${inputId}','${r.place}')">
+      <div class="loc-rank-num ${medals[i]||''}">${i+1}</div>
+      <div style="flex-shrink:0;width:90px;font-size:14px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${r.place}</div>
+      <div style="font-size:13px;color:var(--muted);flex-shrink:0;text-align:left;width:34px;">${r.count}回</div>
+      <div style="font-size:13px;color:var(--muted);flex-shrink:0;text-align:right;width:68px;white-space:nowrap;">${fmtWait(r.totalMin)}</div>
+    </div>
+  `).join('');
+}
+// 場所欄にチップ／候補から選んだ値を入れる。休憩開始直後の簡易入力中なら、
+// 選んだ時点でそのまま保存して閉じる（時刻はワンタップ開始時に自動記録済みのため不要）
+function pickPlace(inputId, name) {
+  document.getElementById(inputId).value = name;
+  hideLocSuggest(`${inputId}Suggest`);
+  if (schedQuickPlaceMode && inputId === 'schedItemEditPlace') saveSchedItemEdit();
+}
+
+// 業務終了時刻を保存（HH:MM形式）
+function saveSchedEndTimeValue(val) {
+  const date = schedCurrentDate;
+  if (!val) { showToast('終了時刻を入力してください'); return false; }
+  const shiftStart = new Date(date + 'T07:30:00');
+  const d = new Date(date + 'T' + val + ':00');
+  if (d < shiftStart) d.setDate(d.getDate() + 1); // 深夜をまたぐ場合は翌日扱い
+  saveDayEndTime(date, d);
+  showToast('業務終了時刻を保存しました ✓');
+  renderSchedule();
+  return true;
+}
+
+function deleteScheduleBreak(index) {
+  const date = schedCurrentDate;
+  const breaks = getScheduleBreaks(date);
+  breaks.splice(index, 1);
+  saveScheduleBreaks(date, breaks);
+  renderSchedule();
+}
+
+function deleteScheduleFuel(index) {
+  const date = schedCurrentDate;
+  const fuelStops = getScheduleFuelStops(date);
+  fuelStops.splice(index, 1);
+  saveScheduleFuelStops(date, fuelStops);
+  renderSchedule();
+}
+
+// ---- 休憩・給油をタップして編集（時刻・場所の修正／削除） ----
+let schedItemEditTarget = null; // { kind: 'break'|'fuel', index: number }
+// true の間は、休憩開始直後の簡易入力モード（場所欄だけを見せ、選んだら即保存して閉じる）
+let schedQuickPlaceMode = false;
+
+// 場所欄の「他の場所を入力」欄の表示・非表示を切り替える。
+// visible=falseのときはチップから選ぶことだけを想定し、入力欄自体を隠してキーボードが出ないようにする
+function setSchedItemEditPlaceInputVisible(visible) {
+  document.getElementById('schedItemEditPlaceInputWrap').style.display = visible ? '' : 'none';
+  document.getElementById('schedItemEditPlaceMoreBtn').style.display = visible ? 'none' : '';
+}
+function revealSchedItemEditPlaceInput() {
+  setSchedItemEditPlaceInputVisible(true);
+  document.getElementById('schedItemEditPlace').focus();
+}
+function openSchedItemEdit(kind, index) {
+  const list = kind === 'break' ? getScheduleBreaks(schedCurrentDate) : getScheduleFuelStops(schedCurrentDate);
+  const item = list[index];
+  if (!item) return;
+  schedItemEditTarget = { kind, index };
+  schedQuickPlaceMode = false;
+  document.getElementById('schedItemEditTimeRow').style.display = '';
+  document.getElementById('schedItemEditFooter').style.display = '';
+  document.getElementById('schedItemEditTitle').textContent = kind === 'break' ? '休憩を修正' : '給油を修正';
+  document.getElementById('schedItemEditStart').value = item.start || '';
+  document.getElementById('schedItemEditEnd').value = item.end || '';
+  document.getElementById('schedItemEditPlace').value = item.place || '';
+  hideLocSuggest('schedItemEditPlaceSuggest');
+  // 給油の場所は高岡町で固定のため、場所欄は休憩のときだけ出す
+  const isBreak = kind === 'break';
+  document.getElementById('schedItemEditPlaceRow').style.display = isBreak ? '' : 'none';
+  document.getElementById('schedItemEditFuelNote').style.display = isBreak ? 'none' : '';
+  renderPlaceChips('schedItemEditPlaceChips', 'schedItemEditPlace');
+  setSchedItemEditPlaceInputVisible(true);
+  document.getElementById('schedItemEditModal').classList.add('open');
+}
+// 休憩を開始した直後だけの簡易入力：候補チップだけを見せ、キーボードは出さない。
+// チップを選ぶか「他の場所を入力」を自分でタップしたときだけ入力欄を出す。
+// 選んだ／入力し終えた時点でそのまま保存して閉じる（開始時刻はワンタップ開始時に記録済みのため触らせない）
+function openSchedBreakQuickPlace(index) {
+  const list = getScheduleBreaks(schedCurrentDate);
+  const item = list[index];
+  if (!item) return;
+  schedItemEditTarget = { kind: 'break', index };
+  schedQuickPlaceMode = true;
+  document.getElementById('schedItemEditTimeRow').style.display = 'none';
+  document.getElementById('schedItemEditFooter').style.display = 'none';
+  document.getElementById('schedItemEditTitle').textContent = '休憩の場所を入力';
+  document.getElementById('schedItemEditStart').value = item.start || '';
+  document.getElementById('schedItemEditEnd').value = item.end || '';
+  document.getElementById('schedItemEditPlace').value = '';
+  hideLocSuggest('schedItemEditPlaceSuggest');
+  document.getElementById('schedItemEditPlaceRow').style.display = '';
+  document.getElementById('schedItemEditFuelNote').style.display = 'none';
+  renderPlaceChips('schedItemEditPlaceChips', 'schedItemEditPlace');
+  setSchedItemEditPlaceInputVisible(false);
+  document.getElementById('schedItemEditModal').classList.add('open');
+}
+// 場所欄からフォーカスが外れたとき、候補を選ばず自分で打ち終えた場合はそのまま保存する
+function onSchedItemEditPlaceBlur() {
+  if (!schedQuickPlaceMode) return;
+  if (document.getElementById('schedItemEditPlace').value.trim()) saveSchedItemEdit();
+}
+function closeSchedItemEdit() {
+  document.getElementById('schedItemEditModal').classList.remove('open');
+  schedItemEditTarget = null;
+  schedQuickPlaceMode = false;
+  // 地名を選んで自動保存・自動で閉じたときに、キーボードが開いたまま残らないようにする
+  if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+}
+function saveSchedItemEdit() {
+  if (!schedItemEditTarget) return;
+  const { kind, index } = schedItemEditTarget;
+  const start = document.getElementById('schedItemEditStart').value;
+  const end = document.getElementById('schedItemEditEnd').value;
+  // 給油の場所は常に高岡町
+  const place = kind === 'break' ? document.getElementById('schedItemEditPlace').value.trim() : FUEL_PLACE;
+  // 終了時刻は進行中のとき空のままにできる
+  if (!start) { showToast('開始時刻を入力してください'); return; }
+  const list = kind === 'break' ? getScheduleBreaks(schedCurrentDate) : getScheduleFuelStops(schedCurrentDate);
+  if (!list[index]) return;
+  const quick = schedQuickPlaceMode;
+  list[index] = { start, end, place };
+  if (kind === 'break') saveScheduleBreaks(schedCurrentDate, list);
+  else saveScheduleFuelStops(schedCurrentDate, list);
+  closeSchedItemEdit();
+  showToast(quick ? '休憩の場所を記録しました ✓' : (kind === 'break' ? '休憩を更新しました ✓' : '給油を更新しました ✓'));
+  renderSchedule();
+}
+function deleteSchedItemEdit() {
+  if (!schedItemEditTarget) return;
+  const { kind, index } = schedItemEditTarget;
+  closeSchedItemEdit();
+  if (kind === 'break') deleteScheduleBreak(index);
+  else deleteScheduleFuel(index);
+}
+
+// この日の営収額を手動で修正する（運行記録では説明のつかない端数差などを補正するため）。
+// 保存した修正値はヘッダー・サマリー・統計・履歴すべてでdayTotalExTax経由で使われる
+function openDaySalesEditModal() {
+  const date = schedCurrentDate;
+  const d = new Date(date + 'T00:00:00');
+  const dow = ['日','月','火','水','木','金','土'][d.getDay()];
+  document.getElementById('daySalesEditDateLabel').textContent = `${d.getMonth()+1}月${d.getDate()}日（${dow}）`;
+  document.getElementById('daySalesEditAmount').value = dayTotalExTax(date);
+  const override = getDaySalesOverride(date);
+  document.getElementById('daySalesEditAutoNote').textContent = override !== null
+    ? `運行記録からの自動計算：¥${calcDayTotalExTax(date).toLocaleString()}`
+    : '運行記録から自動計算した金額です';
+  document.getElementById('daySalesEditResetBtn').style.display = override !== null ? '' : 'none';
+  document.getElementById('daySalesEditModal').classList.add('open');
+}
+function closeDaySalesEditModal() {
+  document.getElementById('daySalesEditModal').classList.remove('open');
+}
+function saveDaySalesEdit() {
+  const date = schedCurrentDate;
+  const val = parseInt(document.getElementById('daySalesEditAmount').value);
+  if (isNaN(val) || val < 0) { showToast('正しい金額を入力してください'); return; }
+  setDaySalesOverride(date, val);
+  closeDaySalesEditModal();
+  showToast('この日の営収額を修正しました ✓');
+  renderSchedule();
+  updateHeader();
+}
+function resetDaySalesEdit() {
+  const date = schedCurrentDate;
+  setDaySalesOverride(date, null);
+  closeDaySalesEditModal();
+  showToast('自動計算の金額に戻しました ✓');
+  renderSchedule();
+  updateHeader();
+}
+
+// 同じGO乗客の過去の乗車回数・履歴を取得（名前が完全一致するもの）
+// お客様の識別名。GOは氏名欄、流し・配車はメモを名前として扱う（場所の履歴表示と同じ扱い）
+function getPaxName(t) {
+  if (!t) return '';
+  const raw = (t.tripType === 'GO') ? t.paxName : t.memo;
+  return stripSama(raw || '').split(' / ')[0].trim();
+}
+
+// 同じお客様の乗車履歴を、GO・流し・配車をまたいで集める。
+// 名前と性別が一致した場合のみ同一人物とみなす。
+// 年代はGOにしか記録されないため、両方がGOのときだけ一致を求める。
+function getPaxHistory(trip) {
+  const name = getPaxName(trip);
+  if (!name) return null;
+  const all = getTrips()
+    .filter(t => {
+      if (getPaxName(t) !== name) return false;
+      if ((t.paxGender || '') !== (trip.paxGender || '')) return false;
+      if (t.tripType === 'GO' && trip.tripType === 'GO' && (t.paxAge || '') !== (trip.paxAge || '')) return false;
+      return true;
+    })
+    .sort((a,b) => (a.date + (a.pickupTime||'')).localeCompare(b.date + (b.pickupTime||'')));
+  const visitNumber = all.findIndex(t => t.id === trip.id) + 1;
+  return { visitNumber, total: all.length, all };
+}
+
+// 乗車〜降車の経過時間（分）。深夜をまたぐ場合は24時間を足して補正する
+function tripDurationMin(t) {
+  if (!t.pickupTime || !t.dropoffTime) return null;
+  const [ph,pm] = t.pickupTime.split(':').map(Number);
+  const [dh,dm] = t.dropoffTime.split(':').map(Number);
+  let diff = (dh*60+dm) - (ph*60+pm);
+  if (diff < 0) diff += 24*60;
+  return diff;
+}
+function showCustomerHistory(tripId) {
+  const trip = getTrips().find(t => t.id === tripId);
+  const info = getPaxHistory(trip);
+  if (!info) return;
+  const sorted = info.all.slice().reverse(); // 新しい順
+  const totalFare = info.all.reduce((s,t) => s + getTripFare(t), 0);
+  document.getElementById('custHistoryTitle').textContent = `${getPaxName(trip)}のご利用履歴（${info.total}回）`;
+  document.getElementById('custHistoryContent').innerHTML =
+    `<div style="text-align:center;font-size:13px;color:var(--muted);margin-bottom:10px;">合計¥${totalFare.toLocaleString()}　<span style="font-size:11px;">（タップして記録を修正）</span></div>` +
+    sorted.map(t => {
+      const [,mm,dd] = t.date.split('-');
+      const dow = ['日','月','火','水','木','金','土'][new Date(t.date + 'T00:00:00').getDay()];
+      const fare = getTripFare(t);
+      const isCurrent = t.id === trip.id;
+      // 種別バッジ。色はタイムラインと同じ（GO=青／流し=緑／配車=橙）
+      const type = t.tripType || '流し';
+      const typeColor = { '配車': '#ff6b00', 'GO': '#1a73e8', '流し': '#00a152' }[type] || '#1a73e8';
+      const durMin = tripDurationMin(t);
+      const payMethod = t.payMethod || '現金';
+      return `
+        <div style="padding:8px;border-radius:8px;margin-bottom:4px;cursor:pointer;${isCurrent ? 'background:#e3f2fd;' : ''}border-bottom:${isCurrent ? 'none' : '1px solid var(--border)'};" onclick="closeCustHistoryModal();openTripEditModal(${t.id})">
+          <div style="display:flex;justify-content:space-between;">
+            <span style="font-size:13px;font-weight:700;">
+              <span class="sched-type-badge" style="background:${typeColor}22;color:${typeColor};">${type}</span>${parseInt(mm)}/${parseInt(dd)}(${dow}) ${t.pickupTime||''}${durMin !== null ? `　<span style="color:var(--muted);font-weight:600;">（${fmtWait(durMin)}）</span>` : ''}　<span style="color:var(--muted);font-weight:600;">${payMethod}</span>
+            </span>
+            <span style="font-weight:700;color:var(--success);">¥${fare.toLocaleString()}</span>
+          </div>
+          <div style="font-size:12px;color:var(--muted);margin-top:2px;">${formatTripRoute(t)}</div>
+        </div>
+      `;
+    }).join('');
+  document.getElementById('custHistoryModal').classList.add('open');
+}
+function closeCustHistoryModal() {
+  document.getElementById('custHistoryModal').classList.remove('open');
+}
+
+// サマリーの「未収額」「流し合計金額」をタップすると、閲覧中の日の該当する記録を一覧表示する
+function showSummaryDetail(kind) {
+  const date = summaryCurrentDate;
+  const trips = getTrips().filter(t => t.date === date);
+  let filtered, title;
+  if (kind === 'uncollected') {
+    filtered = trips.filter(t => (t.uncollectedFare||0) > 0);
+    title = '未収額の内訳';
+  } else {
+    filtered = trips.filter(t => (t.tripType||'流し') === '流し');
+    title = '流しの内訳';
+  }
+  filtered.sort((a,b) => tripSortKey(b) - tripSortKey(a));
+  document.getElementById('summaryDetailTitle').textContent = title;
+  document.getElementById('summaryDetailContent').innerHTML = filtered.length
+    ? filtered.map(t => tripCard(t)).join('')
+    : emptyState('該当する記録がありません');
+  document.getElementById('summaryDetailModal').classList.add('open');
+}
+function closeSummaryDetailModal() {
+  document.getElementById('summaryDetailModal').classList.remove('open');
+}
+
+// 指定日のタイムライン（実車・空車・休憩・給油）のセグメントを計算する。記録がない日は null を返す
+function computeScheduleSegments(date) {
+  const isToday = date === todayStr();
+  const now = new Date();
+  const shiftStart = new Date(date + 'T07:30:00');
+
+  const trips = getTrips()
+    .filter(t => t.date === date && t.pickupTime && t.dropoffTime)
+    .sort((a,b) => tripSortKey(a) - tripSortKey(b));
+
+  if (trips.length === 0) return null;
+
+  const savedEnd = getDayEndTime(date);
+  const isOngoing = isToday && !savedEnd;
+
+  const jisshaMin = trips.reduce((s,t) => {
+    const [ph,pm] = t.pickupTime.split(':').map(Number);
+    const [dh,dm] = t.dropoffTime.split(':').map(Number);
+    let diff = (dh*60+dm) - (ph*60+pm);
+    if (diff < 0) diff += 24*60;
+    return s + (diff > 0 ? diff : 0);
+  }, 0);
+
+  // HH:MM文字列をDateに変換。深夜をまたぐ場合はcursorを基準に日をずらす
+  let cursor = shiftStart;
+  function toDate(timeStr) {
+    const d = new Date(date + 'T' + timeStr + ':00');
+    while (d < cursor) d.setDate(d.getDate() + 1);
+    return d;
+  }
+
+  const segments = [];
+  trips.forEach(t => {
+    const p = toDate(t.pickupTime);
+    let d = toDate(t.dropoffTime);
+    if (d < p) d.setDate(d.getDate() + 1);
+    if (p > cursor) segments.push({ type: 'vacant', start: cursor, end: p });
+    segments.push({ type: 'occupied', start: p, end: d, trip: t });
+    if (d > cursor) cursor = d;
+  });
+
+  // 業務終了時刻が未記録の過去日は、最後の降車時刻より先の「空車」は表示しない
+  const endTime = savedEnd || (isToday ? now : cursor);
+  if (endTime > cursor) {
+    segments.push({ type: 'vacant', start: cursor, end: endTime, ongoing: isOngoing });
+  }
+
+  // 休憩時間を空車枠に割り込ませる形で反映
+  const scheduleBreaks = getScheduleBreaks(date);
+  scheduleBreaks.forEach((brk, brkIdx) => {
+    const bStart = new Date(date + 'T' + brk.start + ':00');
+    if (bStart < shiftStart) bStart.setDate(bStart.getDate() + 1);
+    const bEnd = new Date(date + 'T' + (brk.end || nowHM()) + ':00');
+    if (bEnd < bStart) bEnd.setDate(bEnd.getDate() + 1);
+
+    const idx = segments.findIndex(seg => seg.type === 'vacant' && bStart >= seg.start && bEnd <= seg.end);
+    if (idx === -1) return; // 実車時間と重なるなど、空車枠に収まらない場合は反映しない
+    const seg = segments[idx];
+    // 進行中は枠の終わり（現在）まで伸ばし、直後にごく短い空車が残らないようにする
+    const bEndFinal = brk.end ? bEnd : seg.end;
+    const replacement = [];
+    if (bStart > seg.start) replacement.push({ type: 'vacant', start: seg.start, end: bStart });
+    replacement.push({ type: 'break', start: bStart, end: bEndFinal, breakIndex: brkIdx, place: brk.place || '', ongoing: !brk.end });
+    if (bEndFinal < seg.end) replacement.push({ type: 'vacant', start: bEndFinal, end: seg.end, ongoing: seg.ongoing });
+    segments.splice(idx, 1, ...replacement);
+  });
+
+  // 給油時間を空車枠に割り込ませる形で反映
+  const scheduleFuelStops = getScheduleFuelStops(date);
+  scheduleFuelStops.forEach((fs, fsIdx) => {
+    const fStart = new Date(date + 'T' + fs.start + ':00');
+    if (fStart < shiftStart) fStart.setDate(fStart.getDate() + 1);
+    const fEnd = new Date(date + 'T' + (fs.end || nowHM()) + ':00');
+    if (fEnd < fStart) fEnd.setDate(fEnd.getDate() + 1);
+
+    const idx = segments.findIndex(seg => seg.type === 'vacant' && fStart >= seg.start && fEnd <= seg.end);
+    if (idx === -1) return; // 実車時間や休憩と重なるなど、空車枠に収まらない場合は反映しない
+    const seg = segments[idx];
+    // 進行中は枠の終わり（現在）まで伸ばし、直後にごく短い空車が残らないようにする
+    const fEndFinal = fs.end ? fEnd : seg.end;
+    const replacement = [];
+    if (fStart > seg.start) replacement.push({ type: 'vacant', start: seg.start, end: fStart });
+    // 給油の場所は常に高岡町（場所が未記録の過去データも同じ扱いにする）
+    replacement.push({ type: 'fuel', start: fStart, end: fEndFinal, fuelIndex: fsIdx, place: FUEL_PLACE, ongoing: !fs.end });
+    if (fEndFinal < seg.end) replacement.push({ type: 'vacant', start: fEndFinal, end: seg.end, ongoing: seg.ongoing });
+    segments.splice(idx, 1, ...replacement);
+  });
+
+  // 終了時刻が未記録のもの（進行中）は現在時刻までとして数える
+  const sumTimeRangeMin = (list) => list.reduce((s, item) => {
+    const [sh, sm] = item.start.split(':').map(Number);
+    const [eh, em] = (item.end || nowHM()).split(':').map(Number);
+    let diff = (eh * 60 + em) - (sh * 60 + sm);
+    if (diff < 0) diff += 24 * 60;
+    return s + diff;
+  }, 0);
+  // 「休憩時間」には給油時間も含めて表示する
+  const breakMin = sumTimeRangeMin(scheduleBreaks) + sumTimeRangeMin(scheduleFuelStops);
+  const allMin = Math.max(0, Math.round((endTime - shiftStart) / 60000));
+
+  return { trips, segments, shiftStart, endTime, jisshaMin, breakMin, allMin, isToday };
+}
+
+function renderSchedule() {
+  // 本日の記録がまだない場合は、直近の記録がある日にフォールバックする
+  const todayForFallback = todayStr();
+  // 自動フォールバック中に本日の記録ができたら、自動で本日表示に戻す
+  if (schedAutoFallback && getTrips().some(t => t.date === todayForFallback)) {
+    schedCurrentDate = todayForFallback;
+    schedAutoFallback = false;
+  }
+  if (schedCurrentDate === todayForFallback && !getTrips().some(t => t.date === todayForFallback)) {
+    const pastDates = [...new Set(getTrips().map(t => t.date))].filter(d => d < todayForFallback).sort();
+    if (pastDates.length > 0) {
+      schedCurrentDate = pastDates[pastDates.length - 1];
+      schedAutoFallback = true;
+    }
+  }
+
+  const date = schedCurrentDate;
+  const isToday = date === todayStr();
+  const now = new Date();
+  const shiftStart = new Date(date + 'T07:30:00');
+
+  // 過去の勤務日一覧（記録がある日＋今日）をプルダウンに表示
+  const workDates = [...new Set(getTrips().map(t=>t.date))];
+  if (!workDates.includes(todayStr())) workDates.push(todayStr());
+  workDates.sort().reverse();
+  document.getElementById('scheduleFilter').innerHTML = workDates.map(wd => {
+    const wdd = new Date(wd + 'T00:00:00');
+    const wDow = ['日','月','火','水','木','金','土'][wdd.getDay()];
+    const label = `${wdd.getMonth()+1}月${wdd.getDate()}日（${wDow}）` + (wd === todayStr() ? ' 今日' : '');
+    return `<option value="${wd}"${wd === date ? ' selected' : ''}>${label}</option>`;
+  }).join('');
+
+  const allDates = [...new Set(getTrips().map(t=>t.date))].sort();
+  document.getElementById('schedNavPrevBtn').disabled = !allDates.some(dt => dt < date);
+  document.getElementById('schedNavNextBtn').disabled = date >= todayStr();
+
+  // この日の営収額（タップして手動修正できる。修正済みならその値を優先）
+  const daySales = getTrips().filter(t => t.date === date).reduce((s,t) => s + getTripFare(t), 0);
+  const daySalesEx = dayTotalExTax(date);
+  document.getElementById('schedDaySales').textContent = `¥${daySalesEx.toLocaleString()}`;
+  document.getElementById('schedDaySalesEdited').style.display = getDaySalesOverride(date) !== null ? '' : 'none';
+  renderSchedTabs();
+
+  const result = computeScheduleSegments(date);
+
+  // 最初の記録がない場合は空車時間を0にする
+  if (!result) {
+    document.getElementById('schedJisshaTotal').textContent = '0分';
+    document.getElementById('schedBreakTotal').textContent = '0分';
+    document.getElementById('schedHourly').textContent = '---';
+    document.getElementById('schedAllTotal').textContent = '0分';
+    const msg = (isToday && now < shiftStart) ? 'まだ業務開始前です' : 'この日の記録はありません';
+    document.getElementById('scheduleList').innerHTML = emptyState(msg);
+    return;
+  }
+
+  const { trips, segments, endTime, jisshaMin, breakMin, allMin } = result;
+
+  // その日の何回目の乗車かと、その時点までの累計営収額（税抜）を求める
+  const rideNumberMap = {};
+  const cumulativeFareMap = {};
+  let runningTotal = 0;
+  trips.forEach((t, i) => {
+    rideNumberMap[t.id] = i + 1;
+    runningTotal += getTripFare(t);
+    cumulativeFareMap[t.id] = exTax(runningTotal);
+  });
+
+  document.getElementById('schedJisshaTotal').textContent = fmtWait(jisshaMin);
+  document.getElementById('schedBreakTotal').textContent = fmtWait(breakMin);
+  document.getElementById('schedAllTotal').textContent = fmtWait(allMin);
+  // 時給 = 営収額（税抜）÷ 実働時間 × 0.5（サマリーと同じ計算）
+  const schedHourlyWage = allMin > 0 ? Math.round(daySalesEx / (allMin / 60) * 0.5) : null;
+  const hourlyEl = document.getElementById('schedHourly');
+  hourlyEl.textContent = schedHourlyWage !== null ? `¥${schedHourlyWage.toLocaleString()}` : '---';
+  // 時給の金額そのものでカードの背景を3段階に塗り分ける
+  // （¥1,000未満は赤、¥1,000〜¥1,200未満は黄、¥1,200以上は緑）
+  const card = document.getElementById('schedHourlyCard');
+  card.classList.remove('wage-low', 'wage-mid', 'wage-high');
+  if (schedHourlyWage !== null) {
+    card.classList.add(schedHourlyWage < 1000 ? 'wage-low' : schedHourlyWage < 1200 ? 'wage-mid' : 'wage-high');
+  }
+
+  const typeColors = { '配車': '#ff6b00', 'GO': '#1a73e8', '流し': '#00a152' };
+  const fmtHM = d => `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  const diffMin = (a,b) => Math.max(0, Math.round((b-a)/60000));
+
+  document.getElementById('scheduleList').innerHTML = segments.slice().reverse().map((seg, revIdx) => {
+    const durMin = diffMin(seg.start, seg.end);
+    // 逆順に並べているため、先頭がその日の最後のセグメント
+    const isLastSegment = revIdx === 0;
+    if (seg.type === 'occupied') {
+      const t = seg.trip;
+      const type = t.tripType || '流し';
+      const typeColor = typeColors[type] || '#1a73e8';
+      const fare = getTripFare(t);
+      const visitInfo = getPaxHistory(t);
+      const showVisit = visitInfo && visitInfo.visitNumber >= 2;
+
+      // 乗客情報：GOは氏名・性別・年代、流し・配車はメモと性別を表示。
+      // どちらも2回目以降は来店回数を付け、タップでご利用履歴を開けるようにする
+      let paxLine = '';
+      let paxClickable = false;
+      if (type === 'GO' && t.paxName) {
+        const parts = [t.paxName];
+        if (t.paxGender) parts.push(t.paxGender);
+        if (t.paxAge) parts.push(t.paxAge);
+        paxLine = parts.join(' / ');
+      } else {
+        const parts = [];
+        if (t.memo) parts.push(stripSama(t.memo));
+        if (t.paxGender) parts.push(t.paxGender);
+        paxLine = parts.join(' / ');
+      }
+      if (paxLine && showVisit) { paxLine += `（${visitInfo.visitNumber}回目）`; paxClickable = true; }
+
+      // 人員の内訳（運行記録と同じ表記）
+      const paxCount = t.passengers || 1;
+      const paxCountLabel = (t.paxMaleCount !== undefined || t.paxFemaleCount !== undefined)
+        ? `${paxCount}名（男${t.paxMaleCount||0}・女${t.paxFemaleCount||0}）`
+        : `${paxCount}名`;
+
+      const rideNumber = rideNumberMap[t.id];
+      const cumulative = cumulativeFareMap[t.id];
+      return `
+        <div class="sched-item" style="border-left-color:${typeColor};position:relative;cursor:pointer;" onclick="openTripEditModal(${t.id})">
+          <div style="position:absolute;top:10px;right:12px;text-align:right;">
+            <div style="font-size:12px;font-weight:800;color:var(--muted);">${rideNumber}</div>
+          </div>
+          <div class="sched-time">${fmtHM(seg.start)}〜${fmtHM(seg.end)} <span class="sched-dur">（${fmtWait(durMin)}）</span> <span style="color:var(--success);font-weight:700;">¥${fare.toLocaleString()}</span> <span style="color:var(--muted);font-size:12px;font-weight:700;">（${t.payMethod || '現金'}）</span></div>
+          <div class="sched-body">
+            <span class="sched-type-badge" style="background:${typeColor}22;color:${typeColor};">${type}</span>
+            ${[t.pickup||'（乗車場所未設定）', ...getTripViaPoints(t), (t.dropoff||'（降車場所未設定）') + (t.dropoffDetail ? `（${t.dropoffDetail}）` : '')].join(' → ')}
+            ${paxLine ? `<div style="margin-top:4px;font-size:12px;font-weight:700;color:var(--primary);${paxClickable ? 'cursor:pointer;' : ''}"${paxClickable ? ` onclick="event.stopPropagation();showCustomerHistory(${t.id})"` : ''}>${paxLine}${paxClickable ? ' ›' : ''}</div>` : ''}
+            <div style="margin-top:4px;font-size:12px;color:var(--muted);display:flex;justify-content:space-between;align-items:center;gap:8px;">
+              <span>${paxCountLabel}</span>
+              <span style="font-size:11px;font-weight:700;color:var(--success);white-space:nowrap;">¥${cumulative.toLocaleString()}</span>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+    if (seg.type === 'break') {
+      return `
+        <div class="sched-item break" style="cursor:pointer;" onclick="openSchedItemEdit('break',${seg.breakIndex})">
+          <div class="sched-time">${fmtHM(seg.start)}〜${seg.ongoing ? '現在' : fmtHM(seg.end)} <span class="sched-dur">（${fmtWait(durMin)}${seg.ongoing ? '経過' : ''}）</span></div>
+          <div class="sched-body">${seg.ongoing ? '休憩中' : '休憩'}${seg.place ? `　<span style="color:var(--muted);">${seg.place}</span>` : ''}</div>
+        </div>
+      `;
+    }
+    if (seg.type === 'fuel') {
+      return `
+        <div class="sched-item fuel" style="cursor:pointer;" onclick="openSchedItemEdit('fuel',${seg.fuelIndex})">
+          <div class="sched-time">${fmtHM(seg.start)}〜${seg.ongoing ? '現在' : fmtHM(seg.end)} <span class="sched-dur">（${fmtWait(durMin)}${seg.ongoing ? '経過' : ''}）</span></div>
+          <div class="sched-body">${seg.ongoing ? '給油中' : '給油'}${seg.place ? `　<span style="color:var(--muted);">${seg.place}</span>` : ''}</div>
+        </div>
+      `;
+    }
+    // その日の最後の空車で業務を終えた場合は、終了時刻がわかるように印を付ける
+    const showEnd = isLastSegment && !seg.ongoing && endTime;
+    return `
+      <div class="sched-item vacant">
+        <div class="sched-time">${fmtHM(seg.start)}〜${seg.ongoing ? '現在' : fmtHM(seg.end)} <span class="sched-dur">（${fmtWait(durMin)}${seg.ongoing ? '経過' : ''}）</span></div>
+        <div class="sched-body">空車${showEnd ? `　<span style="color:var(--primary);font-weight:700;">${fmtHM(endTime)} 業務終了</span>` : ''}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+// ==================== タイムライン グラフ（縦棒・複数日表示） ====================
+// 07:30〜翌5:00（アプリのシフト日の境界）を固定の縦軸スケールとして使う
+const GRAPH_DAY_SPAN_MIN = 21.5 * 60;
+const GRAPH_TYPE_COLORS = { '配車': '#ff6b00', 'GO': '#1a73e8', '流し': '#00a152' };
+const GRAPH_OTHER_COLORS = { break: '#f5a623', fuel: '#00acc1', vacant: '#ddd' };
+
+function openScheduleGraph() {
+  renderScheduleGraph();
+  switchGraphTab('sales');
+  applySalesCompareDowDefault();
+  document.getElementById('scheduleGraphModal').classList.add('open');
+}
+// グラフを開いたとき、今日の曜日に合わせて曜日タブを自動選択する
+// （月・水・金ならその曜日、火・木・土・日は「全体」）
+function applySalesCompareDowDefault() {
+  const dow = new Date(todayStr() + 'T00:00:00').getDay();
+  const target = [1, 3, 5].includes(dow) ? String(dow) : 'all';
+  switchSalesCompareDow(target);
+}
+function closeScheduleGraphModal() {
+  document.getElementById('scheduleGraphModal').classList.remove('open');
+}
+
+function renderScheduleGraph() {
+  // 記録がある日を古い順に並べて、それぞれを縦棒グラフの1列にする
+  // （当日はまだ1件も記録がなければ列を表示しない）
+  const dates = [...new Set(getTrips().map(t => t.date))].sort();
+
+  // 左側の時刻目盛り（07:30〜翌5:00）。1時間刻みで細かく表示する。各列のグリッド線と位置を揃えるため先に計算する
+  const axisHours = [];
+  for (let h = 8; h <= 23; h++) axisHours.push(h);
+  for (let h = 0; h <= 4; h++) axisHours.push(h);
+  const axisTicks = axisHours.map(h => {
+    let minFromStart = (h - 7.5) * 60;
+    if (minFromStart < 0) minFromStart += 24 * 60;
+    return { h, topPct: minFromStart / GRAPH_DAY_SPAN_MIN * 100 };
+  });
+  const gridHTML = axisTicks.map(tick =>
+    `<div style="position:absolute;left:0;right:0;top:${tick.topPct}%;border-top:1px dashed var(--border);"></div>`
+  ).join('');
+
+  document.getElementById('scheduleGraphColumns').innerHTML = dates.map(date => {
+    const d = new Date(date + 'T00:00:00');
+    const dow = ['日','月','火','水','木','金','土'][d.getDay()];
+    const isToday = date === todayStr();
+    const label = `${d.getMonth()+1}/${d.getDate()}(${dow})`;
+    const labelStyle = isToday ? 'color:var(--primary);font-weight:800;' : 'color:var(--muted);';
+
+    const daySalesLabel = `¥${dayTotalExTax(date).toLocaleString()}`;
+
+    const result = computeScheduleSegments(date);
+    const barsHTML = result ? result.segments.map(seg => {
+      const startMin = (seg.start - result.shiftStart) / 60000;
+      const durMin = (seg.end - seg.start) / 60000;
+      const topPct = Math.max(0, startMin / GRAPH_DAY_SPAN_MIN * 100);
+      const heightPct = Math.max(0, durMin / GRAPH_DAY_SPAN_MIN * 100);
+      let color, label2;
+      if (seg.type === 'occupied') {
+        const type = seg.trip.tripType || '流し';
+        color = GRAPH_TYPE_COLORS[type] || '#1a73e8';
+        label2 = type;
+      } else if (seg.type === 'break') { color = GRAPH_OTHER_COLORS.break; label2 = '休憩'; }
+      else if (seg.type === 'fuel') { color = GRAPH_OTHER_COLORS.fuel; label2 = '給油'; }
+      else { color = GRAPH_OTHER_COLORS.vacant; label2 = '空車'; }
+      const fmtHM = dt => `${pad(dt.getHours())}:${pad(dt.getMinutes())}`;
+      return `<div style="position:absolute;left:0;right:0;top:${topPct}%;height:${heightPct}%;background:${color};" title="${label2} ${fmtHM(seg.start)}〜${fmtHM(seg.end)}"></div>`;
+    }).join('') : '';
+
+    return `
+      <div style="display:flex;flex-direction:column;align-items:center;flex-shrink:0;height:100%;">
+        <div style="font-size:10px;font-weight:700;color:var(--success);margin-bottom:4px;white-space:nowrap;flex-shrink:0;">${daySalesLabel}</div>
+        <div style="position:relative;width:28px;flex:1;min-height:0;background:var(--bg);border-radius:4px;overflow:hidden;">${gridHTML}${barsHTML}</div>
+        <div style="font-size:10px;margin-top:4px;white-space:nowrap;flex-shrink:0;${labelStyle}">${label}</div>
+      </div>
+    `;
+  }).join('');
+
+  document.getElementById('scheduleGraphAxis').innerHTML = axisTicks.map(tick => `
+    <div style="position:absolute;top:${tick.topPct}%;left:0;right:0;transform:translateY(-50%);display:flex;align-items:center;justify-content:flex-end;gap:3px;">
+      <span style="font-size:11px;font-weight:600;color:var(--text);white-space:nowrap;">${pad(tick.h)}:00</span>
+      <span style="width:5px;height:1px;background:var(--border);flex-shrink:0;"></span>
+    </div>
+  `).join('');
+
+  const legendItems = [
+    { color: GRAPH_TYPE_COLORS['GO'], label: 'GO' },
+    { color: GRAPH_TYPE_COLORS['流し'], label: '流し' },
+    { color: GRAPH_TYPE_COLORS['配車'], label: '配車' },
+    { color: GRAPH_OTHER_COLORS.break, label: '休憩' },
+    { color: GRAPH_OTHER_COLORS.fuel, label: '給油' },
+    { color: GRAPH_OTHER_COLORS.vacant, label: '空車' },
+  ];
+  document.getElementById('scheduleGraphLegend').innerHTML = legendItems.map(li => `
+    <span style="display:inline-flex;align-items:center;gap:4px;margin-right:10px;font-size:12px;color:var(--muted);">
+      <span style="width:10px;height:10px;border-radius:2px;background:${li.color};display:inline-block;"></span>${li.label}
+    </span>
+  `).join('');
+}
+
+// ==================== 稼働状況グラフ内タブ ====================
+function switchGraphTab(tab) {
+  document.getElementById('graphTabBtnWork').classList.toggle('active', tab === 'work');
+  document.getElementById('graphTabBtnSales').classList.toggle('active', tab === 'sales');
+  document.getElementById('graphTabWork').style.display = tab === 'work' ? 'flex' : 'none';
+  document.getElementById('graphTabSales').style.display = tab === 'sales' ? 'flex' : 'none';
+  if (tab === 'sales') renderSalesCompareGraph();
+  if (tab === 'work') {
+    // 稼働状況タブは表示された直後でないと横幅が測れないため、ここで直近の日付（右端）に合わせる
+    const scrollEl = document.getElementById('scheduleGraphScroll');
+    requestAnimationFrame(() => { scrollEl.scrollLeft = scrollEl.scrollWidth; });
+  }
+}
+
+// ==================== 営収額比較グラフ（今日の累計 vs 過去の平均） ====================
+// シフト開始（07:30）からの経過分。翌5:00までを 0〜GRAPH_DAY_SPAN_MIN の範囲で表す
+function minutesFromShiftStart(hm) {
+  const [h, m] = hm.split(':').map(Number);
+  let min = (h * 60 + m) - 7 * 60 - 30;
+  if (min < 0) min += 24 * 60;
+  return min;
+}
+// 現在がシフト開始前（5:00〜7:30）のときは「まだ始まっていない」として0分扱いにする
+function nowMinutesIntoShift() {
+  const raw = minutesFromShiftStart(nowHM());
+  return raw > GRAPH_DAY_SPAN_MIN ? 0 : raw;
+}
+function shiftMinToHM(min) {
+  const total = (7 * 60 + 30 + Math.round(min)) % (24 * 60);
+  return `${pad(Math.floor(total / 60))}:${pad(total % 60)}`;
+}
+// 1日分の乗降記録を「降車時刻ごとの累計営収額（税抜）」の階段グラフの折れ点にする
+function buildDayCumulative(date) {
+  // exTaxは10円単位への丸めのため、1件ごとに丸めてから足すと合計が本来の
+  // 「その日の営収額」（税込合計をまとめて丸めたもの）とずれてしまう。
+  // そのため税込のまま累計し、各時点でまとめて丸めることで、最終値が
+  // タイムラインの「この日の営収額」と必ず一致するようにする。
+  const sorted = getTrips().filter(t => t.date === date && t.dropoffTime)
+    .map(t => ({ min: Math.min(minutesFromShiftStart(t.dropoffTime), GRAPH_DAY_SPAN_MIN), amt: getTripFare(t) }))
+    .sort((a, b) => a.min - b.min);
+  const points = [];
+  let runningRaw = 0;
+  sorted.forEach(p => {
+    runningRaw += p.amt;
+    const lastPt = points[points.length - 1];
+    if (lastPt && lastPt.min === p.min) lastPt.cum = exTax(runningRaw);
+    else points.push({ min: p.min, cum: exTax(runningRaw) });
+  });
+  return points;
+}
+// 階段グラフ上の任意の時点の値（直近の折れ点の値をそのまま引き継ぐ）
+function cumAtMinute(points, min) {
+  let val = 0;
+  for (const p of points) {
+    if (p.min <= min) val = p.cum; else break;
+  }
+  return val;
+}
+const SALES_GRAPH_STEP_MIN = 30;
+// 曜日で絞り込んで平均の元になる日を選べるようにする（対象は月・水・金のみ。「全体」が既定）
+function filterDatesByDow(dates, dow) {
+  if (!dow || dow === 'all') return dates;
+  const target = parseInt(dow);
+  return dates.filter(d => new Date(d + 'T00:00:00').getDay() === target);
+}
+function buildAverageCurve(excludeDate, dow) {
+  let allDates = [...new Set(getTrips().map(t => t.date))].filter(d => d !== excludeDate);
+  allDates = filterDatesByDow(allDates, dow);
+  if (allDates.length === 0) return null;
+  const dayCurves = allDates.map(d => buildDayCumulative(d));
+  const samples = [];
+  for (let min = 0; min <= GRAPH_DAY_SPAN_MIN; min += SALES_GRAPH_STEP_MIN) {
+    const vals = dayCurves.map(pts => cumAtMinute(pts, min));
+    samples.push({ min, val: vals.reduce((s, v) => s + v, 0) / vals.length });
+  }
+  return { samples, dayCount: allDates.length };
+}
+function buildTodayCurve() {
+  const today = todayStr();
+  if (getTrips().some(t => t.date === today)) {
+    const pts = buildDayCumulative(today);
+    const nowMin = nowMinutesIntoShift();
+    const samples = [];
+    for (let min = 0; min <= nowMin; min += SALES_GRAPH_STEP_MIN) {
+      samples.push({ min, val: cumAtMinute(pts, min) });
+    }
+    const last = samples[samples.length - 1];
+    if (!last || last.min < nowMin) samples.push({ min: nowMin, val: cumAtMinute(pts, nowMin) });
+    return { samples, nowMin, nowVal: cumAtMinute(pts, nowMin), date: today, isFallback: false };
+  }
+  // 当日の記録がまだなければ、記録がある直近の日を代わりに1日分フルで表示する
+  const fallbackDate = resolveDefaultViewDate();
+  if (fallbackDate === today) {
+    // 記録が1件もない場合
+    return { samples: [{ min: 0, val: 0 }], nowMin: 0, nowVal: 0, date: today, isFallback: false };
+  }
+  const pts = buildDayCumulative(fallbackDate);
+  const samples = [];
+  for (let min = 0; min <= GRAPH_DAY_SPAN_MIN; min += SALES_GRAPH_STEP_MIN) {
+    samples.push({ min, val: cumAtMinute(pts, min) });
+  }
+  return { samples, nowMin: GRAPH_DAY_SPAN_MIN, nowVal: cumAtMinute(pts, GRAPH_DAY_SPAN_MIN), date: fallbackDate, isFallback: true };
+}
+// 選んだ過去1日分を、当日線と同じ刻みで1日ぶんフルに描けるようにする
+function buildDateCurve(date) {
+  const pts = buildDayCumulative(date);
+  const samples = [];
+  for (let min = 0; min <= GRAPH_DAY_SPAN_MIN; min += SALES_GRAPH_STEP_MIN) {
+    samples.push({ min, val: cumAtMinute(pts, min) });
+  }
+  return { samples, total: cumAtMinute(pts, GRAPH_DAY_SPAN_MIN) };
+}
+function shiftDateLabel(date) {
+  const d = new Date(date + 'T00:00:00');
+  return `${d.getMonth() + 1}/${d.getDate()}(${['日','月','火','水','木','金','土'][d.getDay()]})`;
+}
+// その日の営収額（税抜）合計を、運行記録から自動計算する（手動修正前の本来の値）
+function calcDayTotalExTax(date) {
+  return exTax(getTrips().filter(t => t.date === date).reduce((s, t) => s + getTripFare(t), 0));
+}
+// タイムラインで「この日の営収額」を手動で調整できるようにするための修正値。
+// 日付ごとに保存し、以後この日の営収額はヘッダー・サマリー・統計・履歴すべてで
+// この値を優先して使う（未設定ならcalcDayTotalExTaxの自動計算どおり）
+const DAY_SALES_OVERRIDE_KEY = 'taxi_day_sales_override';
+function getDaySalesOverrides() {
+  try { return JSON.parse(localStorage.getItem(DAY_SALES_OVERRIDE_KEY) || '{}'); } catch(e) { return {}; }
+}
+function getDaySalesOverride(date) {
+  const v = getDaySalesOverrides()[date];
+  return (v === undefined || v === null) ? null : v;
+}
+function setDaySalesOverride(date, value) {
+  const data = getDaySalesOverrides();
+  if (value === null) delete data[date];
+  else data[date] = value;
+  localStorage.setItem(DAY_SALES_OVERRIDE_KEY, JSON.stringify(data));
+}
+// その日の営収額（税抜）合計。日付チップ・ヘッダー・サマリー・統計・履歴すべてで
+// 共通して使う。手動修正済みならその値、なければ自動計算した値を返す
+function dayTotalExTax(date) {
+  const override = getDaySalesOverride(date);
+  return override !== null ? override : calcDayTotalExTax(date);
+}
+// 複数日をまたぐ合計（週・月の統計）でも、日ごとの手動修正を正しく反映するため、
+// 税込合計をまとめて丸めるのではなく、1日ずつdayTotalExTaxを求めてから合計する
+function sumDayTotalExTax(dates) {
+  return [...new Set(dates)].reduce((s, d) => s + dayTotalExTax(d), 0);
+}
+
+// ---- 曜日フィルター・個別日の重ね表示 ----
+const DATE_LINE_COLORS = ['#ff6b00', '#8e24aa', '#00acc1', '#e91e63', '#43a047', '#fbbc04'];
+let salesCompareDow = 'all';
+let salesCompareSelectedDates = [];
+function switchSalesCompareDow(dow) {
+  salesCompareDow = dow;
+  document.querySelectorAll('#salesCompareDowTabs .dow-tab').forEach(el => {
+    el.className = 'dow-tab' + (el.dataset.dow === dow ? ' active' : '');
+  });
+  // 月・水・金を選んだときは、直近のその曜日を自動でグラフに重ねて表示する（全体では選択を外す）
+  if (dow === 'all') {
+    salesCompareSelectedDates = [];
+  } else {
+    const options = getSalesCompareDateOptions();
+    salesCompareSelectedDates = options.length ? [options[0]] : [];
+  }
+  renderSalesCompareGraph();
+}
+function toggleSalesCompareDate(date) {
+  const idx = salesCompareSelectedDates.indexOf(date);
+  if (idx >= 0) {
+    salesCompareSelectedDates.splice(idx, 1);
+  } else {
+    if (salesCompareSelectedDates.length >= DATE_LINE_COLORS.length) {
+      showToast(`同時に表示できるのは${DATE_LINE_COLORS.length}日までです`);
+      return;
+    }
+    salesCompareSelectedDates.push(date);
+  }
+  renderSalesCompareGraph();
+}
+// 曜日フィルターに一致する、記録のある過去日を新しい順に返す（日付チップの選択肢）
+function getSalesCompareDateOptions() {
+  let dates = [...new Set(getTrips().map(t => t.date))].filter(d => d !== todayStr());
+  dates = filterDatesByDow(dates, salesCompareDow);
+  return dates.sort().reverse();
+}
+// samples配列から任意の分の値を線形補間で読み取る（クロスヘア用）
+function interpAt(samples, min) {
+  if (!samples.length) return 0;
+  if (min <= samples[0].min) return samples[0].val;
+  for (let i = 1; i < samples.length; i++) {
+    if (min <= samples[i].min) {
+      const a = samples[i - 1], b = samples[i];
+      const ratio = b.min === a.min ? 0 : (min - a.min) / (b.min - a.min);
+      return a.val + (b.val - a.val) * ratio;
+    }
+  }
+  return samples[samples.length - 1].val;
+}
+
+function renderSalesCompareGraph() {
+  const today = buildTodayCurve();
+  const avg = buildAverageCurve(today.date, salesCompareDow);
+  const avgAtNow = avg ? interpAt(avg.samples, today.nowMin) : 0;
+  // 選択中の個別日（曜日フィルターに合わなくなったものは除く）
+  const dateOptions = getSalesCompareDateOptions();
+  salesCompareSelectedDates = salesCompareSelectedDates.filter(d => dateOptions.includes(d));
+  const dateCurves = salesCompareSelectedDates.map((d, i) => ({ date: d, color: DATE_LINE_COLORS[i], ...buildDateCurve(d) }));
+
+  // ---- 見出し（現在の実績と平均比） ----
+  let diffHTML;
+  if (!avg) {
+    diffHTML = `<div style="font-size:13px;color:var(--muted);margin-top:2px;">比較できる過去の記録がまだありません</div>`;
+  } else if (avgAtNow <= 0) {
+    diffHTML = `<div style="font-size:13px;color:var(--muted);margin-top:2px;">この時間帯は平均も実績がまだ少ないです</div>`;
+  } else {
+    const diffPct = Math.round((today.nowVal - avgAtNow) / avgAtNow * 100);
+    const positive = diffPct >= 0;
+    diffHTML = `<div style="font-size:15px;font-weight:800;color:${positive ? 'var(--success)' : 'var(--danger)'};margin-top:2px;">平均 ¥${Math.round(avgAtNow).toLocaleString()} 比 ${positive ? '+' : ''}${diffPct}%</div>`;
+  }
+  // 選んだ個別日それぞれとも、同じ時刻同士で何%違うかを表示する
+  const dateDiffHTML = dateCurves.map(dc => {
+    const dateAtNow = interpAt(dc.samples, today.nowMin);
+    if (dateAtNow <= 0) {
+      return `<div style="font-size:12px;margin-top:2px;"><span style="color:${dc.color};font-weight:700;">${shiftDateLabel(dc.date)}</span> <span style="color:var(--muted);">比 この時間帯はまだ実績が少ないです</span></div>`;
+    }
+    const diffPct = Math.round((today.nowVal - dateAtNow) / dateAtNow * 100);
+    const positive = diffPct >= 0;
+    return `<div style="font-size:13px;font-weight:700;margin-top:2px;"><span style="color:${dc.color};">${shiftDateLabel(dc.date)}</span> <span style="color:${positive ? 'var(--success)' : 'var(--danger)'};">比 ${positive ? '+' : ''}${diffPct}%</span></div>`;
+  }).join('');
+  const headlineLabel = today.isFallback
+    ? `前回（${shiftDateLabel(today.date)}）の営収額`
+    : `現在（${shiftMinToHM(today.nowMin)}）の営収額`;
+  // 今日まだ業務中なら、このペースが続いた場合の業務終了時の予想営収額を出す。
+  // 平均カーブがあれば「現在の実績＋平均カーブの残り時間分の伸び」で見積り、
+  // 平均データがまだなければ単純に経過時間で比例配分する
+  let projectedHTML = '';
+  if (!today.isFallback && today.nowMin > 0 && today.nowMin < GRAPH_DAY_SPAN_MIN) {
+    let projected;
+    if (avg) {
+      const avgTotal = avg.samples[avg.samples.length - 1].val;
+      projected = today.nowVal + Math.max(0, avgTotal - avgAtNow);
+    } else {
+      projected = today.nowVal / today.nowMin * GRAPH_DAY_SPAN_MIN;
+    }
+    projectedHTML = `<div style="font-size:13px;color:var(--muted);margin-top:8px;">このペースなら業務終了時は予想<span style="font-weight:800;color:var(--text);"> ¥${Math.round(projected).toLocaleString()}</span></div>`;
+  }
+  document.getElementById('salesCompareHeadline').innerHTML = `
+    <div style="font-size:12px;color:var(--muted);">${headlineLabel}</div>
+    <div style="font-size:30px;font-weight:800;color:var(--text);line-height:1.3;">¥${Math.round(today.nowVal).toLocaleString()}</div>
+    ${diffHTML}
+    ${dateDiffHTML}
+    ${projectedHTML}
+  `;
+  document.getElementById('salesCompareNote').textContent = avg
+    ? `平均は${salesCompareDow === 'all' ? '' : DOW_LABELS[parseInt(salesCompareDow)] + '曜日の'}過去${avg.dayCount}日分の記録から算出`
+    : '';
+
+  // ---- SVGチャート ----
+  // 縦軸は¥10,000刻み・¥60,000までを目盛表示。実際の記録は¥67,000まで収まるよう余白を確保する
+  const W = 640, H = 600, padL = 66, padR = 12, padT = 10, padB = 26;
+  const plotW = W - padL - padR, plotH = H - padT - padB;
+  const AXIS_MAX_VAL = 67000;
+  const maxVal = AXIS_MAX_VAL;
+  const x = min => padL + (min / GRAPH_DAY_SPAN_MIN) * plotW;
+  const y = val => padT + plotH - (val / maxVal) * plotH;
+
+  const toPath = samples => samples.map((s, i) => `${i === 0 ? 'M' : 'L'}${x(s.min).toFixed(1)},${y(s.val).toFixed(1)}`).join(' ');
+  const todayPath = toPath(today.samples);
+  const todayAreaPath = today.samples.length
+    ? `${toPath(today.samples)} L${x(today.samples[today.samples.length - 1].min).toFixed(1)},${(padT + plotH).toFixed(1)} L${x(0).toFixed(1)},${(padT + plotH).toFixed(1)} Z`
+    : '';
+  const avgPath = avg ? toPath(avg.samples) : '';
+  const dateCurvePathsHTML = dateCurves.map(dc =>
+    `<path d="${toPath(dc.samples)}" fill="none" stroke="${dc.color}" stroke-width="2"/>`
+  ).join('');
+
+  // 横軸目盛り（3時間おき）と縦軸目盛り（¥10,000〜¥60,000の固定刻み）
+  const axisHours = [8, 11, 14, 17, 20, 23, 2];
+  const xTicksHTML = axisHours.map(h => {
+    let min = (h - 7.5) * 60; if (min < 0) min += 24 * 60;
+    return `<text x="${x(min).toFixed(1)}" y="${H - 8}" font-size="10" fill="var(--muted)" text-anchor="middle">${pad(h)}時</text>`;
+  }).join('');
+  const yTickVals = [10000, 20000, 30000, 40000, 50000, 60000];
+  const yTicksHTML = yTickVals.map(v => `
+    <line x1="${padL}" y1="${y(v).toFixed(1)}" x2="${W - padR}" y2="${y(v).toFixed(1)}" stroke="var(--border)" stroke-width="1" stroke-dasharray="2,3"/>
+    <text x="${padL - 6}" y="${(y(v) + 3).toFixed(1)}" font-size="10" fill="var(--muted)" text-anchor="end">¥${v.toLocaleString()}</text>
+  `).join('');
+
+  const nowX = x(today.nowMin), nowY = y(today.nowVal);
+  const svg = `
+    <svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;display:block;" id="salesCompareSvg">
+      ${yTicksHTML}
+      ${xTicksHTML}
+      ${avgPath ? `<path d="${avgPath}" fill="none" stroke="var(--muted)" stroke-width="2" stroke-dasharray="5,4"/>` : ''}
+      ${dateCurvePathsHTML}
+      ${todayAreaPath ? `<path d="${todayAreaPath}" fill="var(--primary)" fill-opacity="0.12" stroke="none"/>` : ''}
+      ${todayPath ? `<path d="${todayPath}" fill="none" stroke="var(--primary)" stroke-width="2.5"/>` : ''}
+      ${today.samples.length ? `<circle cx="${nowX.toFixed(1)}" cy="${nowY.toFixed(1)}" r="4" fill="var(--primary)"/>` : ''}
+      <g id="salesCompareCrosshair" style="display:none;">
+        <line id="salesCompareCrosshairLine" x1="0" y1="${padT}" x2="0" y2="${padT + plotH}" stroke="var(--text)" stroke-width="1" stroke-dasharray="3,3"/>
+      </g>
+    </svg>
+    <div id="salesCompareTooltip" style="display:none;position:absolute;top:4px;background:var(--text);color:white;font-size:11px;line-height:1.5;padding:6px 9px;border-radius:8px;pointer-events:none;white-space:nowrap;"></div>
+  `;
+  const wrap = document.getElementById('salesCompareChartWrap');
+  wrap.innerHTML = svg;
+
+  // ---- 凡例 ----
+  const dateLegendHTML = dateCurves.map(dc => `
+    <span style="display:inline-flex;align-items:center;gap:5px;margin-right:14px;margin-top:4px;font-size:12px;color:var(--muted);">
+      <span style="width:16px;height:2.5px;background:${dc.color};display:inline-block;"></span>${shiftDateLabel(dc.date)}
+    </span>
+  `).join('');
+  document.getElementById('salesCompareLegend').innerHTML = `
+    <span style="display:inline-flex;align-items:center;gap:5px;margin-right:14px;font-size:12px;color:var(--muted);">
+      <span style="width:16px;height:2.5px;background:var(--primary);display:inline-block;"></span>今日
+    </span>
+    ${avg ? `<span style="display:inline-flex;align-items:center;gap:5px;font-size:12px;color:var(--muted);">
+      <span style="width:16px;height:0;border-top:2.5px dashed var(--muted);display:inline-block;"></span>平均
+    </span>` : ''}
+    ${dateLegendHTML}
+  `;
+
+  // ---- 日付チップ（曜日フィルターに合う過去日を新しい順に。タップで表示ON/OFF） ----
+  document.getElementById('salesCompareDateChips').innerHTML = dateOptions.length ? dateOptions.map(d => {
+    const selIdx = salesCompareSelectedDates.indexOf(d);
+    const color = selIdx >= 0 ? DATE_LINE_COLORS[selIdx] : null;
+    const style = color ? `border-color:${color};background:${color}1a;color:${color};` : '';
+    return `<button type="button" class="place-chip" style="${style}" onclick="toggleSalesCompareDate('${d}')">${shiftDateLabel(d)} ¥${dayTotalExTax(d).toLocaleString()}</button>`;
+  }).join('') : `<span style="font-size:12px;color:var(--muted);">該当する記録がありません</span>`;
+
+  // ---- クロスヘア（タップ／ドラッグで時刻ごとの値を表示） ----
+  const svgEl = document.getElementById('salesCompareSvg');
+  const crosshair = document.getElementById('salesCompareCrosshair');
+  const crosshairLine = document.getElementById('salesCompareCrosshairLine');
+  const tooltip = document.getElementById('salesCompareTooltip');
+  const updateCrosshair = clientX => {
+    const rect = svgEl.getBoundingClientRect();
+    const ratio = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+    const min = ratio * GRAPH_DAY_SPAN_MIN;
+    const px = x(min);
+    crosshairLine.setAttribute('x1', px.toFixed(1));
+    crosshairLine.setAttribute('x2', px.toFixed(1));
+    crosshair.style.display = '';
+    const todayVal = min <= today.nowMin ? interpAt(today.samples, min) : null;
+    const avgVal = avg ? interpAt(avg.samples, min) : null;
+    const dateLines = dateCurves.map(dc => `${shiftDateLabel(dc.date)}: ¥${Math.round(interpAt(dc.samples, min)).toLocaleString()}`).join('<br>');
+    const todayLineLabel = today.isFallback ? shiftDateLabel(today.date) : '今日';
+    tooltip.innerHTML = `${shiftMinToHM(min)}<br>${todayLineLabel}: ${todayVal === null ? 'ー' : '¥' + Math.round(todayVal).toLocaleString()}<br>平均: ${avgVal === null ? 'ー' : '¥' + Math.round(avgVal).toLocaleString()}${dateLines ? '<br>' + dateLines : ''}`;
+    tooltip.style.display = '';
+    const wrapRect = wrap.getBoundingClientRect();
+    const leftPx = (px / W) * wrapRect.width;
+    tooltip.style.left = `${Math.min(Math.max(leftPx - 45, 0), wrapRect.width - 100)}px`;
+  };
+  const hideCrosshair = () => { crosshair.style.display = 'none'; tooltip.style.display = 'none'; };
+  let dragging = false;
+  // 再描画のたびに呼ばれるため、addEventListenerでの重複登録を避けてonXXXで1つだけ保持する
+  wrap.onpointerdown = e => { dragging = true; updateCrosshair(e.clientX); };
+  wrap.onpointermove = e => { if (dragging) updateCrosshair(e.clientX); };
+  wrap.onpointerup = hideCrosshair;
+  wrap.onpointerleave = hideCrosshair;
+  wrap.onpointercancel = hideCrosshair;
+}
+
+// カスタム締め日（指定期間）
+// カスタム締め日（2026年度）
+const CUSTOM_PERIODS = [
+  ['2026-03-21','2026-04-19'],
+  ['2026-04-20','2026-05-19'],
+  ['2026-05-20','2026-06-18'],
+  ['2026-06-19','2026-07-18'],
+  ['2026-07-19','2026-08-17'],
+  ['2026-08-18','2026-09-16'],
+  ['2026-09-17','2026-10-16'],
+  ['2026-10-17','2026-11-15'],
+  ['2026-11-16','2026-12-15'],
+];
+
+// 統計「月」タブの期間ラベル（例：7/19〜8/17）をタップして手動調整した結果を保存する。
+// 実際の締め日はカレンダー通りにいかないことがあるための補正用
+const USER_PERIODS_KEY = 'taxi_user_periods';
+function getUserPeriods() {
+  try { return JSON.parse(localStorage.getItem(USER_PERIODS_KEY) || '[]'); } catch(e) { return []; }
+}
+function saveUserPeriods(periods) {
+  localStorage.setItem(USER_PERIODS_KEY, JSON.stringify(periods));
+}
+function addDaysStr(dateStr, delta) {
+  const d = new Date(dateStr + 'T00:00:00');
+  d.setDate(d.getDate() + delta);
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+}
+
+function getBillingPeriod(dateStr, overridePeriods) {
+  const fmt   = str => { const d = new Date(str+'T00:00:00'); return `${d.getMonth()+1}/${d.getDate()}`; };
+  const toStr = dt  => dt.toISOString().slice(0, 10);
+
+  // 手動調整した期間を最優先
+  for (const p of (overridePeriods || getUserPeriods())) {
+    if (dateStr >= p.startStr && dateStr <= p.endStr) {
+      return { startStr: p.startStr, endStr: p.endStr, label: `${fmt(p.startStr)}〜${fmt(p.endStr)}` };
+    }
+  }
+
+  // カスタム期間を優先
+  for (const [s, e] of CUSTOM_PERIODS) {
+    if (dateStr >= s && dateStr <= e) {
+      return { startStr: s, endStr: e, label: `${fmt(s)}〜${fmt(e)}` };
+    }
+  }
+
+  // 2026/12/16以降：15日締め（16日〜翌月15日）
+  const d = new Date(dateStr + 'T00:00:00');
+  const day = d.getDate();
+  let sy = d.getFullYear(), sm = d.getMonth() + 1;
+  let start, end;
+  if (day >= 16) {
+    // 今月16日〜翌月15日
+    start = new Date(sy, sm - 1, 16);
+    end   = new Date(sy, sm, 15);
+  } else {
+    // 前月16日〜今月15日
+    let pm = sm - 1, py = sy;
+    if (pm === 0) { pm = 12; py--; }
+    start = new Date(py, pm - 1, 16);
+    end   = new Date(sy, sm - 1, 15);
+  }
+  return { startStr: toStr(start), endStr: toStr(end), label: `${fmt(toStr(start))}〜${fmt(toStr(end))}` };
+}
+
+// 統計「月」タブの期間ラベルをタップして開始日・終了日を手動調整する
+function openPeriodEditModal() {
+  if (currentStatTab !== 'month' || !currentStatPeriod) return;
+  document.getElementById('periodEditStart').value = currentStatPeriod.startStr;
+  document.getElementById('periodEditEnd').value = currentStatPeriod.endStr;
+  document.getElementById('periodEditModal').classList.add('open');
+}
+function closePeriodEditModal() {
+  document.getElementById('periodEditModal').classList.remove('open');
+}
+function savePeriodEdit() {
+  const s = document.getElementById('periodEditStart').value;
+  const e = document.getElementById('periodEditEnd').value;
+  if (!s || !e || s > e) { showToast('開始日は終了日より前にしてください'); return; }
+  if (!currentStatPeriod) return;
+  const old = currentStatPeriod;
+  // 再編集のときは、今表示中の期間そのもの（前回の調整結果）をまず取り除いておく
+  let periods = getUserPeriods().filter(p => !(p.startStr === old.startStr && p.endStr === old.endStr));
+  const upsert = (startStr, endStr) => {
+    periods = periods.filter(p => p.startStr !== startStr);
+    periods.push({ startStr, endStr });
+  };
+  // 開始日を変えた場合、前の期間（今回の変更前の境目のすぐ前日で特定する）の終了日を
+  // 新しい開始日の前日にそろえ、隙間や重複を防ぐ
+  if (s !== old.startStr) {
+    const prevPeriod = getBillingPeriod(addDaysStr(old.startStr, -1), periods);
+    upsert(prevPeriod.startStr, addDaysStr(s, -1));
+  }
+  // 終了日を変えた場合、次の期間（変更前の境目のすぐ翌日で特定する）の開始日を
+  // 新しい終了日の翌日にそろえる
+  if (e !== old.endStr) {
+    const nextPeriod = getBillingPeriod(addDaysStr(old.endStr, 1), periods);
+    upsert(addDaysStr(e, 1), nextPeriod.endStr);
+  }
+  upsert(s, e);
+  saveUserPeriods(periods);
+  closePeriodEditModal();
+  showToast('集計期間を修正しました ✓');
+  renderStats();
+}
+
+function renderStats() {
+  const today = todayStr();
+  const allTrips = getTrips();
+  const allWaits = getWaits();
+  let trips, waits, label;
+
+  // 現在の期間（当日・今週・今月）に記録がなければ、記録がある直近の期間まで自動的にさかのぼる
+  if (statPeriodOffset === 0 && allTrips.length > 0) {
+    if (currentStatTab === 'day') {
+      if (!allTrips.some(t => t.date === today)) {
+        const pastDates = [...new Set(allTrips.map(t => t.date))].filter(d => d < today).sort();
+        if (pastDates.length > 0) {
+          const latestDate = pastDates[pastDates.length - 1];
+          statPeriodOffset = Math.round((new Date(today + 'T00:00:00') - new Date(latestDate + 'T00:00:00')) / 86400000);
+        }
+      }
+    } else if (currentStatTab === 'week') {
+      const wStartDate0 = new Date(getWeekStart() + 'T00:00:00');
+      for (let off = 0; off <= 520; off++) {
+        const s = new Date(wStartDate0); s.setDate(s.getDate() - off * 7);
+        const e = new Date(s); e.setDate(e.getDate() + 6);
+        const sStr = `${s.getFullYear()}-${pad(s.getMonth()+1)}-${pad(s.getDate())}`;
+        const eStr = `${e.getFullYear()}-${pad(e.getMonth()+1)}-${pad(e.getDate())}`;
+        if (allTrips.some(t => t.date >= sStr && t.date <= eStr)) { statPeriodOffset = off; break; }
+      }
+    } else if (currentStatTab === 'month') {
+      for (let off = 0; off <= 120; off++) {
+        const period = getShiftedBillingPeriod(off);
+        if (allTrips.some(t => t.date >= period.startStr && t.date <= period.endStr)) { statPeriodOffset = off; break; }
+      }
+    }
+  }
+
+  if (currentStatTab === 'day') {
+    // 日別は記録がある日だけを行き来するため、その方向に記録がなければボタンを無効化する
+    document.getElementById('statPeriodPrevBtn').disabled = findStatDayOffsetWithData(statPeriodOffset, 1) === null;
+    document.getElementById('statPeriodNextBtn').disabled = findStatDayOffsetWithData(statPeriodOffset, -1) === null;
+  } else {
+    document.getElementById('statPeriodPrevBtn').disabled = false;
+    document.getElementById('statPeriodNextBtn').disabled = statPeriodOffset <= 0;
+  }
+
+  let viewedDate = null;
+  currentStatPeriod = null;
+  if (currentStatTab === 'day') {
+    const d = new Date(today + 'T00:00:00');
+    d.setDate(d.getDate() - statPeriodOffset);
+    viewedDate = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+    trips = allTrips.filter(t => t.date === viewedDate);
+    waits = allWaits.filter(w => w.date === viewedDate);
+    label = statPeriodOffset === 0 ? '本日の営収額' : fmtDate(viewedDate);
+    document.getElementById('statPeriodLabel').textContent = fmtDate(viewedDate);
+  } else if (currentStatTab === 'week') {
+    const wStartDate = new Date(getWeekStart() + 'T00:00:00');
+    wStartDate.setDate(wStartDate.getDate() - statPeriodOffset * 7);
+    const wEndDate = new Date(wStartDate);
+    wEndDate.setDate(wEndDate.getDate() + 6);
+    const wStart = `${wStartDate.getFullYear()}-${pad(wStartDate.getMonth()+1)}-${pad(wStartDate.getDate())}`;
+    const wEnd = `${wEndDate.getFullYear()}-${pad(wEndDate.getMonth()+1)}-${pad(wEndDate.getDate())}`;
+    trips = allTrips.filter(t => t.date >= wStart && t.date <= wEnd);
+    waits = allWaits.filter(w => w.date >= wStart && w.date <= wEnd);
+    label = statPeriodOffset === 0 ? '今週の売上' : `${wStartDate.getMonth()+1}/${wStartDate.getDate()}〜${wEndDate.getMonth()+1}/${wEndDate.getDate()} の売上`;
+    document.getElementById('statPeriodLabel').textContent = `${wStartDate.getMonth()+1}/${wStartDate.getDate()}〜${wEndDate.getMonth()+1}/${wEndDate.getDate()}`;
+  } else {
+    const period = getShiftedBillingPeriod(statPeriodOffset);
+    currentStatPeriod = period;
+    trips = allTrips.filter(t => t.date >= period.startStr && t.date <= period.endStr);
+    waits = allWaits.filter(w => w.date >= period.startStr && w.date <= period.endStr);
+    label = `${period.label} 売上`;
+    document.getElementById('statPeriodLabel').textContent = period.label;
+  }
+
+  // 営収額は日ごとの手動修正（タイムラインでの調整）を反映するため、
+  // 税込合計をまとめて丸めるのではなく1日ずつdayTotalExTaxを合計する
+  const totalExTaxStat = currentStatTab === 'day'
+    ? dayTotalExTax(viewedDate)
+    : sumDayTotalExTax(trips.map(t => t.date));
+  const avgFare = trips.length ? floorDivInt(totalExTaxStat, trips.length * 10) * 10 : 0;
+
+  // 実車時間（乗車〜降車の合計）
+  const jisshaMin = trips.reduce((s,t) => {
+    if (t.pickupTime && t.dropoffTime) {
+      const [sh,sm]=t.pickupTime.split(':').map(Number);
+      const [eh,em]=t.dropoffTime.split(':').map(Number);
+      let min=(eh*60+em)-(sh*60+sm);
+      if(min<0) min+=24*60;
+      return s+min;
+    }
+    return s;
+  },0);
+
+  document.getElementById('statSales').textContent = `¥${totalExTaxStat.toLocaleString()}`;
+  document.getElementById('statSalesLabel').textContent = label;
+  document.getElementById('statTrips').textContent = trips.length;
+  document.getElementById('statAvg').textContent = `¥${avgFare.toLocaleString()}`;
+  document.getElementById('statDrive').textContent = fmtWait(jisshaMin);
+
+  // Ranking — タブに応じて日別・週別・月別の全期間ランキングを表示
+  const byGroup = {};
+  if (currentStatTab === 'week') {
+    document.getElementById('rankingLabel').textContent = '売上ランキング（週別）';
+    allTrips.forEach(t => {
+      const key = getWeekKeyOf(t.date);
+      if (!byGroup[key]) byGroup[key] = { total: 0, count: 0, label: '', dates: new Set() };
+      byGroup[key].total += (t.fare||0);
+      byGroup[key].count++;
+      byGroup[key].dates.add(t.date);
+    });
+    // 稼働した日が確定してからラベルを作る
+    Object.entries(byGroup).forEach(([key, g]) => {
+      g.label = fmtWeekWorkedDaysLabel(key, [...g.dates]);
+    });
+  } else if (currentStatTab === 'month') {
+    document.getElementById('rankingLabel').textContent = '売上ランキング（月別）';
+    allTrips.forEach(t => {
+      const period = getBillingPeriod(t.date);
+      const key = period.startStr;
+      if (!byGroup[key]) byGroup[key] = { total: 0, count: 0, label: period.label, dates: new Set() };
+      byGroup[key].total += (t.fare||0);
+      byGroup[key].count++;
+      byGroup[key].dates.add(t.date);
+    });
+  } else {
+    document.getElementById('rankingLabel').textContent = '売上ランキング（日別）';
+    allTrips.forEach(t => {
+      if (!byGroup[t.date]) byGroup[t.date] = { total: 0, count: 0, label: fmtDate(t.date), dates: new Set([t.date]) };
+      byGroup[t.date].total += (t.fare||0);
+      byGroup[t.date].count++;
+    });
+  }
+  // 現在（今日／今週／今月）に該当するキーをハイライト表示するために求める
+  let currentKey = currentStatTab === 'week' ? getWeekKeyOf(today)
+    : currentStatTab === 'month' ? getBillingPeriod(today).startStr
+    : today;
+
+  // 今日／今週／今月にまだ記録がない場合は、直近の記録がある日・週・月を代わりにハイライトする
+  if (!byGroup[currentKey]) {
+    const pastKeys = Object.keys(byGroup).filter(k => k < currentKey).sort();
+    if (pastKeys.length > 0) currentKey = pastKeys[pastKeys.length - 1];
+  }
+
+  const ranked = Object.entries(byGroup).sort((a,b)=>b[1].total-a[1].total);
+  const medalClasses = ['gold','silver','bronze'];
+  document.getElementById('rankingList').innerHTML = ranked.length ? ranked.map(([key,r],i)=>{
+    const vEx = sumDayTotalExTax([...r.dates]);
+    const avgEx = floorDivInt(vEx, r.count * 10) * 10;
+    const isCurrent = key === currentKey;
+    // どのタブでもタップするとその日・週・月の記録を一覧できる（見た目は変えない）
+    const onTap = currentStatTab === 'day'
+      ? `showDayHistory('${key}')`
+      : `showPeriodHistory('${currentStatTab}','${key}')`;
+    const style = `${isCurrent ? 'background:#e3f2fd;' : ''}cursor:pointer;`;
+    return `
+    <div class="loc-rank-item" style="${style}" onclick="${onTap}">
+      <div class="loc-rank-num ${medalClasses[i]||''}">${i+1}</div>
+      <div class="loc-rank-body">
+        <div class="loc-rank-name${currentStatTab === 'week' ? ' week-days' : ''}">${r.label}</div>
+        <div class="loc-rank-meta">${r.count}件 ／ 平均 ¥${avgEx.toLocaleString()}</div>
+      </div>
+      <div class="loc-rank-fare">¥${vEx.toLocaleString()}</div>
+    </div>`;
+  }).join('') : emptyState('まだデータがありません');
+  shrinkLabelsToOneLine('#rankingList .loc-rank-name');
+}
+
+// 稼働日が多い週でも折り返さず1行に収めるため、はみ出す分だけ文字を小さくする
+function shrinkLabelsToOneLine(selector, minPx = 9) {
+  document.querySelectorAll(selector).forEach(el => {
+    el.style.fontSize = '';
+    let size = parseFloat(getComputedStyle(el).fontSize);
+    while (el.scrollWidth > el.clientWidth && size > minPx) {
+      size -= 0.5;
+      el.style.fontSize = size + 'px';
+    }
+  });
+}
+
+// 任意の日付が属する週の開始日（日曜始まり）をキーとして返す
+function getWeekKeyOf(dateStr) {
+  const d = new Date(dateStr + 'T00:00:00');
+  d.setDate(d.getDate() - d.getDay());
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+}
+function fmtWeekLabel(weekStartStr) {
+  const s = new Date(weekStartStr + 'T00:00:00');
+  const e = new Date(s);
+  e.setDate(e.getDate() + 6);
+  return `${s.getMonth()+1}/${s.getDate()}〜${e.getMonth()+1}/${e.getDate()}`;
+}
+
+// 週の売上ランキングは期間ではなく、実際に稼働した日を並べて表示する
+// （例：6/22(月) 6/24(水) 6/26(金)）
+function fmtWeekWorkedDaysLabel(weekStartStr, dates) {
+  if (!dates || dates.length === 0) return fmtWeekLabel(weekStartStr);
+  const weekdays = ['日','月','火','水','木','金','土'];
+  // 同じ月が続く間は「月/」を省いて短くする（例：6/22(月) 24(水) 26(金)）
+  let lastMonth = null;
+  return dates.slice().sort().map(d => {
+    const dt = new Date(d + 'T00:00:00');
+    const m = dt.getMonth() + 1;
+    const head = m === lastMonth ? '' : `${m}/`;
+    lastMonth = m;
+    return `${head}${dt.getDate()}(${weekdays[dt.getDay()]})`;
+  }).join(' ');
+}
+
+function getWeekStart() {
+  const d = new Date();
+  const day = d.getDay();
+  d.setDate(d.getDate() - day);
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+}
+
+// ==================== NAVIGATION ====================
+function switchPage(page) {
+  ['record','schedule','summary','recommend','stats','history'].forEach(p => {
+    document.getElementById(`page-${p}`).className = 'page' + (p === page ? ' active' : '');
+    document.getElementById(`nav-${p}`).className = 'nav-btn' + (p === page ? ' active' : '');
+  });
+  // 運行記録だけ下の余白の詰め方が違う
+  document.querySelector('.content').classList.toggle('record-page', page === 'record');
+  if (page === 'history') renderHistory();
+  if (page === 'stats') renderStats();
+  if (page === 'recommend') renderRecommend();
+  if (page === 'schedule') renderSchedule();
+}
+
+// メインタブを左右スワイプで切り替えられるようにする
+const TAB_ORDER = ['record', 'schedule', 'summary', 'recommend', 'stats', 'history'];
+(function initTabSwipe() {
+  const el = document.querySelector('.content');
+  let startX = 0, startY = 0;
+  el.addEventListener('touchstart', e => {
+    startX = e.touches[0].clientX;
+    startY = e.touches[0].clientY;
+  }, { passive: true });
+  el.addEventListener('touchend', e => {
+    const dx = e.changedTouches[0].clientX - startX;
+    const dy = e.changedTouches[0].clientY - startY;
+    if (Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
+    const activePage = document.querySelector('.page.active');
+    if (!activePage) return;
+    const idx = TAB_ORDER.indexOf(activePage.id.replace('page-', ''));
+    if (idx === -1) return;
+    if (dx < 0 && idx < TAB_ORDER.length - 1) switchPage(TAB_ORDER[idx + 1]);
+    else if (dx > 0 && idx > 0) switchPage(TAB_ORDER[idx - 1]);
+  }, { passive: true });
+})();
+
+// ==================== HELPERS ====================
+function emptyState(msg) {
+  return `<div class="empty"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 6h-2.18c.07-.44.18-.86.18-1.3C18 2.12 15.88 0 13.3 0c-1.4 0-2.56.65-3.3 1.67L9 3 7.99 1.67C7.24.65 6.08 0 4.68 0 2.1 0 0 2.12 0 4.7c0 .44.1.86.18 1.3H0L0 20c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-6.7-4c1.08 0 1.98.88 1.98 1.97 0 .52-.2 1-.55 1.33L13 7H9.58l-1.03-1.9A1.95 1.95 0 0 1 8.7 3.97C8.7 2.88 9.6 2 10.68 2z"/></svg><p>${msg}</p></div>`;
+}
+
+// ==================== CUSTOM CONFIRM ====================
+function showConfirm(title, desc, onOk) {
+  const overlay = document.createElement('div');
+  overlay.className = 'confirm-overlay';
+  overlay.innerHTML = `
+    <div class="confirm-sheet">
+      <h3>${title}</h3>
+      <p>${desc}</p>
+      <div class="confirm-btns">
+        <button class="c-btn-del" id="confirmOkBtn">削除する</button>
+        <button class="c-btn-cancel" id="confirmCancelBtn">キャンセル</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  overlay.querySelector('#confirmOkBtn').addEventListener('click', () => {
+    overlay.remove();
+    onOk();
+  });
+  overlay.querySelector('#confirmCancelBtn').addEventListener('click', () => overlay.remove());
+  overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+}
+
+let toastTimer;
+function showToast(msg) {
+  let t = document.getElementById('toast');
+  if (!t) {
+    t = document.createElement('div');
+    t.id = 'toast';
+    t.style.cssText = 'position:fixed;bottom:calc(80px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%) translateY(20px);background:#333;color:white;padding:10px 20px;border-radius:20px;font-size:14px;font-weight:600;z-index:500;opacity:0;transition:all 0.25s;white-space:normal;max-width:85vw;text-align:center;box-shadow:0 4px 12px rgba(0,0,0,0.3);';
+    document.body.appendChild(t);
+  }
+  t.textContent = msg;
+  requestAnimationFrame(() => { t.style.opacity = '1'; t.style.transform = 'translateX(-50%) translateY(0)'; });
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { t.style.opacity = '0'; t.style.transform = 'translateX(-50%) translateY(20px)'; }, 2200);
+}
+
+// ==================== INIT ====================
+function updateHeader() {
+  const date = resolveDefaultViewDate();
+  const d = new Date(date + 'T00:00:00');
+  const days = ['日曜日','月曜日','火曜日','水曜日','木曜日','金曜日','土曜日'];
+  const isToday = date === todayStr();
+  const suffix = isToday ? '' : '（前回）';
+  document.getElementById('headerDate').textContent = `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日（${days[d.getDay()]}）${suffix}`;
+  document.getElementById('headerSales').textContent = `¥${dayTotalExTax(date).toLocaleString()}`;
+
+  const trips = getTrips().filter(t => t.date === date);
+  document.getElementById('headerCount').textContent = `${trips.length}件`;
+
+  // 時給はタイムラインと同じ計算方法・色分け（赤＜1000／黄＜1200／緑）
+  const scheduleResult = computeScheduleSegments(date);
+  const allMin = scheduleResult ? scheduleResult.allMin : 0;
+  const hourlyWage = allMin > 0 ? Math.round(dayTotalExTax(date) / (allMin / 60) * 0.5) : null;
+  const hourlyEl = document.getElementById('headerHourly');
+  if (hourlyWage !== null) {
+    hourlyEl.style.background = hourlyWage < 1000 ? 'var(--danger)' : hourlyWage < 1200 ? '#dd9500' : 'var(--success)';
+    hourlyEl.style.color = 'white';
+    hourlyEl.textContent = `時給¥${hourlyWage.toLocaleString()}`;
+    hourlyEl.style.display = '';
+  } else {
+    hourlyEl.style.display = 'none';
+  }
+
+  // GO・流し・配車の件数。表示方法は統計「場所」タブの内訳バッジ（typeBadges）と同じにする。
+  // 配車が0件のときはtypeBadges側で自動的に表示されない
+  const types = {};
+  trips.forEach(t => { const tp = t.tripType || '流し'; types[tp] = (types[tp] || 0) + 1; });
+  document.getElementById('headerTypeBadges').innerHTML = typeBadges(types);
+}
+
+updateTodaySummary();
+updateFareDisplay();
+setInterval(() => {
+  updateHeader();
+  updateTodaySummary();
+  if (document.getElementById('page-recommend').classList.contains('active')) renderRecommend();
+  if (document.getElementById('page-schedule').classList.contains('active')) renderSchedule();
+}, 60000);
+selectType(getDefaultType()); // 起動時の種別を時間帯で設定
+
+// ==================== 自動アップデート ====================
+// 以前はService Workerでキャッシュしようとしていたが、blob URLのスクリプトは
+// Service Workerとして登録できない仕様のため、実際には一度も動作していなかった。
+// 代わりに、起動時にサーバー上のファイルを直接確認して、新しい版があれば自動で読み込み直す。
+async function checkForAppUpdate() {
+  try {
+    // cache: 'no-store' でブラウザのキャッシュを迂回して必ず最新を取得する
+    const res = await fetch('./index.html', { cache: 'no-store' });
+    if (!res.ok) return;
+    const text = await res.text();
+    const m = text.match(/const APP_VERSION = '([^']+)'/);
+    if (m && m[1] !== APP_VERSION) {
+      const url = new URL(location.href);
+      url.searchParams.set('v', m[1]);
+      location.replace(url.toString());
+    }
+  } catch (e) { /* オフライン時などは何もしない */ }
+}
+// 起動直後（まだ入力していない状態）に確認するので、自動で読み込み直しても入力内容は失われない
+checkForAppUpdate();
+
+// ヘッダーの高さは端末やセーフエリアで変わるため、実測値をCSS変数に入れる。
+// 運行記録のフォームを画面の高さぴったりに広げるのに使う
+function syncHeaderHeightVar() {
+  const header = document.querySelector('.header');
+  if (header) document.documentElement.style.setProperty('--header-actual', header.offsetHeight + 'px');
+  const nav = document.querySelector('.bottom-nav');
+  if (nav) document.documentElement.style.setProperty('--nav-actual', nav.offsetHeight + 'px');
+}
+syncHeaderHeightVar();
+window.addEventListener('resize', syncHeaderHeightVar);
+// 起動時は運行記録が開いているので、下の余白の詰め方も合わせておく
+document.querySelector('.content').classList.toggle(
+  'record-page', !!document.querySelector('#page-record.active'));
+
+// Install prompt banner for Android/desktop (iOS uses Safari share)
+let deferredPrompt;
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredPrompt = e;
+  // Show a subtle install banner
+  const banner = document.createElement('div');
+  banner.style.cssText = 'position:fixed;top:calc(60px + env(safe-area-inset-top));left:12px;right:12px;background:white;border-radius:14px;padding:12px 16px;box-shadow:0 4px 16px rgba(0,0,0,0.15);z-index:400;display:flex;align-items:center;gap:12px;';
+  banner.innerHTML = `<span style="font-size:24px;">📲</span><div style="flex:1"><div style="font-weight:700;font-size:14px;">ホーム画面に追加</div><div style="font-size:12px;color:#666;">アプリとして使えます</div></div><button onclick="deferredPrompt.prompt();this.closest('div').remove();" style="background:#1a73e8;color:white;border:none;border-radius:8px;padding:8px 14px;font-weight:600;font-size:13px;cursor:pointer;">追加</button><button onclick="this.closest('div').remove();" style="background:none;border:none;color:#999;font-size:20px;cursor:pointer;padding:4px;">✕</button>`;
+  document.body.appendChild(banner);
+  setTimeout(() => banner.remove(), 8000);
+});
+</script>
+</body>
+</html>
