@@ -342,6 +342,11 @@
     <h1 id="headerSales">¥0</h1>
     <button class="reload-btn" id="reloadBtn" onclick="triggerReload()">↻ 更新</button>
   </div>
+  <div style="display:flex;align-items:center;gap:8px;margin-top:6px;flex-wrap:wrap;font-size:12px;">
+    <span id="headerCount" style="opacity:0.9;font-weight:600;"></span>
+    <span id="headerHourly" style="padding:2px 8px;border-radius:8px;font-weight:700;display:none;"></span>
+    <span id="headerTypeBadges" style="display:flex;gap:4px;"></span>
+  </div>
 </div>
 
 <!-- Pages -->
@@ -1376,19 +1381,17 @@ function floorDivInt(a, b) {
   const r = a % b;
   return (a - r) / b;
 }
-// 同じ考え方で切り上げる（余りがあれば1足す）
-function ceilDivInt(a, b) {
-  const r = a % b;
-  return r === 0 ? a / b : (a - r) / b + 1;
-}
-// 1件の乗車の消費税抜き（10円単位で切り上げ）。例：税込1000円 → 1000/1.1=909.09... → 910円
-// amount/1.1/10 = amount/11 のため、切り上げ ceil(amount/11) を
-// ceilDivIntによる整数演算だけで求め、浮動小数点の割り算を経由しないことで
-// 数回に1回程度発生していた10円のずれを無くす。
-// 1日の合計はこの関数を1件ずつ適用してから合計する（まとめて1回だけ計算すると
-// 件数によって最大10円前後ずれるため、calcDayTotalExTaxなどは必ず1件ずつ呼び出す）
+// 消費税抜き。国税庁の内税処理と同じく、まず消費税額を1円未満切り捨てで求め
+// （tax = floor(amount/11)）、税込金額から引いて税抜金額を出す。
+// 表示は10円単位にしたいため、最後にその税抜金額を10円単位で四捨五入する。
+// 例：税込1000円 → 税額floor(90.9)=90円 → 税抜910円（910は10円単位なのでそのまま）
+// 　　税込1200円 → 税額floor(109.09)=109円 → 税抜1091円 → 四捨五入で1090円
+// floorDivIntのみを使った整数演算で求め、浮動小数点の割り算を経由しないことで
+// 数回に1回程度発生していた10円前後のずれを無くす
 function exTax(amount) {
-  return ceilDivInt(amount, 11) * 10;
+  const tax = floorDivInt(amount, 11);
+  const base = amount - tax;
+  return floorDivInt(base + 5, 10) * 10;
 }
 
 // ==================== GPS / LOCATION ====================
@@ -5620,6 +5623,29 @@ function updateHeader() {
   const suffix = isToday ? '' : '（前回）';
   document.getElementById('headerDate').textContent = `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日（${days[d.getDay()]}）${suffix}`;
   document.getElementById('headerSales').textContent = `¥${dayTotalExTax(date).toLocaleString()}`;
+
+  const trips = getTrips().filter(t => t.date === date);
+  document.getElementById('headerCount').textContent = `${trips.length}件`;
+
+  // 時給はタイムラインと同じ計算方法・色分け（赤＜1000／黄＜1200／緑）
+  const scheduleResult = computeScheduleSegments(date);
+  const allMin = scheduleResult ? scheduleResult.allMin : 0;
+  const hourlyWage = allMin > 0 ? Math.round(dayTotalExTax(date) / (allMin / 60) * 0.5) : null;
+  const hourlyEl = document.getElementById('headerHourly');
+  if (hourlyWage !== null) {
+    hourlyEl.style.background = hourlyWage < 1000 ? 'var(--danger)' : hourlyWage < 1200 ? '#dd9500' : 'var(--success)';
+    hourlyEl.style.color = 'white';
+    hourlyEl.textContent = `時給¥${hourlyWage.toLocaleString()}`;
+    hourlyEl.style.display = '';
+  } else {
+    hourlyEl.style.display = 'none';
+  }
+
+  // GO・流し・配車の件数。表示方法は統計「場所」タブの内訳バッジ（typeBadges）と同じにする。
+  // 配車が0件のときはtypeBadges側で自動的に表示されない
+  const types = {};
+  trips.forEach(t => { const tp = t.tripType || '流し'; types[tp] = (types[tp] || 0) + 1; });
+  document.getElementById('headerTypeBadges').innerHTML = typeBadges(types);
 }
 
 updateTodaySummary();
