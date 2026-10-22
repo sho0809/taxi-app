@@ -34,6 +34,23 @@
     --glass-border: rgba(255,255,255,0.65);
     --glass-blur: blur(20px) saturate(180%);
     --glass-shadow: 0 8px 24px rgba(31,41,55,0.08), 0 1px 2px rgba(31,41,55,0.04);
+    /* カードや入力欄などの「地」の色をRGB成分で持ち、ダークモードではここだけ差し替えれば
+       rgba(var(--surface-rgb), 0.9) のような不透明度付きの背景が自動的に追従する */
+    --surface-rgb: 255,255,255;
+  }
+  /* ダークモード：常に青いヘッダーや、支払方法・時給などの意味を持つ色はそのまま残し、
+     背景・カード・文字色・枠線だけを暗い配色に差し替える */
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #000000;
+      --card: #1c1c1e;
+      --text: #f2f2f7;
+      --muted: #98989f;
+      --border: #38383a;
+      --glass-border: rgba(255,255,255,0.12);
+      --glass-shadow: 0 8px 24px rgba(0,0,0,0.45), 0 1px 2px rgba(0,0,0,0.3);
+      --surface-rgb: 28,28,30;
+    }
   }
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
   /* ガラス素材がうっすら透けるよう、背景に淡いグラデーションの光だまりを敷く */
@@ -81,13 +98,14 @@
   .content.loc-focus { padding-bottom: 75vh; }
 
   /* Bottom nav：すりガラスのように奥のコンテンツが透けるタブバー */
-  .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(255,255,255,0.72); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); border-top: 1px solid rgba(255,255,255,0.6); display: flex; z-index: 200; padding-bottom: var(--safe-bottom); box-shadow: 0 -4px 20px rgba(31,41,55,0.08); }
+  .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(var(--surface-rgb),0.72); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); border-top: 1px solid var(--glass-border); display: flex; z-index: 200; padding-bottom: var(--safe-bottom); box-shadow: 0 -4px 20px rgba(31,41,55,0.08); }
   .nav-btn { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 10px 2px 18px; gap: 4px; background: none; border: none; color: var(--muted); font-size: 9.5px; font-weight: 500; cursor: pointer; transition: color 0.15s; white-space: nowrap; }
   .nav-btn.active { color: var(--primary); }
   .nav-btn svg { width: 24px; height: 24px; }
 
-  /* Cards：半透明＋ぼかしのガラス素材。細い光の縁取りで輪郭を出す */
-  .card { background: var(--glass-bg-strong); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); border: 1px solid var(--glass-border); border-radius: 18px; padding: 18px; margin-bottom: 14px; box-shadow: var(--glass-shadow); }
+  /* Cards：半透明の明るいパネル。backdrop-filterは使わず（多数の要素に重ねるとiOS Safariで
+     描画クラッシュ「問題が繰り返し発生しました」の原因になるため）、不透明度だけで質感を出す */
+  .card { background: rgba(var(--surface-rgb),0.92); border: 1px solid var(--glass-border); border-radius: 18px; padding: 18px; margin-bottom: 14px; box-shadow: var(--glass-shadow); }
   .card-title { font-size: 13px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 13px; }
 
   /* Status badges */
@@ -114,8 +132,8 @@
   .btn-success { background: linear-gradient(155deg, #3dbb63, var(--success)); color: white; box-shadow: 0 4px 14px rgba(52,168,83,0.35), inset 0 1px 0 rgba(255,255,255,0.3); }
   .btn-warning { background: var(--warning); color: #333; }
   .btn-danger { background: linear-gradient(155deg, #f1584a, var(--danger)); color: white; box-shadow: 0 4px 14px rgba(234,67,53,0.35), inset 0 1px 0 rgba(255,255,255,0.3); }
-  .btn-outline { background: rgba(255,255,255,0.5); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); color: var(--primary); border: 1.5px solid var(--primary); }
-  .btn-gray { background: rgba(120,120,128,0.12); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); color: var(--text); border: 1px solid rgba(255,255,255,0.5); }
+  .btn-outline { background: rgba(var(--surface-rgb),0.75); color: var(--primary); border: 1.5px solid var(--primary); }
+  .btn-gray { background: rgba(120,120,128,0.14); color: var(--text); border: 1px solid rgba(255,255,255,0.5); }
   .btn-sm { padding: 9px 14px; font-size: 14px; width: auto; border-radius: 10px; }
 
   .btn-row { display: flex; gap: 10px; margin-top: 10px; }
@@ -159,25 +177,25 @@
   .label-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 5px; vertical-align: 1px; }
   .label-dot.pickup { background: var(--success); }
   .label-dot.dropoff { background: var(--danger); }
-  .input-field { width: 100%; padding: 12px 14px; border: 1.5px solid rgba(0,0,0,0.08); border-radius: 12px; font-size: 16px; background: rgba(255,255,255,0.7); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); color: var(--text); outline: none; transition: all 0.15s; -webkit-appearance: none; }
-  .input-field:focus { border-color: var(--primary); background: rgba(255,255,255,0.92); box-shadow: 0 0 0 3px rgba(26,115,232,0.12); }
+  .input-field { width: 100%; padding: 12px 14px; border: 1.5px solid var(--border); border-radius: 12px; font-size: 16px; background: rgba(var(--surface-rgb),0.85); color: var(--text); outline: none; transition: all 0.15s; -webkit-appearance: none; }
+  .input-field:focus { border-color: var(--primary); background: rgba(var(--surface-rgb),0.95); box-shadow: 0 0 0 3px rgba(26,115,232,0.12); }
   .input-row { display: flex; gap: 8px; }
   .input-row .input-group { flex: 1; }
 
   /* 乗車/降車場所の予測変換候補 */
-  .loc-suggest { display: none; position: absolute; left: 0; right: 0; top: 100%; margin-top: 4px; background: rgba(255,255,255,0.88); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); border: 1px solid var(--glass-border); border-radius: 12px; box-shadow: var(--glass-shadow); z-index: 60; max-height: 180px; overflow-y: auto; }
-  .loc-suggest-item { padding: 9px 12px; font-size: 14px; color: var(--text); cursor: pointer; border-bottom: 1px solid rgba(0,0,0,0.06); }
+  .loc-suggest { display: none; position: absolute; left: 0; right: 0; top: 100%; margin-top: 4px; background: rgba(var(--surface-rgb),0.97); border: 1px solid var(--glass-border); border-radius: 12px; box-shadow: var(--glass-shadow); z-index: 60; max-height: 180px; overflow-y: auto; }
+  .loc-suggest-item { padding: 9px 12px; font-size: 14px; color: var(--text); cursor: pointer; border-bottom: 1px solid var(--border); }
   .loc-suggest-item:last-child { border-bottom: none; }
   .loc-suggest-item:active { background: rgba(26,115,232,0.08); }
 
   /* Tabs (sub)：選択中のタブだけガラスの光沢で浮かせ、未選択は透け感のあるトラックに沈める */
-  .tab-bar { display: flex; background: rgba(120,120,128,0.1); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); border-radius: 13px; padding: 3px; margin-bottom: 14px; }
+  .tab-bar { display: flex; background: rgba(120,120,128,0.14); border-radius: 13px; padding: 3px; margin-bottom: 14px; }
   .tab-item { flex: 1; text-align: center; padding: 8px 6px; border-radius: 10px; font-size: 13px; font-weight: 600; color: var(--muted); cursor: pointer; transition: all 0.15s; }
   .tab-item.active { background: rgba(255,255,255,0.95); color: var(--primary); box-shadow: 0 2px 6px rgba(31,41,55,0.12); }
   /* タイムラインの操作タブ（グラフ・休憩・給油・業務終了） */
   /* タイムラインの操作タブ。1つずつ独立したボタンとして並べる */
   .sched-tab-bar { display: flex; margin-top: 10px; gap: 6px; }
-  .sched-tab { flex: 1; text-align: center; padding: 10px 2px; border-radius: 10px; font-size: 12px; font-weight: 700; color: var(--text); background: rgba(255,255,255,0.55); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); border: 1px solid rgba(255,255,255,0.6); cursor: pointer; white-space: nowrap; transition: all 0.15s; }
+  .sched-tab { flex: 1; text-align: center; padding: 10px 2px; border-radius: 10px; font-size: 12px; font-weight: 700; color: var(--text); background: rgba(var(--surface-rgb),0.78); border: 1px solid var(--glass-border); cursor: pointer; white-space: nowrap; transition: all 0.15s; }
   .sched-tab:active { border-color: var(--primary); color: var(--primary); transform: scale(0.96); }
   /* 休憩中・給油中はタイムラインの記録と同じ色で塗り、状態がわかるようにする */
   .sched-tab.ongoing-break { background: #f5a623; border-color: #f5a623; color: white; }
@@ -191,13 +209,13 @@
   .graph-tab.active { background: rgba(26,115,232,0.14); border-color: var(--primary); color: var(--primary); }
   /* 休憩場所のよく使う候補 */
   .place-chip-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
-  .place-chip { padding: 7px 12px; border-radius: 999px; border: 1px solid rgba(255,255,255,0.6); background: rgba(255,255,255,0.55); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); font-size: 13px; font-weight: 600; color: var(--text); cursor: pointer; }
+  .place-chip { padding: 7px 12px; border-radius: 999px; border: 1px solid var(--glass-border); background: rgba(var(--surface-rgb),0.78); font-size: 13px; font-weight: 600; color: var(--text); cursor: pointer; }
   .place-chip.active { background:#fff3e0; border-color:#ff9800; color:#e65100; }
   .place-chip { transition: all 0.15s; }
   .place-chip:active { background: var(--bg); border-color: var(--primary); color: var(--primary); transform: scale(0.96); }
 
   /* Trip list items */
-  .trip-item { background: var(--glass-bg-strong); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); border: 1px solid var(--glass-border); border-radius: 16px; padding: 16px; margin-bottom: 11px; box-shadow: var(--glass-shadow); position: relative; }
+  .trip-item { background: rgba(var(--surface-rgb),0.92); border: 1px solid var(--glass-border); border-radius: 16px; padding: 16px; margin-bottom: 11px; box-shadow: var(--glass-shadow); position: relative; }
   .trip-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
   .trip-fare { font-size: 24px; font-weight: 700; color: var(--success); }
   .trip-time { font-size: 15px; font-weight: 600; color: var(--text); text-align: right; }
@@ -218,8 +236,8 @@
   .trip-actions .btn-del:active { background: #ffebee; }
   /* Confirm overlay */
   .confirm-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); backdrop-filter: blur(2px); z-index: 500; display: flex; align-items: flex-end; }
-  .confirm-sheet { background: rgba(255,255,255,0.88); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); width: 100%; border-radius: 20px 20px 0 0; padding: 20px; padding-bottom: calc(20px + env(safe-area-inset-bottom)); }
-  .confirm-sheet h3 { font-size: 17px; font-weight: 700; text-align: center; margin-bottom: 6px; }
+  .confirm-sheet { background: rgba(var(--surface-rgb),0.92); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); width: 100%; border-radius: 20px 20px 0 0; padding: 20px; padding-bottom: calc(20px + env(safe-area-inset-bottom)); }
+  .confirm-sheet h3 { font-size: 17px; font-weight: 700; text-align: center; margin-bottom: 6px; color: var(--text); }
   .confirm-sheet p { font-size: 14px; color: var(--muted); text-align: center; margin-bottom: 18px; }
   .confirm-sheet .confirm-btns { display: flex; flex-direction: column; gap: 10px; }
   .confirm-sheet .c-btn-del { padding: 15px; border-radius: 12px; border: none; background: linear-gradient(155deg, #f1584a, var(--danger)); color: white; font-size: 16px; font-weight: 700; cursor: pointer; }
@@ -227,7 +245,7 @@
 
   /* Stats */
   .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 11px; margin-bottom: 13px; }
-  .stat-card { background: var(--glass-bg-strong); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); border: 1px solid var(--glass-border); border-radius: 16px; padding: 15px; box-shadow: var(--glass-shadow); transition: transform 0.15s; }
+  .stat-card { background: rgba(var(--surface-rgb),0.92); border: 1px solid var(--glass-border); border-radius: 16px; padding: 15px; box-shadow: var(--glass-shadow); transition: transform 0.15s; }
   .stat-card[onclick]:active { transform: scale(0.97); }
   .stat-value { font-size: 24px; font-weight: 700; color: var(--text); }
   .stat-label { font-size: 11px; color: var(--muted); font-weight: 500; margin-top: 2px; }
@@ -259,10 +277,10 @@
   /* Modal：奥の画面がうっすら透けるガラスのシートとして立ち上がる */
   .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.42); backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px); z-index: 300; display: flex; align-items: flex-end; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
   .modal-overlay.open { opacity: 1; pointer-events: all; }
-  .modal { background: rgba(255,255,255,0.86); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); border: 1px solid var(--glass-border); border-bottom: none; border-radius: 22px 22px 0 0; padding: 20px; padding-bottom: calc(20px + var(--safe-bottom)); width: 100%; transform: translateY(100%); transition: transform 0.25s cubic-bezier(0.32,0.72,0,1); max-height: 90vh; overflow-y: auto; box-shadow: 0 -8px 32px rgba(31,41,55,0.14); }
+  .modal { background: rgba(var(--surface-rgb),0.92); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); border: 1px solid var(--glass-border); border-bottom: none; border-radius: 22px 22px 0 0; padding: 20px; padding-bottom: calc(20px + var(--safe-bottom)); width: 100%; transform: translateY(100%); transition: transform 0.25s cubic-bezier(0.32,0.72,0,1); max-height: 90vh; overflow-y: auto; box-shadow: 0 -8px 32px rgba(31,41,55,0.14); color: var(--text); }
   .modal-overlay.open .modal { transform: translateY(0); }
-  .modal-handle { width: 40px; height: 4px; background: rgba(0,0,0,0.18); border-radius: 2px; margin: 0 auto 16px; }
-  .modal-title { font-size: 18px; font-weight: 700; margin-bottom: 16px; }
+  .modal-handle { width: 40px; height: 4px; background: var(--border); border-radius: 2px; margin: 0 auto 16px; }
+  .modal-title { font-size: 18px; font-weight: 700; margin-bottom: 16px; color: var(--text); }
   #scheduleGraphModal { align-items: stretch; }
   /* 休憩・給油の編集モーダルは場所入力時にキーボードで隠れないよう、画面の上側に表示する */
   #schedItemEditModal { align-items: flex-start; }
@@ -295,11 +313,20 @@
   /* Section label */
   .section-label { font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.8px; margin: 16px 0 8px; }
 
+  /* 統計画面：直近の推移をひと目で見せる簡易スパークライン（棒グラフ） */
+  .sparkline-wrap { background: rgba(var(--surface-rgb),0.9); border: 1px solid var(--glass-border); border-radius: 16px; padding: 12px 14px 10px; margin-bottom: 14px; box-shadow: var(--glass-shadow); }
+  .sparkline-title { font-size: 11px; font-weight: 700; color: var(--muted); margin-bottom: 8px; }
+  .sparkline-bars { display: flex; align-items: flex-end; gap: 5px; height: 56px; }
+  .sparkline-bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; gap: 4px; }
+  .sparkline-bar { width: 100%; max-width: 22px; border-radius: 4px 4px 2px 2px; background: rgba(120,120,128,0.25); transition: height 0.25s ease; }
+  .sparkline-bar.current { background: linear-gradient(180deg, var(--primary), var(--primary-dark)); }
+  .sparkline-bar-label { font-size: 9px; color: var(--muted); white-space: nowrap; }
+
   /* Fare input with ¥ */
   .fare-wrap { position: relative; }
   .fare-wrap .yen { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); font-size: 16px; color: var(--muted); }
   /* 障害者割引: 現金払いでも未収額を別途記入できるようにするトグルボタン */
-  .discount-toggle-btn { display:inline-block; margin-left:6px; font-size:11px; font-weight:700; padding:2px 8px; border-radius:10px; border:1.5px solid var(--border); background:white; color:var(--muted); cursor:pointer; vertical-align:middle; touch-action:manipulation; }
+  .discount-toggle-btn { display:inline-block; margin-left:6px; font-size:11px; font-weight:700; padding:2px 8px; border-radius:10px; border:1.5px solid var(--border); background:var(--card); color:var(--muted); cursor:pointer; vertical-align:middle; touch-action:manipulation; }
   .discount-toggle-btn.active { background:#fff3e0; border-color:#ff9800; color:#e65100; }
   /* 料金・チップのラベル行の高さをそろえ、障割ボタンの表示有無で横のfare-wrapがずれないようにする */
   .fare-label-row { display:flex; align-items:center; gap:6px; margin-bottom:5px; min-height:22px; }
@@ -311,7 +338,7 @@
 
   /* Payment method buttons */
   .pay-btns { display: flex; gap: 6px; flex-wrap: wrap; }
-  .pay-btn { flex: 1; min-width: 56px; padding: 11px 6px; border-radius: 10px; border: 1.5px solid rgba(0,0,0,0.08); background: rgba(255,255,255,0.55); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); color: var(--muted); font-size: 13px; font-weight: 600; cursor: pointer; text-align: center; transition: all 0.15s; }
+  .pay-btn { flex: 1; min-width: 56px; padding: 11px 6px; border-radius: 10px; border: 1.5px solid var(--border); background: rgba(var(--surface-rgb),0.78); color: var(--muted); font-size: 13px; font-weight: 600; cursor: pointer; text-align: center; transition: all 0.15s; }
   .pay-btn.active { border-color: var(--primary); background: #e3f2fd; color: var(--primary); }
   .pay-btn.active.go { border-color: #ff6b00; background: #fff3e0; color: #ff6b00; }
   .pay-btn.active.paypay { border-color: #e00; background: #fff0f0; color: #e00; }
@@ -323,7 +350,7 @@
 
   /* Trip type selector */
   .trip-type-row { display: flex; gap: 8px; }
-  .type-btn { flex: 1; padding: 13px 6px; border-radius: 12px; border: 1.5px solid rgba(0,0,0,0.08); background: rgba(255,255,255,0.55); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); color: var(--muted); font-size: 14px; font-weight: 700; cursor: pointer; text-align: center; transition: all 0.15s; }
+  .type-btn { flex: 1; padding: 13px 6px; border-radius: 12px; border: 1.5px solid var(--border); background: rgba(var(--surface-rgb),0.78); color: var(--muted); font-size: 14px; font-weight: 700; cursor: pointer; text-align: center; transition: all 0.15s; }
   .type-btn.active { border-color: var(--primary); background: #e3f2fd; color: var(--primary); }
   .type-btn.active.haisha { border-color: #ff6b00; background: #fff3e0; color: #ff6b00; }
   .type-btn.active.nashi { border-color: #00a152; background: #e3f9ec; color: #00a152; }
@@ -332,21 +359,21 @@
   /* GPS button */
   .loc-wrap { display: flex; gap: 8px; align-items: center; }
   .loc-wrap .input-field { flex: 1; }
-  .gps-btn { flex-shrink: 0; padding: 12px 12px; border-radius: 12px; border: 1.5px solid var(--primary); background: rgba(255,255,255,0.6); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); color: var(--primary); font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+  .gps-btn { flex-shrink: 0; padding: 12px 12px; border-radius: 12px; border: 1.5px solid var(--primary); background: rgba(255,255,255,0.8); color: var(--primary); font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
   .gps-btn:active { background: #e3f2fd; transform: scale(0.95); }
   .gps-btn.loading { border-color: var(--warning); color: var(--warning); animation: spin 1s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
   .fare-wrap .input-field { padding-left: 28px; }
 
   /* CSV export button */
-  .export-btn { background: rgba(255,255,255,0.55); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); border: 1.5px solid rgba(0,0,0,0.08); color: var(--text); display: flex; align-items: center; gap: 8px; padding: 12px 16px; border-radius: 12px; font-size: 14px; font-weight: 600; cursor: pointer; width: 100%; transition: all 0.15s; }
+  .export-btn { background: rgba(var(--surface-rgb),0.78); border: 1.5px solid var(--border); color: var(--text); display: flex; align-items: center; gap: 8px; padding: 12px 16px; border-radius: 12px; font-size: 14px; font-weight: 600; cursor: pointer; width: 100%; transition: all 0.15s; }
   .export-btn:active { background: var(--bg); transform: scale(0.98); }
 
   /* Divider */
   .divider { height: 1px; background: var(--border); margin: 12px 0; }
 
   /* 場所分析 */
-  .loc-rank-item { background:var(--glass-bg-strong); backdrop-filter:var(--glass-blur); -webkit-backdrop-filter:var(--glass-blur); border:1px solid var(--glass-border); border-radius:16px; padding:14px 15px; margin-bottom:9px; box-shadow:var(--glass-shadow); display:flex; align-items:center; gap:12px; transition: transform 0.15s; }
+  .loc-rank-item { background:rgba(var(--surface-rgb),0.92); border:1px solid var(--glass-border); border-radius:16px; padding:14px 15px; margin-bottom:9px; box-shadow:var(--glass-shadow); display:flex; align-items:center; gap:12px; transition: transform 0.15s; }
   .loc-rank-item[onclick]:active { transform: scale(0.97); }
   .loc-rank-num { font-size:18px; font-weight:800; color:var(--primary); min-width:28px; text-align:center; }
   .loc-rank-num.gold { color:#f5a623; }
@@ -360,10 +387,10 @@
   .loc-rank-meta { font-size:12px; color:var(--muted); margin-top:2px; }
   .loc-rank-fare { font-size:16px; font-weight:800; color:var(--success); text-align:right; }
   .analysis-tabs { display:flex; gap:6px; margin-bottom:12px; }
-  .analysis-tab { flex:1; padding:8px 4px; border-radius:10px; border:1.5px solid rgba(0,0,0,0.08); background:rgba(255,255,255,0.55); backdrop-filter:var(--glass-blur); -webkit-backdrop-filter:var(--glass-blur); color:var(--muted); font-size:12px; font-weight:700; cursor:pointer; text-align:center; }
+  .analysis-tab { flex:1; padding:8px 4px; border-radius:10px; border:1.5px solid var(--border); background:rgba(var(--surface-rgb),0.78); color:var(--muted); font-size:12px; font-weight:700; cursor:pointer; text-align:center; }
   .analysis-tab.active { border-color:var(--primary); background:#e3f2fd; color:var(--primary); }
   .dow-tabs { display:flex; gap:6px; margin-bottom:12px; overflow-x:auto; -webkit-overflow-scrolling:touch; }
-  .dow-tab { flex:0 0 auto; padding:8px 14px; border-radius:10px; border:1.5px solid rgba(0,0,0,0.08); background:rgba(255,255,255,0.55); backdrop-filter:var(--glass-blur); -webkit-backdrop-filter:var(--glass-blur); color:var(--muted); font-size:13px; font-weight:700; cursor:pointer; text-align:center; white-space:nowrap; }
+  .dow-tab { flex:0 0 auto; padding:8px 14px; border-radius:10px; border:1.5px solid var(--border); background:rgba(var(--surface-rgb),0.78); color:var(--muted); font-size:13px; font-weight:700; cursor:pointer; text-align:center; white-space:nowrap; }
   .dow-tab.active { border-color:var(--primary); background:#e3f2fd; color:var(--primary); }
 
   /* GO乗客の過去履歴サジェスト */
@@ -373,8 +400,8 @@
   .pax-history-item .ph-route { color:var(--muted); }
 
   /* タイムライン */
-  .sched-item { background:var(--glass-bg-strong); backdrop-filter:var(--glass-blur); -webkit-backdrop-filter:var(--glass-blur); border:1px solid var(--glass-border); border-radius:14px; padding:13px 15px; margin-bottom:9px; box-shadow:var(--glass-shadow); border-left:4px solid var(--border); }
-  .sched-item.vacant { background:rgba(120,120,128,0.08); box-shadow:none; border-left-color:#bbb; }
+  .sched-item { background:rgba(var(--surface-rgb),0.92); border:1px solid var(--glass-border); border-radius:14px; padding:13px 15px; margin-bottom:9px; box-shadow:var(--glass-shadow); border-left:4px solid var(--border); }
+  .sched-item.vacant { background:rgba(120,120,128,0.1); box-shadow:none; border-left-color:#bbb; }
   .sched-item.break { background:#fff8e1; box-shadow:none; border-left-color:#f5a623; }
   .sched-item.fuel { background:#e8f5e9; box-shadow:none; border-left-color:#43a047; }
   .sched-time { font-size:13px; font-weight:700; color:var(--text); }
@@ -620,6 +647,7 @@
           <div class="stat-label">実車時間計</div>
         </div>
       </div>
+      <div id="statSparkline" class="sparkline-wrap" style="display:none;"></div>
       <div class="section-label" id="rankingLabel">売上ランキング</div>
       <div id="rankingList"></div>
     </div>
@@ -683,7 +711,7 @@
       <div style="display:flex;gap:6px;align-items:center;">
         <button class="btn btn-gray btn-sm" id="schedNavPrevBtn" onclick="schedNavPrev()" style="padding:10px 16px;font-size:20px;line-height:1;">‹</button>
         <div style="flex:1;position:relative;">
-          <select id="scheduleFilter" onchange="schedPickDate(this.value)" style="width:100%;text-align:center;text-align-last:center;font-size:16px;font-weight:700;color:var(--text);padding:10px 22px;border:1.5px solid var(--border);border-radius:10px;background:white;-webkit-appearance:none;appearance:none;"></select>
+          <select id="scheduleFilter" onchange="schedPickDate(this.value)" style="width:100%;text-align:center;text-align-last:center;font-size:16px;font-weight:700;color:var(--text);padding:10px 22px;border:1.5px solid var(--border);border-radius:10px;background:var(--card);-webkit-appearance:none;appearance:none;"></select>
           <span style="position:absolute;right:10px;top:50%;transform:translateY(-50%);pointer-events:none;color:var(--muted);font-size:11px;">▾</span>
         </div>
         <button class="btn btn-gray btn-sm" onclick="schedNavNext()" id="schedNavNextBtn" style="padding:10px 16px;font-size:20px;line-height:1;">›</button>
@@ -727,7 +755,7 @@
       <div style="display:flex;gap:6px;align-items:center;">
         <button class="btn btn-gray btn-sm" id="summaryNavPrevBtn" onclick="summaryNavPrev()" style="padding:10px 16px;font-size:20px;line-height:1;">‹</button>
         <div style="flex:1;position:relative;">
-          <select id="summaryFilter" onchange="summaryPickDate(this.value)" style="width:100%;text-align:center;text-align-last:center;font-size:16px;font-weight:700;color:var(--text);padding:10px 22px;border:1.5px solid var(--border);border-radius:10px;background:white;-webkit-appearance:none;appearance:none;"></select>
+          <select id="summaryFilter" onchange="summaryPickDate(this.value)" style="width:100%;text-align:center;text-align-last:center;font-size:16px;font-weight:700;color:var(--text);padding:10px 22px;border:1.5px solid var(--border);border-radius:10px;background:var(--card);-webkit-appearance:none;appearance:none;"></select>
           <span style="position:absolute;right:10px;top:50%;transform:translateY(-50%);pointer-events:none;color:var(--muted);font-size:11px;">▾</span>
         </div>
         <button class="btn btn-gray btn-sm" onclick="summaryNavNext()" id="summaryNavNextBtn" style="padding:10px 16px;font-size:20px;line-height:1;">›</button>
@@ -2839,7 +2867,7 @@ function saveTrip() {
   if (!pickupTime) missing.push('乗車時刻');
   if (!dropoffTime) missing.push('降車時刻');
   if (missing.length > 0) {
-    showToast(`⚠️ 未入力の項目があります: ${missing.join('・')}`);
+    showToast(`未入力の項目があります: ${missing.join('・')}`);
     return;
   }
 
@@ -4029,12 +4057,12 @@ function renderRecommend() {
     .map(([loc, d]) => ({ loc, count: d.count, total: d.total }))
     .sort((a,b) => b.count - a.count || b.total - a.total)
     .slice(0, 3);
-  const medals = ['🥇','🥈','🥉'];
+  const medalClasses = ['gold','silver','bronze'];
   document.getElementById('recommendAreaRanking').innerHTML = areaRanking.length === 0
     ? `<div style="color:var(--muted);text-align:center;padding:12px;">まだデータがありません</div>`
     : areaRanking.map((r,i) => `
       <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);">
-        <span style="font-size:22px;">${medals[i]}</span>
+        <span class="loc-rank-num ${medalClasses[i]}">${i+1}</span>
         <div style="flex:1;font-size:15px;font-weight:700;">${r.loc}</div>
         <div style="text-align:right;">
           <div style="font-weight:700;color:var(--primary);">${r.count}回</div>
@@ -5524,6 +5552,32 @@ function renderStats() {
     if (pastKeys.length > 0) currentKey = pastKeys[pastKeys.length - 1];
   }
 
+  // 直近の推移を見せる簡易スパークライン（日付・週・月の各キーは文字列として時系列順に並ぶため、
+  // そのままソートして直近8件を取る）
+  const sparkWrap = document.getElementById('statSparkline');
+  const chronological = Object.entries(byGroup).sort((a,b)=> a[0] < b[0] ? -1 : 1).slice(-8);
+  if (chronological.length < 2) {
+    sparkWrap.style.display = 'none';
+  } else {
+    const maxTotal = Math.max(...chronological.map(([,g]) => g.total), 1);
+    const sparkLabel = (key) => {
+      if (currentStatTab === 'month') return (byGroup[key].label || '').replace(/月.*/, '月');
+      const d = new Date(key + 'T00:00:00');
+      return `${d.getMonth()+1}/${d.getDate()}`;
+    };
+    sparkWrap.style.display = 'block';
+    sparkWrap.innerHTML = `
+      <div class="sparkline-title">直近の推移</div>
+      <div class="sparkline-bars">
+        ${chronological.map(([key, g]) => `
+          <div class="sparkline-bar-col">
+            <div class="sparkline-bar${key === currentKey ? ' current' : ''}" style="height:${Math.max(6, Math.round(g.total / maxTotal * 100))}%;"></div>
+            <div class="sparkline-bar-label">${sparkLabel(key)}</div>
+          </div>
+        `).join('')}
+      </div>`;
+  }
+
   const ranked = Object.entries(byGroup).sort((a,b)=>b[1].total-a[1].total);
   const medalClasses = ['gold','silver','bronze'];
   document.getElementById('rankingList').innerHTML = ranked.length ? ranked.map(([key,r],i)=>{
@@ -5766,7 +5820,7 @@ window.addEventListener('beforeinstallprompt', e => {
   deferredPrompt = e;
   // Show a subtle install banner
   const banner = document.createElement('div');
-  banner.style.cssText = 'position:fixed;top:calc(60px + env(safe-area-inset-top));left:12px;right:12px;background:white;border-radius:14px;padding:12px 16px;box-shadow:0 4px 16px rgba(0,0,0,0.15);z-index:400;display:flex;align-items:center;gap:12px;';
+  banner.style.cssText = 'position:fixed;top:calc(60px + env(safe-area-inset-top));left:12px;right:12px;background:var(--card);color:var(--text);border-radius:14px;padding:12px 16px;box-shadow:0 4px 16px rgba(0,0,0,0.15);z-index:400;display:flex;align-items:center;gap:12px;';
   banner.innerHTML = `<span style="font-size:24px;">📲</span><div style="flex:1"><div style="font-weight:700;font-size:14px;">ホーム画面に追加</div><div style="font-size:12px;color:#666;">アプリとして使えます</div></div><button onclick="deferredPrompt.prompt();this.closest('div').remove();" style="background:#1a73e8;color:white;border:none;border-radius:8px;padding:8px 14px;font-weight:600;font-size:13px;cursor:pointer;">追加</button><button onclick="this.closest('div').remove();" style="background:none;border:none;color:#999;font-size:20px;cursor:pointer;padding:4px;">✕</button>`;
   document.body.appendChild(banner);
   setTimeout(() => banner.remove(), 8000);
