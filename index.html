@@ -34,8 +34,15 @@
   /* Header */
   .header { background: var(--primary); color: white; padding: 14px 18px 12px; padding-top: calc(14px + env(safe-area-inset-top, 0px)); position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
   .header-row { display: flex; justify-content: space-between; align-items: center; }
-  .header h1 { font-size: 22px; font-weight: 800; letter-spacing: -0.3px; }
+  .header h1, .header .header-big { font-size: 28px; font-weight: 800; letter-spacing: -0.3px; }
   .header .date { font-size: 12px; opacity: 0.85; margin-bottom: 2px; }
+  /* 件数・時給も営収額と同じ大きさで並べる。時給だけ色付きの背景を付けるピル状に */
+  .header-metrics { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; margin-top: 2px; }
+  .header-metrics .header-big { line-height: 1.1; }
+  #headerHourly.header-big { padding: 2px 10px; border-radius: 10px; }
+  /* GO・流し・配車の件数。背景を塗りつぶしにして、ヘッダーの青地でも視認性を保つ
+     （色自体はこれまでと同じ：GO=青／流し=緑／配車=オレンジ） */
+  .header-type-badge { display: inline-block; padding: 4px 10px; border-radius: 10px; font-size: 13px; font-weight: 800; color: white; }
   .reload-btn { background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.4); border-radius: 8px; color: white; font-size: 12px; font-weight: 700; padding: 6px 10px; cursor: pointer; white-space: nowrap; transition: all 0.15s; }
   .reload-btn:active { background: rgba(255,255,255,0.35); }
   .reload-btn.loading { background: rgba(255,255,255,0.9); color: var(--primary); border-color: white; }
@@ -337,16 +344,16 @@
 
 <!-- Header -->
 <div class="header">
-  <div class="date" id="headerDate"></div>
   <div class="header-row">
-    <h1 id="headerSales">¥0</h1>
+    <div class="date" id="headerDate"></div>
     <button class="reload-btn" id="reloadBtn" onclick="triggerReload()">↻ 更新</button>
   </div>
-  <div style="display:flex;align-items:center;gap:8px;margin-top:6px;flex-wrap:wrap;font-size:12px;">
-    <span id="headerCount" style="opacity:0.9;font-weight:600;"></span>
-    <span id="headerHourly" style="padding:2px 8px;border-radius:8px;font-weight:700;display:none;"></span>
-    <span id="headerTypeBadges" style="display:flex;gap:4px;"></span>
+  <div class="header-metrics">
+    <h1 id="headerSales">¥0</h1>
+    <span class="header-big" id="headerCount">0件</span>
+    <span class="header-big" id="headerHourly" style="display:none;"></span>
   </div>
+  <div id="headerTypeBadges" style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;"></div>
 </div>
 
 <!-- Pages -->
@@ -5641,14 +5648,15 @@ function updateHeader() {
     hourlyEl.style.display = 'none';
   }
 
-  // GO・流し・配車の件数。バッジの見た目は統計「場所」タブの内訳バッジ（typeBadges）と同じにする。
+  // GO・流し・配車の件数。色はこれまでと同じ（GO=青／流し=緑／配車=オレンジ）だが、
+  // ヘッダーの青地でも埋もれないよう背景を塗りつぶしにして視認性を上げる。
   // GO・流しは0件でも表示し、配車だけ0件のときは表示しない
   const types = {};
   trips.forEach(t => { const tp = t.tripType || '流し'; types[tp] = (types[tp] || 0) + 1; });
   const typeColors = { '配車': '#ff6b00', 'GO': '#1a73e8', '流し': '#00a152' };
   document.getElementById('headerTypeBadges').innerHTML = ['GO','流し','配車']
     .filter(tp => tp !== '配車' || types[tp] > 0)
-    .map(tp => `<span class="sched-type-badge" style="background:${typeColors[tp]}22;color:${typeColors[tp]};">${tp} ${types[tp] || 0}</span>`)
+    .map(tp => `<span class="header-type-badge" style="background:${typeColors[tp]};">${tp} ${types[tp] || 0}</span>`)
     .join('');
 }
 
