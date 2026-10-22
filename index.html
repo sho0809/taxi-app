@@ -269,13 +269,14 @@
   .stat-card.ongoing-break { background: #f5a623; border-color: transparent; }
   .stat-card.ongoing-break .stat-value, .stat-card.ongoing-break .stat-label { color: white; opacity: 0.95; }
 
-  /* タイムラインで休憩中のとき、日付ナビの上に出す大きな案内バナー。
-     ひと目で「今は休憩中」とわかるよう、休憩タブ・休憩時間カードと同じオレンジで大きく表示する */
-  .break-banner { display: flex; align-items: center; justify-content: center; gap: 10px; background: linear-gradient(155deg, #ffb94d, #f5a623); border-radius: 18px; padding: 22px 16px; margin-bottom: 14px; box-shadow: 0 10px 28px rgba(245,166,35,0.35), inset 0 1px 0 rgba(255,255,255,0.35); animation: breakBannerIn 0.3s cubic-bezier(0.22,0.61,0.36,1); }
-  .break-banner-icon { font-size: 30px; line-height: 1; animation: breakBannerPulse 1.6s ease-in-out infinite; }
-  .break-banner-text { font-size: 26px; font-weight: 800; color: white; letter-spacing: 0.5px; }
-  @keyframes breakBannerIn { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
-  @keyframes breakBannerPulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.12); } }
+  /* 休憩中はどの画面を見ていても全画面で表示し、タップすると休憩を終了して時刻を記録する
+     （休憩タブを押して終了するのと同じ処理）。ヘッダー・ボトムナビより上に重ね、
+     場所入力などのモーダル（z-index:300〜）より下に置くことで、休憩開始直後に開く
+     場所選択モーダルはこの上に正しく表示される */
+  .break-fullscreen { position: fixed; inset: 0; z-index: 250; display: none; flex-direction: column; align-items: center; justify-content: center; gap: 10px; background: linear-gradient(165deg, #ffb94d, #f5a623); cursor: pointer; animation: breakFullscreenIn 0.25s ease; }
+  .break-fullscreen-text { font-size: 44px; font-weight: 800; color: white; letter-spacing: 1px; }
+  .break-fullscreen-hint { font-size: 14px; font-weight: 600; color: rgba(255,255,255,0.85); }
+  @keyframes breakFullscreenIn { from { opacity: 0; } to { opacity: 1; } }
 
   /* Modal：奥の画面がうっすら透けるガラスのシートとして立ち上がる */
   .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.42); backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px); z-index: 300; display: flex; align-items: flex-end; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
@@ -704,11 +705,6 @@
 
   <!-- ===== PAGE: タイムライン（実車・空車タイムライン） ===== -->
   <div class="page" id="page-schedule">
-    <!-- 休憩中は記録の邪魔にならないよう、日付ナビの上に大きな案内バナーとして表示する -->
-    <div class="break-banner" id="schedBreakBanner" style="display:none;">
-      <span class="break-banner-icon">☕</span>
-      <span class="break-banner-text">休憩中</span>
-    </div>
     <!-- Day navigation -->
     <div class="card" style="padding:10px 12px;">
       <div style="display:flex;gap:6px;align-items:center;">
@@ -1072,6 +1068,12 @@
   </button>
 
 </nav>
+
+<!-- 休憩中は、どの画面を見ていても全画面で表示する。タップで休憩を終了し時刻を記録する -->
+<div class="break-fullscreen" id="breakFullscreen" style="display:none;" onclick="toggleSchedStop('break')">
+  <div class="break-fullscreen-text">休憩中</div>
+  <div class="break-fullscreen-hint">タップして終了</div>
+</div>
 
 <!-- Schedule Graph Modal -->
 <div class="modal-overlay" id="scheduleGraphModal" onclick="if(event.target===this) closeScheduleGraphModal()">
@@ -4190,7 +4192,7 @@ function renderSchedTabs() {
     // 「休憩時間」カードも休憩タブと同じ色にし、休憩が終わると元の表示に戻す
     if (kind === 'break') {
       document.getElementById('schedBreakCard').classList.toggle('ongoing-break', ongoing);
-      document.getElementById('schedBreakBanner').style.display = ongoing ? 'flex' : 'none';
+      document.getElementById('breakFullscreen').style.display = ongoing ? 'flex' : 'none';
     }
   });
 }
@@ -5773,6 +5775,7 @@ function updateHeader() {
 
 updateTodaySummary();
 updateFareDisplay();
+renderSchedTabs(); // 起動時、どのページを開いていても休憩中なら全画面表示が出るようにする
 setInterval(() => {
   updateHeader();
   updateTodaySummary();
