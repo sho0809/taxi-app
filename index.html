@@ -38,10 +38,12 @@
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
   /* ガラス素材がうっすら透けるよう、背景に淡いグラデーションの光だまりを敷く */
   body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", 'Helvetica Neue', sans-serif;
+    font-variant-numeric: tabular-nums;
     background:
       radial-gradient(900px 600px at -5% -10%, rgba(26,115,232,0.10), transparent 60%),
       radial-gradient(800px 600px at 105% 8%, rgba(142,36,170,0.07), transparent 55%),
+      radial-gradient(700px 500px at 100% 100%, rgba(200,150,40,0.06), transparent 55%),
       radial-gradient(900px 700px at 50% 115%, rgba(52,168,83,0.06), transparent 55%),
       var(--bg);
     background-attachment: fixed;
@@ -53,8 +55,8 @@
   .header-row { display: flex; justify-content: space-between; align-items: center; }
   .header .date { font-size: 12px; opacity: 0.8; margin-bottom: 2px; letter-spacing: 0.1px; }
   /* 営収額だけを主役にし、他の数字はひと回り小さい控えめな表示にする */
-  .header-hero-label { font-size: 10px; font-weight: 700; letter-spacing: 0.6px; opacity: 0.6; display: block; margin-top: 10px; }
-  .header h1 { font-size: 30px; font-weight: 800; letter-spacing: -0.5px; line-height: 1.15; margin-top: 1px; }
+  .header-hero-label { font-size: 10.5px; font-weight: 700; letter-spacing: 0.8px; opacity: 0.62; display: block; margin-top: 10px; }
+  .header h1 { font-size: 35px; font-weight: 800; letter-spacing: -0.8px; line-height: 1.12; margin-top: 2px; }
   /* 件数・時給・GO/流し/配車は、同じ小さめのピル型チップで統一する */
   .header-chips { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
   .header-chip { display: inline-flex; align-items: center; gap: 4px; background: rgba(255,255,255,0.14); border: 1px solid rgba(255,255,255,0.16); border-radius: 999px; padding: 4px 10px; font-size: 12px; font-weight: 700; letter-spacing: 0.1px; }
@@ -85,8 +87,8 @@
   .nav-btn svg { width: 24px; height: 24px; }
 
   /* Cards：半透明＋ぼかしのガラス素材。細い光の縁取りで輪郭を出す */
-  .card { background: var(--glass-bg-strong); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); border: 1px solid var(--glass-border); border-radius: 18px; padding: 16px; margin-bottom: 12px; box-shadow: var(--glass-shadow); }
-  .card-title { font-size: 13px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; }
+  .card { background: var(--glass-bg-strong); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); border: 1px solid var(--glass-border); border-radius: 18px; padding: 18px; margin-bottom: 14px; box-shadow: var(--glass-shadow); }
+  .card-title { font-size: 13px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 13px; }
 
   /* Status badges */
   .status-row { display: flex; justify-content: center; gap: 8px; margin-bottom: 12px; }
@@ -149,7 +151,14 @@
 
   /* Inputs：入力欄もうっすら透けるガラス素材に。フォーカス時は縁取りを強めて光らせる */
   .input-group { margin-bottom: 12px; position: relative; }
-  .input-label { font-size: 13px; font-weight: 600; color: var(--muted); margin-bottom: 5px; display: block; }
+  .input-label { font-size: 13px; font-weight: 600; color: var(--muted); margin-bottom: 5px; display: block; letter-spacing: 0.1px; }
+  /* 入力欄ラベルのアイコン：絵文字ではなく線画SVGで統一し、機種によって見た目が変わらないようにする */
+  .label-icon { display: inline-flex; width: 13px; height: 13px; vertical-align: -2px; margin-right: 4px; opacity: 0.6; }
+  .label-icon svg { width: 100%; height: 100%; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .label-icon.yen { font-style: normal; font-weight: 800; opacity: 0.65; width: auto; height: auto; font-size: 12px; }
+  .label-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 5px; vertical-align: 1px; }
+  .label-dot.pickup { background: var(--success); }
+  .label-dot.dropoff { background: var(--danger); }
   .input-field { width: 100%; padding: 12px 14px; border: 1.5px solid rgba(0,0,0,0.08); border-radius: 12px; font-size: 16px; background: rgba(255,255,255,0.7); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); color: var(--text); outline: none; transition: all 0.15s; -webkit-appearance: none; }
   .input-field:focus { border-color: var(--primary); background: rgba(255,255,255,0.92); box-shadow: 0 0 0 3px rgba(26,115,232,0.12); }
   .input-row { display: flex; gap: 8px; }
@@ -169,7 +178,7 @@
   /* タイムラインの操作タブ。1つずつ独立したボタンとして並べる */
   .sched-tab-bar { display: flex; margin-top: 10px; gap: 6px; }
   .sched-tab { flex: 1; text-align: center; padding: 10px 2px; border-radius: 10px; font-size: 12px; font-weight: 700; color: var(--text); background: rgba(255,255,255,0.55); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); border: 1px solid rgba(255,255,255,0.6); cursor: pointer; white-space: nowrap; transition: all 0.15s; }
-  .sched-tab:active { border-color: var(--primary); color: var(--primary); }
+  .sched-tab:active { border-color: var(--primary); color: var(--primary); transform: scale(0.96); }
   /* 休憩中・給油中はタイムラインの記録と同じ色で塗り、状態がわかるようにする */
   .sched-tab.ongoing-break { background: #f5a623; border-color: #f5a623; color: white; }
   .sched-tab.ongoing-fuel { background: #43a047; border-color: #43a047; color: white; }
@@ -178,15 +187,17 @@
   /* 稼働状況グラフモーダル内のタブ切り替え */
   .graph-tab-bar { display: flex; gap: 6px; margin-bottom: 14px; }
   .graph-tab { flex: 1; text-align: center; padding: 9px 4px; border-radius: 10px; font-size: 13px; font-weight: 700; color: var(--muted); background: rgba(120,120,128,0.1); border: 1.5px solid transparent; cursor: pointer; transition: all 0.15s; }
+  .graph-tab:active, .analysis-tab:active, .dow-tab:active { transform: scale(0.96); }
   .graph-tab.active { background: rgba(26,115,232,0.14); border-color: var(--primary); color: var(--primary); }
   /* 休憩場所のよく使う候補 */
   .place-chip-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
   .place-chip { padding: 7px 12px; border-radius: 999px; border: 1px solid rgba(255,255,255,0.6); background: rgba(255,255,255,0.55); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); font-size: 13px; font-weight: 600; color: var(--text); cursor: pointer; }
   .place-chip.active { background:#fff3e0; border-color:#ff9800; color:#e65100; }
-  .place-chip:active { background: var(--bg); border-color: var(--primary); color: var(--primary); }
+  .place-chip { transition: all 0.15s; }
+  .place-chip:active { background: var(--bg); border-color: var(--primary); color: var(--primary); transform: scale(0.96); }
 
   /* Trip list items */
-  .trip-item { background: var(--glass-bg-strong); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); border: 1px solid var(--glass-border); border-radius: 16px; padding: 14px; margin-bottom: 10px; box-shadow: var(--glass-shadow); position: relative; }
+  .trip-item { background: var(--glass-bg-strong); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); border: 1px solid var(--glass-border); border-radius: 16px; padding: 16px; margin-bottom: 11px; box-shadow: var(--glass-shadow); position: relative; }
   .trip-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
   .trip-fare { font-size: 24px; font-weight: 700; color: var(--success); }
   .trip-time { font-size: 15px; font-weight: 600; color: var(--text); text-align: right; }
@@ -215,8 +226,9 @@
   .confirm-sheet .c-btn-cancel { padding: 15px; border-radius: 12px; border: none; background: rgba(120,120,128,0.12); color: var(--text); font-size: 16px; font-weight: 600; cursor: pointer; }
 
   /* Stats */
-  .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
-  .stat-card { background: var(--glass-bg-strong); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); border: 1px solid var(--glass-border); border-radius: 16px; padding: 14px; box-shadow: var(--glass-shadow); }
+  .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 11px; margin-bottom: 13px; }
+  .stat-card { background: var(--glass-bg-strong); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); border: 1px solid var(--glass-border); border-radius: 16px; padding: 15px; box-shadow: var(--glass-shadow); transition: transform 0.15s; }
+  .stat-card[onclick]:active { transform: scale(0.97); }
   .stat-value { font-size: 24px; font-weight: 700; color: var(--text); }
   .stat-label { font-size: 11px; color: var(--muted); font-weight: 500; margin-top: 2px; }
   .stat-card.accent { background: linear-gradient(155deg, var(--primary), var(--primary-dark)); border-color: transparent; }
@@ -235,6 +247,14 @@
      休憩が終わると元の表示に戻る */
   .stat-card.ongoing-break { background: #f5a623; border-color: transparent; }
   .stat-card.ongoing-break .stat-value, .stat-card.ongoing-break .stat-label { color: white; opacity: 0.95; }
+
+  /* タイムラインで休憩中のとき、日付ナビの上に出す大きな案内バナー。
+     ひと目で「今は休憩中」とわかるよう、休憩タブ・休憩時間カードと同じオレンジで大きく表示する */
+  .break-banner { display: flex; align-items: center; justify-content: center; gap: 10px; background: linear-gradient(155deg, #ffb94d, #f5a623); border-radius: 18px; padding: 22px 16px; margin-bottom: 14px; box-shadow: 0 10px 28px rgba(245,166,35,0.35), inset 0 1px 0 rgba(255,255,255,0.35); animation: breakBannerIn 0.3s cubic-bezier(0.22,0.61,0.36,1); }
+  .break-banner-icon { font-size: 30px; line-height: 1; animation: breakBannerPulse 1.6s ease-in-out infinite; }
+  .break-banner-text { font-size: 26px; font-weight: 800; color: white; letter-spacing: 0.5px; }
+  @keyframes breakBannerIn { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes breakBannerPulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.12); } }
 
   /* Modal：奥の画面がうっすら透けるガラスのシートとして立ち上がる */
   .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.42); backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px); z-index: 300; display: flex; align-items: flex-end; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
@@ -267,9 +287,10 @@
   .alert-success { background: #e8f5e9; color: #2e7d32; }
   .alert-info { background: #e3f2fd; color: #1565c0; }
 
-  /* Page sections */
+  /* Page sections：タブ切り替え時にふわっとフェードインさせ、ガラスの質感に動きを添える */
   .page { display: none; }
-  .page.active { display: block; }
+  .page.active { display: block; animation: pageFadeIn 0.32s cubic-bezier(0.22,0.61,0.36,1); }
+  @keyframes pageFadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 
   /* Section label */
   .section-label { font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.8px; margin: 16px 0 8px; }
@@ -290,7 +311,7 @@
 
   /* Payment method buttons */
   .pay-btns { display: flex; gap: 6px; flex-wrap: wrap; }
-  .pay-btn { flex: 1; min-width: 56px; padding: 10px 4px; border-radius: 10px; border: 1.5px solid rgba(0,0,0,0.08); background: rgba(255,255,255,0.55); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); color: var(--muted); font-size: 13px; font-weight: 600; cursor: pointer; text-align: center; transition: all 0.15s; }
+  .pay-btn { flex: 1; min-width: 56px; padding: 11px 6px; border-radius: 10px; border: 1.5px solid rgba(0,0,0,0.08); background: rgba(255,255,255,0.55); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); color: var(--muted); font-size: 13px; font-weight: 600; cursor: pointer; text-align: center; transition: all 0.15s; }
   .pay-btn.active { border-color: var(--primary); background: #e3f2fd; color: var(--primary); }
   .pay-btn.active.go { border-color: #ff6b00; background: #fff3e0; color: #ff6b00; }
   .pay-btn.active.paypay { border-color: #e00; background: #fff0f0; color: #e00; }
@@ -302,7 +323,7 @@
 
   /* Trip type selector */
   .trip-type-row { display: flex; gap: 8px; }
-  .type-btn { flex: 1; padding: 11px 4px; border-radius: 12px; border: 1.5px solid rgba(0,0,0,0.08); background: rgba(255,255,255,0.55); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); color: var(--muted); font-size: 14px; font-weight: 700; cursor: pointer; text-align: center; transition: all 0.15s; }
+  .type-btn { flex: 1; padding: 13px 6px; border-radius: 12px; border: 1.5px solid rgba(0,0,0,0.08); background: rgba(255,255,255,0.55); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); color: var(--muted); font-size: 14px; font-weight: 700; cursor: pointer; text-align: center; transition: all 0.15s; }
   .type-btn.active { border-color: var(--primary); background: #e3f2fd; color: var(--primary); }
   .type-btn.active.haisha { border-color: #ff6b00; background: #fff3e0; color: #ff6b00; }
   .type-btn.active.nashi { border-color: #00a152; background: #e3f9ec; color: #00a152; }
@@ -318,14 +339,15 @@
   .fare-wrap .input-field { padding-left: 28px; }
 
   /* CSV export button */
-  .export-btn { background: rgba(255,255,255,0.55); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); border: 1.5px solid rgba(0,0,0,0.08); color: var(--text); display: flex; align-items: center; gap: 8px; padding: 12px 16px; border-radius: 12px; font-size: 14px; font-weight: 600; cursor: pointer; width: 100%; }
-  .export-btn:active { background: var(--bg); }
+  .export-btn { background: rgba(255,255,255,0.55); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); border: 1.5px solid rgba(0,0,0,0.08); color: var(--text); display: flex; align-items: center; gap: 8px; padding: 12px 16px; border-radius: 12px; font-size: 14px; font-weight: 600; cursor: pointer; width: 100%; transition: all 0.15s; }
+  .export-btn:active { background: var(--bg); transform: scale(0.98); }
 
   /* Divider */
   .divider { height: 1px; background: var(--border); margin: 12px 0; }
 
   /* 場所分析 */
-  .loc-rank-item { background:var(--glass-bg-strong); backdrop-filter:var(--glass-blur); -webkit-backdrop-filter:var(--glass-blur); border:1px solid var(--glass-border); border-radius:16px; padding:13px 14px; margin-bottom:8px; box-shadow:var(--glass-shadow); display:flex; align-items:center; gap:12px; }
+  .loc-rank-item { background:var(--glass-bg-strong); backdrop-filter:var(--glass-blur); -webkit-backdrop-filter:var(--glass-blur); border:1px solid var(--glass-border); border-radius:16px; padding:14px 15px; margin-bottom:9px; box-shadow:var(--glass-shadow); display:flex; align-items:center; gap:12px; transition: transform 0.15s; }
+  .loc-rank-item[onclick]:active { transform: scale(0.97); }
   .loc-rank-num { font-size:18px; font-weight:800; color:var(--primary); min-width:28px; text-align:center; }
   .loc-rank-num.gold { color:#f5a623; }
   .loc-rank-num.silver { color:#9b9b9b; }
@@ -351,7 +373,7 @@
   .pax-history-item .ph-route { color:var(--muted); }
 
   /* タイムライン */
-  .sched-item { background:var(--glass-bg-strong); backdrop-filter:var(--glass-blur); -webkit-backdrop-filter:var(--glass-blur); border:1px solid var(--glass-border); border-radius:14px; padding:12px 14px; margin-bottom:8px; box-shadow:var(--glass-shadow); border-left:4px solid var(--border); }
+  .sched-item { background:var(--glass-bg-strong); backdrop-filter:var(--glass-blur); -webkit-backdrop-filter:var(--glass-blur); border:1px solid var(--glass-border); border-radius:14px; padding:13px 15px; margin-bottom:9px; box-shadow:var(--glass-shadow); border-left:4px solid var(--border); }
   .sched-item.vacant { background:rgba(120,120,128,0.08); box-shadow:none; border-left-color:#bbb; }
   .sched-item.break { background:#fff8e1; box-shadow:none; border-left-color:#f5a623; }
   .sched-item.fuel { background:#e8f5e9; box-shadow:none; border-left-color:#43a047; }
@@ -392,7 +414,7 @@
       <div class="card-title">乗降記録入力</div>
 
       <div class="input-group">
-        <label class="input-label">🚖 種別</label>
+        <label class="input-label"><span class="label-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M20.59 13.41L13.42 20.58a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg></span>種別</label>
         <div class="trip-type-row">
           <button class="type-btn go active" id="type-GO" onclick="selectType('GO')">GO</button>
           <button class="type-btn" id="type-流し" onclick="selectType('流し')">流　し</button>
@@ -401,7 +423,7 @@
       </div>
 
       <div class="input-group">
-        <label class="input-label">💳 支払方法</label>
+        <label class="input-label"><span class="label-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg></span>支払方法</label>
         <div class="pay-btns">
           <button class="pay-btn active" id="pay-現金" onclick="selectPay('現金')">現金</button>
           <button class="pay-btn go" id="pay-GO" onclick="selectPay('GO')">GO</button>
@@ -420,7 +442,7 @@
       <div class="input-row">
         <div class="input-group" style="flex:1.5;">
           <div class="fare-label-row">
-            <label class="input-label" id="fareLabelMain" style="margin-bottom:0;">💴 料金（現金）</label>
+            <label class="input-label" id="fareLabelMain" style="margin-bottom:0;"><span class="label-icon yen" aria-hidden="true">¥</span>料金（現金）</label>
             <button type="button" class="discount-toggle-btn" id="disabilityToggleBtn" onclick="toggleDisabilityDiscount()">障割</button>
           </div>
           <div class="fare-wrap">
@@ -431,7 +453,7 @@
         </div>
         <div class="input-group" style="flex:1;">
           <div class="fare-label-row">
-            <label class="input-label" style="margin-bottom:0;">🎁 チップ</label>
+            <label class="input-label" style="margin-bottom:0;"><span class="label-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg></span>チップ</label>
           </div>
           <div class="fare-wrap">
             <span class="yen">¥</span>
@@ -440,7 +462,7 @@
         </div>
       </div>
       <div class="input-group" id="disabilityUncollectedRow" style="display:none;">
-        <label class="input-label">📱 未収（障害者割引）</label>
+        <label class="input-label"><span class="label-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg></span>未収（障害者割引）</label>
         <div class="fare-wrap">
           <span class="yen">¥</span>
           <input class="input-field fare-masked" id="disabilityUncollectedAmount" type="number" placeholder="" inputmode="numeric" oninput="updateDisabilityFareDisplay()">
@@ -449,10 +471,10 @@
       </div>
 
       <div class="input-group">
-        <label class="input-label">👥 人員</label>
+        <label class="input-label"><span class="label-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>人員</label>
         <div style="display:flex;gap:6px;">
-          <button class="pay-btn" id="pax-male" onclick="incrementPax('male')" style="flex:1;padding:8px 2px;font-size:13px;">🚹 男性 <b id="paxMaleCount">0</b></button>
-          <button class="pay-btn" id="pax-female" onclick="incrementPax('female')" style="flex:1;padding:8px 2px;font-size:13px;">🚺 女性 <b id="paxFemaleCount">0</b></button>
+          <button class="pay-btn" id="pax-male" onclick="incrementPax('male')" style="flex:1;padding:8px 2px;font-size:13px;">男性 <b id="paxMaleCount">0</b></button>
+          <button class="pay-btn" id="pax-female" onclick="incrementPax('female')" style="flex:1;padding:8px 2px;font-size:13px;">女性 <b id="paxFemaleCount">0</b></button>
         </div>
         <div style="text-align:right;font-size:11px;color:var(--muted);margin-top:3px;">合計 <span id="paxTotalCount">0</span>名</div>
         <input type="hidden" id="passengerCount" value="0">
@@ -461,14 +483,14 @@
       <div class="input-row">
         <div class="input-group">
           <div class="fare-label-row">
-            <label class="input-label" style="margin-bottom:0;">🟢 乗車場所</label>
+            <label class="input-label" style="margin-bottom:0;"><span class="label-dot pickup" aria-hidden="true"></span>乗車場所</label>
           </div>
           <input class="input-field" data-scroll-up="1" id="pickupLoc" type="text" placeholder="" autocomplete="off" oninput="onLocInput('pickupLoc','pickupLocSuggest')" onfocus="onLocInput('pickupLoc','pickupLocSuggest');scrollLocFieldToTop('pickupLoc')" onblur="hideLocSuggest('pickupLocSuggest')" onkeydown="if(event.key==='Enter'){event.preventDefault();hideLocSuggest('pickupLocSuggest');openNextTimeField('pickupLoc');}">
           <div id="pickupLocSuggest" class="loc-suggest"></div>
         </div>
         <div class="input-group">
           <div class="fare-label-row">
-            <label class="input-label" style="margin-bottom:0;">🔴 降車場所</label>
+            <label class="input-label" style="margin-bottom:0;"><span class="label-dot dropoff" aria-hidden="true"></span>降車場所</label>
             <button type="button" class="discount-toggle-btn" id="viaPointAddBtn" onclick="addViaPoint()">経由地を追加</button>
           </div>
           <input class="input-field" data-scroll-up="1" id="dropoffLoc" type="text" placeholder="" autocomplete="off" oninput="onLocInput('dropoffLoc','dropoffLocSuggest')" onfocus="onLocInput('dropoffLoc','dropoffLocSuggest');scrollLocFieldToTop('dropoffLoc')" onblur="hideLocSuggest('dropoffLocSuggest')" onkeydown="if(event.key==='Enter'){event.preventDefault();hideLocSuggest('dropoffLocSuggest');openNextTimeField('dropoffLoc');}">
@@ -478,11 +500,11 @@
 
       <div class="input-row">
         <div class="input-group">
-          <label class="input-label">⏱ 乗車時刻</label>
+          <label class="input-label"><span class="label-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span>乗車時刻</label>
           <input class="input-field" id="pickupTime" type="time">
         </div>
         <div class="input-group">
-          <label class="input-label">🏁 降車時刻</label>
+          <label class="input-label"><span class="label-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg></span>降車時刻</label>
           <input class="input-field" id="dropoffTime" type="time">
         </div>
       </div>
@@ -490,7 +512,7 @@
       <div id="viaPointsContainer"></div>
 
       <div class="input-group" id="goMemoGroup" style="display:none;">
-        <label class="input-label">📝 乗客情報</label>
+        <label class="input-label"><span class="label-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></span>乗客情報</label>
         <div class="input-row" style="margin-bottom:4px;">
           <div class="input-group" style="flex:1.4;margin-bottom:0;">
             <input class="input-field" data-scroll-up="1" id="goPaxName" type="text" placeholder="" autocomplete="off" oninput="onGoPaxNameInput()" onfocus="scrollLocFieldToTop('goPaxName')">
@@ -516,14 +538,14 @@
       </div>
 
       <div class="input-group" id="plainMemoGroup">
-        <label class="input-label">📝 メモ</label>
+        <label class="input-label"><span class="label-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></span>メモ</label>
         <textarea class="input-field" id="plainMemo" rows="2" placeholder="自由記入" style="resize:vertical;" oninput="onPlainMemoInput()"></textarea>
         <input type="hidden" id="plainPaxGender" value="">
         <div id="plainMemoHistory" style="display:none;margin-top:8px;"></div>
       </div>
 
       <div class="input-group">
-        <label class="input-label">🏢 降車場所詳細（店名・施設名など／空欄可）</label>
+        <label class="input-label"><span class="label-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 21h18"/><path d="M5 21V7l8-4v18"/><path d="M19 21V11l-6-4"/><line x1="9" y1="9" x2="9" y2="9.01"/><line x1="9" y1="12" x2="9" y2="12.01"/><line x1="9" y1="15" x2="9" y2="15.01"/><line x1="9" y1="18" x2="9" y2="18.01"/></svg></span>降車場所詳細（店名・施設名など／空欄可）</label>
         <input class="input-field" data-scroll-up="1" id="dropoffDetail" type="text" placeholder="" autocomplete="off"
                oninput="onLocInput('dropoffDetail','dropoffDetailSuggest',getDropoffDetailSuggestions)"
                onfocus="onLocInput('dropoffDetail','dropoffDetailSuggest',getDropoffDetailSuggestions);scrollLocFieldToTop('dropoffDetail')"
@@ -651,6 +673,11 @@
 
   <!-- ===== PAGE: タイムライン（実車・空車タイムライン） ===== -->
   <div class="page" id="page-schedule">
+    <!-- 休憩中は記録の邪魔にならないよう、日付ナビの上に大きな案内バナーとして表示する -->
+    <div class="break-banner" id="schedBreakBanner" style="display:none;">
+      <span class="break-banner-icon">☕</span>
+      <span class="break-banner-text">休憩中</span>
+    </div>
     <!-- Day navigation -->
     <div class="card" style="padding:10px 12px;">
       <div style="display:flex;gap:6px;align-items:center;">
@@ -822,12 +849,12 @@
         <button class="btn btn-gray" onclick="closeSchedItemEdit()">キャンセル</button>
         <button class="btn btn-primary" onclick="saveSchedItemEdit()">保存</button>
       </div>
-      <button class="btn btn-danger" style="margin-top:8px;" onclick="deleteSchedItemEdit()">🗑 削除</button>
+      <button class="btn btn-danger" style="margin-top:8px;" onclick="deleteSchedItemEdit()">削除</button>
     </div>
     <div class="input-group" id="schedItemEditPlaceRow" style="margin-top:14px;">
-      <label class="input-label">📍 場所</label>
+      <label class="input-label"><span class="label-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></span>場所</label>
       <div class="place-chip-row" id="schedItemEditPlaceChips"></div>
-      <button type="button" class="place-chip" id="schedItemEditPlaceMoreBtn" style="display:none;margin-top:8px;" onclick="revealSchedItemEditPlaceInput()">✏️ 他の場所を入力</button>
+      <button type="button" class="place-chip" id="schedItemEditPlaceMoreBtn" style="display:none;margin-top:8px;" onclick="revealSchedItemEditPlaceInput()">他の場所を入力</button>
       <div id="schedItemEditPlaceInputWrap">
         <input class="input-field" id="schedItemEditPlace" type="text" placeholder="" autocomplete="off" style="margin-top:8px;"
                oninput="onLocInput('schedItemEditPlace','schedItemEditPlaceSuggest',getBreakPlaceSuggestions)"
@@ -848,7 +875,7 @@
     <div class="modal-title">この日の営収額を修正</div>
     <div id="daySalesEditDateLabel" style="text-align:center;font-size:13px;color:var(--muted);margin-top:-8px;margin-bottom:10px;"></div>
     <div class="input-group">
-      <label class="input-label">💴 営収額（税抜）</label>
+      <label class="input-label"><span class="label-icon yen" aria-hidden="true">¥</span>営収額（税抜）</label>
       <div class="fare-wrap">
         <span class="yen">¥</span>
         <input class="input-field" id="daySalesEditAmount" type="number" inputmode="numeric" placeholder="0">
@@ -1101,13 +1128,13 @@
     <div class="modal-title">乗降記録を修正</div>
 
     <div class="input-group">
-      <label class="input-label">🟢 乗車場所</label>
+      <label class="input-label"><span class="label-dot pickup" aria-hidden="true"></span>乗車場所</label>
       <input class="input-field" id="editPickupLoc" type="text" placeholder="例：渋谷駅前" autocomplete="off" oninput="onLocInput('editPickupLoc','editPickupLocSuggest')" onfocus="onLocInput('editPickupLoc','editPickupLocSuggest');scrollLocFieldToTop('editPickupLoc')" onblur="hideLocSuggest('editPickupLocSuggest')">
       <div id="editPickupLocSuggest" class="loc-suggest"></div>
     </div>
     <div class="input-group">
       <div class="fare-label-row">
-        <label class="input-label" style="margin-bottom:0;">🔴 降車場所</label>
+        <label class="input-label" style="margin-bottom:0;"><span class="label-dot dropoff" aria-hidden="true"></span>降車場所</label>
         <button type="button" class="discount-toggle-btn" id="editViaPointAddBtn" onclick="addEditViaPoint()" style="margin-left:auto;">経由地を追加</button>
       </div>
       <input class="input-field" id="editDropoffLoc" type="text" placeholder="例：新宿三丁目" autocomplete="off" oninput="onLocInput('editDropoffLoc','editDropoffLocSuggest')" onfocus="onLocInput('editDropoffLoc','editDropoffLocSuggest');scrollLocFieldToTop('editDropoffLoc')" onblur="hideLocSuggest('editDropoffLocSuggest')">
@@ -1116,16 +1143,16 @@
     <div id="editViaPointsContainer"></div>
     <div class="input-row">
       <div class="input-group">
-        <label class="input-label">⏱ 乗車時刻</label>
+        <label class="input-label"><span class="label-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span>乗車時刻</label>
         <input class="input-field" id="editPickupTime" type="time">
       </div>
       <div class="input-group">
-        <label class="input-label">🏁 降車時刻</label>
+        <label class="input-label"><span class="label-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg></span>降車時刻</label>
         <input class="input-field" id="editDropoffTime" type="time">
       </div>
     </div>
     <div class="input-group">
-      <label class="input-label">🚖 種別</label>
+      <label class="input-label"><span class="label-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M20.59 13.41L13.42 20.58a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg></span>種別</label>
       <div class="trip-type-row">
         <button class="type-btn go" id="edittype-GO" onclick="selectEditType('GO')">GO</button>
         <button class="type-btn active" id="edittype-流し" onclick="selectEditType('流し')">流　し</button>
@@ -1134,14 +1161,14 @@
     </div>
     <div class="input-row">
       <div class="input-group">
-        <label class="input-label">💴 現金</label>
+        <label class="input-label"><span class="label-icon yen" aria-hidden="true">¥</span>現金</label>
         <div class="fare-wrap">
           <span class="yen">¥</span>
           <input class="input-field" id="editCashFare" type="number" placeholder="0" inputmode="numeric">
         </div>
       </div>
       <div class="input-group">
-        <label class="input-label">📱 未収</label>
+        <label class="input-label"><span class="label-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg></span>未収</label>
         <div class="fare-wrap">
           <span class="yen">¥</span>
           <input class="input-field" id="editUncollectedFare" type="number" placeholder="0" inputmode="numeric">
@@ -1150,24 +1177,24 @@
     </div>
     <div class="input-row">
       <div class="input-group">
-        <label class="input-label">🎁 チップ</label>
+        <label class="input-label"><span class="label-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg></span>チップ</label>
         <div class="fare-wrap">
           <span class="yen">¥</span>
           <input class="input-field" id="editTipAmount" type="number" placeholder="0" inputmode="numeric">
         </div>
       </div>
       <div class="input-group">
-        <label class="input-label">👥 人員</label>
+        <label class="input-label"><span class="label-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>人員</label>
         <div style="display:flex;gap:6px;">
-          <button class="pay-btn active" id="editpax-male" onclick="incrementEditPax('male')" style="flex:1;padding:8px 2px;font-size:13px;">🚹 男性 <b id="editPaxMaleCount">1</b></button>
-          <button class="pay-btn" id="editpax-female" onclick="incrementEditPax('female')" style="flex:1;padding:8px 2px;font-size:13px;">🚺 女性 <b id="editPaxFemaleCount">0</b></button>
+          <button class="pay-btn active" id="editpax-male" onclick="incrementEditPax('male')" style="flex:1;padding:8px 2px;font-size:13px;">男性 <b id="editPaxMaleCount">1</b></button>
+          <button class="pay-btn" id="editpax-female" onclick="incrementEditPax('female')" style="flex:1;padding:8px 2px;font-size:13px;">女性 <b id="editPaxFemaleCount">0</b></button>
         </div>
         <div style="text-align:right;font-size:11px;color:var(--muted);margin-top:3px;">合計 <span id="editPaxTotalCount">1</span>名</div>
         <input type="hidden" id="editPassengerCount" value="1">
       </div>
     </div>
     <div class="input-group">
-      <label class="input-label">💳 支払方法</label>
+      <label class="input-label"><span class="label-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg></span>支払方法</label>
       <div class="pay-btns">
         <button class="pay-btn active" id="editpay-現金" onclick="selectEditPay('現金')">現金</button>
         <button class="pay-btn go" id="editpay-GO" onclick="selectEditPay('GO')">GO</button>
@@ -1181,7 +1208,7 @@
       <input type="hidden" id="editPayMethod" value="現金">
     </div>
     <div class="input-group" id="editGoMemoGroup" style="display:none;">
-      <label class="input-label">📝 乗客情報</label>
+      <label class="input-label"><span class="label-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></span>乗客情報</label>
       <div class="input-row" style="margin-bottom:6px;">
         <div class="input-group" style="flex:1.4;margin-bottom:0;">
           <input class="input-field" id="editGoPaxName" type="text" placeholder="お名前（例：田中）" autocomplete="off">
@@ -1202,12 +1229,12 @@
       <input type="hidden" id="editGoPaxGender" value="男性">
     </div>
     <div class="input-group" id="editPlainMemoGroup">
-      <label class="input-label">📝 メモ</label>
+      <label class="input-label"><span class="label-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></span>メモ</label>
       <textarea class="input-field" id="editPlainMemo" rows="2" placeholder="自由記入" style="resize:vertical;"></textarea>
       <input type="hidden" id="editPlainPaxGender" value="">
     </div>
     <div class="input-group">
-      <label class="input-label">🏢 降車場所詳細（店名・施設名など／空欄可）</label>
+      <label class="input-label"><span class="label-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 21h18"/><path d="M5 21V7l8-4v18"/><path d="M19 21V11l-6-4"/><line x1="9" y1="9" x2="9" y2="9.01"/><line x1="9" y1="12" x2="9" y2="12.01"/><line x1="9" y1="15" x2="9" y2="15.01"/><line x1="9" y1="18" x2="9" y2="18.01"/></svg></span>降車場所詳細（店名・施設名など／空欄可）</label>
       <input class="input-field" data-scroll-up="1" id="editDropoffDetail" type="text" placeholder="" autocomplete="off"
              oninput="onLocInput('editDropoffDetail','editDropoffDetailSuggest',getDropoffDetailSuggestions)"
              onfocus="onLocInput('editDropoffDetail','editDropoffDetailSuggest',getDropoffDetailSuggestions);scrollLocFieldToTop('editDropoffDetail')"
@@ -2734,7 +2761,8 @@ function selectPay(method) {
   // 料金ラベルを支払方法に応じて更新
   const label = document.getElementById('fareLabelMain');
   if (label) {
-    label.textContent = method === '現金' ? '💴 料金（現金）' : `💴 料金（未収 / ${method}）`;
+    const labelText = method === '現金' ? '料金（現金）' : `料金（未収 / ${method}）`;
+    label.innerHTML = `<span class="label-icon yen" aria-hidden="true">¥</span>${labelText}`;
   }
   // 障害者割引の未収記入は、現金払いのときだけ使う機能のため、現金以外では隠す
   const discBtn = document.getElementById('disabilityToggleBtn');
@@ -3249,8 +3277,8 @@ function tripCard(t) {
         ${t.memo ? `<span class="meta-chip">📝 ${stripSama(t.memo)}</span>` : ''}
       </div>
       <div class="trip-actions">
-        <button class="btn-edit" onclick="openTripEditModal(${t.id})">✏️ 修正</button>
-        <button class="btn-del" onclick="deleteTrip(${t.id})">🗑 削除</button>
+        <button class="btn-edit" onclick="openTripEditModal(${t.id})"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4z"/></svg> 修正</button>
+        <button class="btn-del" onclick="deleteTrip(${t.id})"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg> 削除</button>
       </div>
     </div>
   `;
@@ -4131,6 +4159,7 @@ function renderSchedTabs() {
     // 「休憩時間」カードも休憩タブと同じ色にし、休憩が終わると元の表示に戻す
     if (kind === 'break') {
       document.getElementById('schedBreakCard').classList.toggle('ongoing-break', ongoing);
+      document.getElementById('schedBreakBanner').style.display = ongoing ? 'flex' : 'none';
     }
   });
 }
