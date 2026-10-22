@@ -27,9 +27,26 @@
     --nav-h: 84px;
     --safe-bottom: env(safe-area-inset-bottom, 0px);
     --header-h: calc(62px + env(safe-area-inset-top, 0px));
+    /* iOSの「Liquid Glass」寄りの質感用トークン。半透明＋ぼかしで奥の背景が透けて見える
+       素材を、カード・ボタン・タブ・モーダルなど共通で使う部品に横断的に適用する */
+    --glass-bg: rgba(255,255,255,0.6);
+    --glass-bg-strong: rgba(255,255,255,0.78);
+    --glass-border: rgba(255,255,255,0.65);
+    --glass-blur: blur(20px) saturate(180%);
+    --glass-shadow: 0 8px 24px rgba(31,41,55,0.08), 0 1px 2px rgba(31,41,55,0.04);
   }
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-  body { font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; overflow-x: hidden; }
+  /* ガラス素材がうっすら透けるよう、背景に淡いグラデーションの光だまりを敷く */
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
+    background:
+      radial-gradient(900px 600px at -5% -10%, rgba(26,115,232,0.10), transparent 60%),
+      radial-gradient(800px 600px at 105% 8%, rgba(142,36,170,0.07), transparent 55%),
+      radial-gradient(900px 700px at 50% 115%, rgba(52,168,83,0.06), transparent 55%),
+      var(--bg);
+    background-attachment: fixed;
+    color: var(--text); min-height: 100vh; overflow-x: hidden;
+  }
 
   /* Header */
   .header { background: linear-gradient(155deg, var(--primary), var(--primary-dark)); color: white; padding: 14px 18px 14px; padding-top: calc(14px + env(safe-area-inset-top, 0px)); position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 10px rgba(0,0,0,0.18); }
@@ -46,8 +63,9 @@
   .header-chip.wage-low  { background: rgba(234,67,53,0.38); border-color: rgba(234,67,53,0.45); }
   .header-chip.wage-mid  { background: rgba(221,149,0,0.4); border-color: rgba(221,149,0,0.45); }
   .header-chip.wage-high { background: rgba(52,168,83,0.38); border-color: rgba(52,168,83,0.45); }
-  /* GO・流し・配車は色付きの小さいドットで示す（色はこれまでと同じ：GO=青／流し=緑／配車=オレンジ） */
-  .header-type-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+  /* GO・流し・配車は色付きの小さいドットで示す（色はこれまでと同じ：GO=青／流し=緑／配車=オレンジ）。
+     白いリングを添えることで、GOの青が背景の青地に埋もれず常にはっきり見えるようにする */
+  .header-type-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; box-shadow: 0 0 0 1.5px rgba(255,255,255,0.85); }
   .reload-btn { background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.4); border-radius: 8px; color: white; font-size: 12px; font-weight: 700; padding: 6px 10px; cursor: pointer; white-space: nowrap; transition: all 0.15s; }
   .reload-btn:active { background: rgba(255,255,255,0.35); }
   .reload-btn.loading { background: rgba(255,255,255,0.9); color: var(--primary); border-color: white; }
@@ -60,14 +78,14 @@
   /* 場所を入力している間は、入力欄を画面上部まで巻き上げられるよう下に余白を確保する */
   .content.loc-focus { padding-bottom: 75vh; }
 
-  /* Bottom nav */
-  .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: white; border-top: 1px solid var(--border); display: flex; z-index: 200; padding-bottom: var(--safe-bottom); box-shadow: 0 -2px 12px rgba(0,0,0,0.1); }
+  /* Bottom nav：すりガラスのように奥のコンテンツが透けるタブバー */
+  .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(255,255,255,0.72); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); border-top: 1px solid rgba(255,255,255,0.6); display: flex; z-index: 200; padding-bottom: var(--safe-bottom); box-shadow: 0 -4px 20px rgba(31,41,55,0.08); }
   .nav-btn { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 10px 2px 18px; gap: 4px; background: none; border: none; color: var(--muted); font-size: 9.5px; font-weight: 500; cursor: pointer; transition: color 0.15s; white-space: nowrap; }
   .nav-btn.active { color: var(--primary); }
   .nav-btn svg { width: 24px; height: 24px; }
 
-  /* Cards */
-  .card { background: var(--card); border-radius: 16px; padding: 16px; margin-bottom: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+  /* Cards：半透明＋ぼかしのガラス素材。細い光の縁取りで輪郭を出す */
+  .card { background: var(--glass-bg-strong); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); border: 1px solid var(--glass-border); border-radius: 18px; padding: 16px; margin-bottom: 12px; box-shadow: var(--glass-shadow); }
   .card-title { font-size: 13px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; }
 
   /* Status badges */
@@ -89,12 +107,13 @@
   .btn > *, .pay-btn > *, .type-btn > *, .sched-tab > *, .nav-btn > * { pointer-events: none; }
   /* タップ後の待ち時間をなくして反応を良くする */
   .btn, .pay-btn, .type-btn, .tab-item, .sched-tab, .place-chip, .nav-btn, .loc-suggest-item, .pax-history-item { touch-action: manipulation; }
-  .btn-primary { background: var(--primary); color: white; }
-  .btn-success { background: var(--success); color: white; }
+  /* 主要ボタンは斜めのグラデーション＋内側のハイライトで、ガラスの光沢のような立体感を出す */
+  .btn-primary { background: linear-gradient(155deg, var(--primary), var(--primary-dark)); color: white; box-shadow: 0 4px 14px rgba(26,115,232,0.35), inset 0 1px 0 rgba(255,255,255,0.3); }
+  .btn-success { background: linear-gradient(155deg, #3dbb63, var(--success)); color: white; box-shadow: 0 4px 14px rgba(52,168,83,0.35), inset 0 1px 0 rgba(255,255,255,0.3); }
   .btn-warning { background: var(--warning); color: #333; }
-  .btn-danger { background: var(--danger); color: white; }
-  .btn-outline { background: white; color: var(--primary); border: 2px solid var(--primary); }
-  .btn-gray { background: #f0f0f0; color: var(--text); }
+  .btn-danger { background: linear-gradient(155deg, #f1584a, var(--danger)); color: white; box-shadow: 0 4px 14px rgba(234,67,53,0.35), inset 0 1px 0 rgba(255,255,255,0.3); }
+  .btn-outline { background: rgba(255,255,255,0.5); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); color: var(--primary); border: 1.5px solid var(--primary); }
+  .btn-gray { background: rgba(120,120,128,0.12); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); color: var(--text); border: 1px solid rgba(255,255,255,0.5); }
   .btn-sm { padding: 9px 14px; font-size: 14px; width: auto; border-radius: 10px; }
 
   .btn-row { display: flex; gap: 10px; margin-top: 10px; }
@@ -128,28 +147,28 @@
   .go-age-btns { flex-wrap: nowrap; gap: 4px; }
   .go-age-btns .pay-btn { min-width: 0; padding: 6px 2px; }
 
-  /* Inputs */
+  /* Inputs：入力欄もうっすら透けるガラス素材に。フォーカス時は縁取りを強めて光らせる */
   .input-group { margin-bottom: 12px; position: relative; }
   .input-label { font-size: 13px; font-weight: 600; color: var(--muted); margin-bottom: 5px; display: block; }
-  .input-field { width: 100%; padding: 12px 14px; border: 1.5px solid var(--border); border-radius: 12px; font-size: 16px; background: white; color: var(--text); outline: none; transition: border-color 0.15s; -webkit-appearance: none; }
-  .input-field:focus { border-color: var(--primary); }
+  .input-field { width: 100%; padding: 12px 14px; border: 1.5px solid rgba(0,0,0,0.08); border-radius: 12px; font-size: 16px; background: rgba(255,255,255,0.7); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); color: var(--text); outline: none; transition: all 0.15s; -webkit-appearance: none; }
+  .input-field:focus { border-color: var(--primary); background: rgba(255,255,255,0.92); box-shadow: 0 0 0 3px rgba(26,115,232,0.12); }
   .input-row { display: flex; gap: 8px; }
   .input-row .input-group { flex: 1; }
 
   /* 乗車/降車場所の予測変換候補 */
-  .loc-suggest { display: none; position: absolute; left: 0; right: 0; top: 100%; margin-top: 4px; background: white; border: 1px solid var(--border); border-radius: 10px; box-shadow: 0 4px 14px rgba(0,0,0,0.15); z-index: 60; max-height: 180px; overflow-y: auto; }
-  .loc-suggest-item { padding: 9px 12px; font-size: 14px; color: var(--text); cursor: pointer; border-bottom: 1px solid var(--border); }
+  .loc-suggest { display: none; position: absolute; left: 0; right: 0; top: 100%; margin-top: 4px; background: rgba(255,255,255,0.88); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); border: 1px solid var(--glass-border); border-radius: 12px; box-shadow: var(--glass-shadow); z-index: 60; max-height: 180px; overflow-y: auto; }
+  .loc-suggest-item { padding: 9px 12px; font-size: 14px; color: var(--text); cursor: pointer; border-bottom: 1px solid rgba(0,0,0,0.06); }
   .loc-suggest-item:last-child { border-bottom: none; }
-  .loc-suggest-item:active { background: var(--bg); }
+  .loc-suggest-item:active { background: rgba(26,115,232,0.08); }
 
-  /* Tabs (sub) */
-  .tab-bar { display: flex; background: #f0f0f5; border-radius: 12px; padding: 3px; margin-bottom: 14px; }
+  /* Tabs (sub)：選択中のタブだけガラスの光沢で浮かせ、未選択は透け感のあるトラックに沈める */
+  .tab-bar { display: flex; background: rgba(120,120,128,0.1); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); border-radius: 13px; padding: 3px; margin-bottom: 14px; }
   .tab-item { flex: 1; text-align: center; padding: 8px 6px; border-radius: 10px; font-size: 13px; font-weight: 600; color: var(--muted); cursor: pointer; transition: all 0.15s; }
-  .tab-item.active { background: white; color: var(--primary); box-shadow: 0 1px 4px rgba(0,0,0,0.12); }
+  .tab-item.active { background: rgba(255,255,255,0.95); color: var(--primary); box-shadow: 0 2px 6px rgba(31,41,55,0.12); }
   /* タイムラインの操作タブ（グラフ・休憩・給油・業務終了） */
   /* タイムラインの操作タブ。1つずつ独立したボタンとして並べる */
   .sched-tab-bar { display: flex; margin-top: 10px; gap: 6px; }
-  .sched-tab { flex: 1; text-align: center; padding: 10px 2px; border-radius: 10px; font-size: 12px; font-weight: 700; color: var(--text); background: white; border: 1.5px solid var(--border); cursor: pointer; white-space: nowrap; transition: all 0.15s; }
+  .sched-tab { flex: 1; text-align: center; padding: 10px 2px; border-radius: 10px; font-size: 12px; font-weight: 700; color: var(--text); background: rgba(255,255,255,0.55); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); border: 1px solid rgba(255,255,255,0.6); cursor: pointer; white-space: nowrap; transition: all 0.15s; }
   .sched-tab:active { border-color: var(--primary); color: var(--primary); }
   /* 休憩中・給油中はタイムラインの記録と同じ色で塗り、状態がわかるようにする */
   .sched-tab.ongoing-break { background: #f5a623; border-color: #f5a623; color: white; }
@@ -158,16 +177,16 @@
   .sched-tab.done { background: #e8f5e9; border-color: #43a047; color: #1b5e20; }
   /* 稼働状況グラフモーダル内のタブ切り替え */
   .graph-tab-bar { display: flex; gap: 6px; margin-bottom: 14px; }
-  .graph-tab { flex: 1; text-align: center; padding: 9px 4px; border-radius: 10px; font-size: 13px; font-weight: 700; color: var(--muted); background: var(--bg); border: 1.5px solid transparent; cursor: pointer; transition: all 0.15s; }
-  .graph-tab.active { background: #e3f2fd; border-color: var(--primary); color: var(--primary); }
+  .graph-tab { flex: 1; text-align: center; padding: 9px 4px; border-radius: 10px; font-size: 13px; font-weight: 700; color: var(--muted); background: rgba(120,120,128,0.1); border: 1.5px solid transparent; cursor: pointer; transition: all 0.15s; }
+  .graph-tab.active { background: rgba(26,115,232,0.14); border-color: var(--primary); color: var(--primary); }
   /* 休憩場所のよく使う候補 */
   .place-chip-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
-  .place-chip { padding: 7px 12px; border-radius: 999px; border: 1.5px solid var(--border); background: white; font-size: 13px; font-weight: 600; color: var(--text); cursor: pointer; }
+  .place-chip { padding: 7px 12px; border-radius: 999px; border: 1px solid rgba(255,255,255,0.6); background: rgba(255,255,255,0.55); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); font-size: 13px; font-weight: 600; color: var(--text); cursor: pointer; }
   .place-chip.active { background:#fff3e0; border-color:#ff9800; color:#e65100; }
   .place-chip:active { background: var(--bg); border-color: var(--primary); color: var(--primary); }
 
   /* Trip list items */
-  .trip-item { background: white; border-radius: 14px; padding: 14px; margin-bottom: 10px; box-shadow: 0 1px 4px rgba(0,0,0,0.07); position: relative; }
+  .trip-item { background: var(--glass-bg-strong); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); border: 1px solid var(--glass-border); border-radius: 16px; padding: 14px; margin-bottom: 10px; box-shadow: var(--glass-shadow); position: relative; }
   .trip-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
   .trip-fare { font-size: 24px; font-weight: 700; color: var(--success); }
   .trip-time { font-size: 15px; font-weight: 600; color: var(--text); text-align: right; }
@@ -182,47 +201,47 @@
   .delete-btn { position: absolute; top: 12px; right: 12px; background: none; border: none; color: #ccc; font-size: 18px; cursor: pointer; padding: 4px; }
   .delete-btn:active { color: var(--danger); }
   .trip-actions { display: flex; gap: 6px; margin-top: 10px; justify-content: flex-end; }
-  .trip-actions .btn-edit { padding: 5px 12px; border-radius: 8px; border: 1px solid var(--primary); background: white; color: var(--primary); font-size: 11px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 3px; }
-  .trip-actions .btn-del { padding: 5px 12px; border-radius: 8px; border: 1px solid var(--danger); background: white; color: var(--danger); font-size: 11px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 3px; }
+  .trip-actions .btn-edit { padding: 5px 12px; border-radius: 8px; border: 1px solid var(--primary); background: rgba(255,255,255,0.6); color: var(--primary); font-size: 11px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 3px; }
+  .trip-actions .btn-del { padding: 5px 12px; border-radius: 8px; border: 1px solid var(--danger); background: rgba(255,255,255,0.6); color: var(--danger); font-size: 11px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 3px; }
   .trip-actions .btn-edit:active { background: #e3f2fd; }
   .trip-actions .btn-del:active { background: #ffebee; }
   /* Confirm overlay */
-  .confirm-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 500; display: flex; align-items: flex-end; }
-  .confirm-sheet { background: white; width: 100%; border-radius: 16px 16px 0 0; padding: 20px; padding-bottom: calc(20px + env(safe-area-inset-bottom)); }
+  .confirm-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); backdrop-filter: blur(2px); z-index: 500; display: flex; align-items: flex-end; }
+  .confirm-sheet { background: rgba(255,255,255,0.88); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); width: 100%; border-radius: 20px 20px 0 0; padding: 20px; padding-bottom: calc(20px + env(safe-area-inset-bottom)); }
   .confirm-sheet h3 { font-size: 17px; font-weight: 700; text-align: center; margin-bottom: 6px; }
   .confirm-sheet p { font-size: 14px; color: var(--muted); text-align: center; margin-bottom: 18px; }
   .confirm-sheet .confirm-btns { display: flex; flex-direction: column; gap: 10px; }
-  .confirm-sheet .c-btn-del { padding: 15px; border-radius: 12px; border: none; background: var(--danger); color: white; font-size: 16px; font-weight: 700; cursor: pointer; }
-  .confirm-sheet .c-btn-cancel { padding: 15px; border-radius: 12px; border: none; background: #f0f0f0; color: var(--text); font-size: 16px; font-weight: 600; cursor: pointer; }
+  .confirm-sheet .c-btn-del { padding: 15px; border-radius: 12px; border: none; background: linear-gradient(155deg, #f1584a, var(--danger)); color: white; font-size: 16px; font-weight: 700; cursor: pointer; }
+  .confirm-sheet .c-btn-cancel { padding: 15px; border-radius: 12px; border: none; background: rgba(120,120,128,0.12); color: var(--text); font-size: 16px; font-weight: 600; cursor: pointer; }
 
   /* Stats */
   .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
-  .stat-card { background: white; border-radius: 14px; padding: 14px; box-shadow: 0 1px 4px rgba(0,0,0,0.07); }
+  .stat-card { background: var(--glass-bg-strong); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); border: 1px solid var(--glass-border); border-radius: 16px; padding: 14px; box-shadow: var(--glass-shadow); }
   .stat-value { font-size: 24px; font-weight: 700; color: var(--text); }
   .stat-label { font-size: 11px; color: var(--muted); font-weight: 500; margin-top: 2px; }
-  .stat-card.accent { background: var(--primary); }
+  .stat-card.accent { background: linear-gradient(155deg, var(--primary), var(--primary-dark)); border-color: transparent; }
   .stat-card.accent .stat-value, .stat-card.accent .stat-label { color: white; }
   .stat-card.accent .stat-label { opacity: 0.8; }
   /* 時給を過去の平均と比べて3段階の背景色で表す（文字は白）。
      黄は白文字が読めるよう、やや濃いめの色にしている */
-  .stat-card.wage-low  { background: var(--danger); }
-  .stat-card.wage-mid  { background: #dd9500; }
-  .stat-card.wage-high { background: var(--success); }
+  .stat-card.wage-low  { background: linear-gradient(155deg, #f1584a, var(--danger)); border-color: transparent; }
+  .stat-card.wage-mid  { background: linear-gradient(155deg, #f0ab00, #dd9500); border-color: transparent; }
+  .stat-card.wage-high { background: linear-gradient(155deg, #3dbb63, var(--success)); border-color: transparent; }
   .stat-card.wage-low .stat-value, .stat-card.wage-low .stat-label,
   .stat-card.wage-mid .stat-value, .stat-card.wage-mid .stat-label,
   .stat-card.wage-high .stat-value, .stat-card.wage-high .stat-label { color: white; }
   .stat-card.wage-low .stat-label, .stat-card.wage-mid .stat-label, .stat-card.wage-high .stat-label { opacity: 0.85; }
   /* 休憩中は「休憩」タブと同じ色を「休憩時間」カードにも付け、ひと目で進行中とわかるようにする。
      休憩が終わると元の表示に戻る */
-  .stat-card.ongoing-break { background: #f5a623; }
+  .stat-card.ongoing-break { background: #f5a623; border-color: transparent; }
   .stat-card.ongoing-break .stat-value, .stat-card.ongoing-break .stat-label { color: white; opacity: 0.95; }
 
-  /* Modal */
-  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 300; display: flex; align-items: flex-end; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
+  /* Modal：奥の画面がうっすら透けるガラスのシートとして立ち上がる */
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.42); backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px); z-index: 300; display: flex; align-items: flex-end; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
   .modal-overlay.open { opacity: 1; pointer-events: all; }
-  .modal { background: white; border-radius: 20px 20px 0 0; padding: 20px; padding-bottom: calc(20px + var(--safe-bottom)); width: 100%; transform: translateY(100%); transition: transform 0.25s cubic-bezier(0.32,0.72,0,1); max-height: 90vh; overflow-y: auto; }
+  .modal { background: rgba(255,255,255,0.86); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); border: 1px solid var(--glass-border); border-bottom: none; border-radius: 22px 22px 0 0; padding: 20px; padding-bottom: calc(20px + var(--safe-bottom)); width: 100%; transform: translateY(100%); transition: transform 0.25s cubic-bezier(0.32,0.72,0,1); max-height: 90vh; overflow-y: auto; box-shadow: 0 -8px 32px rgba(31,41,55,0.14); }
   .modal-overlay.open .modal { transform: translateY(0); }
-  .modal-handle { width: 40px; height: 4px; background: #ddd; border-radius: 2px; margin: 0 auto 16px; }
+  .modal-handle { width: 40px; height: 4px; background: rgba(0,0,0,0.18); border-radius: 2px; margin: 0 auto 16px; }
   .modal-title { font-size: 18px; font-weight: 700; margin-bottom: 16px; }
   #scheduleGraphModal { align-items: stretch; }
   /* 休憩・給油の編集モーダルは場所入力時にキーボードで隠れないよう、画面の上側に表示する */
@@ -271,7 +290,7 @@
 
   /* Payment method buttons */
   .pay-btns { display: flex; gap: 6px; flex-wrap: wrap; }
-  .pay-btn { flex: 1; min-width: 56px; padding: 10px 4px; border-radius: 10px; border: 1.5px solid var(--border); background: white; color: var(--muted); font-size: 13px; font-weight: 600; cursor: pointer; text-align: center; transition: all 0.15s; }
+  .pay-btn { flex: 1; min-width: 56px; padding: 10px 4px; border-radius: 10px; border: 1.5px solid rgba(0,0,0,0.08); background: rgba(255,255,255,0.55); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); color: var(--muted); font-size: 13px; font-weight: 600; cursor: pointer; text-align: center; transition: all 0.15s; }
   .pay-btn.active { border-color: var(--primary); background: #e3f2fd; color: var(--primary); }
   .pay-btn.active.go { border-color: #ff6b00; background: #fff3e0; color: #ff6b00; }
   .pay-btn.active.paypay { border-color: #e00; background: #fff0f0; color: #e00; }
@@ -283,7 +302,7 @@
 
   /* Trip type selector */
   .trip-type-row { display: flex; gap: 8px; }
-  .type-btn { flex: 1; padding: 11px 4px; border-radius: 12px; border: 1.5px solid var(--border); background: white; color: var(--muted); font-size: 14px; font-weight: 700; cursor: pointer; text-align: center; transition: all 0.15s; }
+  .type-btn { flex: 1; padding: 11px 4px; border-radius: 12px; border: 1.5px solid rgba(0,0,0,0.08); background: rgba(255,255,255,0.55); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); color: var(--muted); font-size: 14px; font-weight: 700; cursor: pointer; text-align: center; transition: all 0.15s; }
   .type-btn.active { border-color: var(--primary); background: #e3f2fd; color: var(--primary); }
   .type-btn.active.haisha { border-color: #ff6b00; background: #fff3e0; color: #ff6b00; }
   .type-btn.active.nashi { border-color: #00a152; background: #e3f9ec; color: #00a152; }
@@ -292,21 +311,21 @@
   /* GPS button */
   .loc-wrap { display: flex; gap: 8px; align-items: center; }
   .loc-wrap .input-field { flex: 1; }
-  .gps-btn { flex-shrink: 0; padding: 12px 12px; border-radius: 12px; border: 1.5px solid var(--primary); background: white; color: var(--primary); font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+  .gps-btn { flex-shrink: 0; padding: 12px 12px; border-radius: 12px; border: 1.5px solid var(--primary); background: rgba(255,255,255,0.6); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); color: var(--primary); font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
   .gps-btn:active { background: #e3f2fd; transform: scale(0.95); }
   .gps-btn.loading { border-color: var(--warning); color: var(--warning); animation: spin 1s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
   .fare-wrap .input-field { padding-left: 28px; }
 
   /* CSV export button */
-  .export-btn { background: white; border: 1.5px solid var(--border); color: var(--text); display: flex; align-items: center; gap: 8px; padding: 12px 16px; border-radius: 12px; font-size: 14px; font-weight: 600; cursor: pointer; width: 100%; }
+  .export-btn { background: rgba(255,255,255,0.55); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); border: 1.5px solid rgba(0,0,0,0.08); color: var(--text); display: flex; align-items: center; gap: 8px; padding: 12px 16px; border-radius: 12px; font-size: 14px; font-weight: 600; cursor: pointer; width: 100%; }
   .export-btn:active { background: var(--bg); }
 
   /* Divider */
   .divider { height: 1px; background: var(--border); margin: 12px 0; }
 
   /* 場所分析 */
-  .loc-rank-item { background:white; border-radius:14px; padding:13px 14px; margin-bottom:8px; box-shadow:0 1px 4px rgba(0,0,0,0.07); display:flex; align-items:center; gap:12px; }
+  .loc-rank-item { background:var(--glass-bg-strong); backdrop-filter:var(--glass-blur); -webkit-backdrop-filter:var(--glass-blur); border:1px solid var(--glass-border); border-radius:16px; padding:13px 14px; margin-bottom:8px; box-shadow:var(--glass-shadow); display:flex; align-items:center; gap:12px; }
   .loc-rank-num { font-size:18px; font-weight:800; color:var(--primary); min-width:28px; text-align:center; }
   .loc-rank-num.gold { color:#f5a623; }
   .loc-rank-num.silver { color:#9b9b9b; }
@@ -319,21 +338,21 @@
   .loc-rank-meta { font-size:12px; color:var(--muted); margin-top:2px; }
   .loc-rank-fare { font-size:16px; font-weight:800; color:var(--success); text-align:right; }
   .analysis-tabs { display:flex; gap:6px; margin-bottom:12px; }
-  .analysis-tab { flex:1; padding:8px 4px; border-radius:10px; border:1.5px solid var(--border); background:white; color:var(--muted); font-size:12px; font-weight:700; cursor:pointer; text-align:center; }
+  .analysis-tab { flex:1; padding:8px 4px; border-radius:10px; border:1.5px solid rgba(0,0,0,0.08); background:rgba(255,255,255,0.55); backdrop-filter:var(--glass-blur); -webkit-backdrop-filter:var(--glass-blur); color:var(--muted); font-size:12px; font-weight:700; cursor:pointer; text-align:center; }
   .analysis-tab.active { border-color:var(--primary); background:#e3f2fd; color:var(--primary); }
   .dow-tabs { display:flex; gap:6px; margin-bottom:12px; overflow-x:auto; -webkit-overflow-scrolling:touch; }
-  .dow-tab { flex:0 0 auto; padding:8px 14px; border-radius:10px; border:1.5px solid var(--border); background:white; color:var(--muted); font-size:13px; font-weight:700; cursor:pointer; text-align:center; white-space:nowrap; }
+  .dow-tab { flex:0 0 auto; padding:8px 14px; border-radius:10px; border:1.5px solid rgba(0,0,0,0.08); background:rgba(255,255,255,0.55); backdrop-filter:var(--glass-blur); -webkit-backdrop-filter:var(--glass-blur); color:var(--muted); font-size:13px; font-weight:700; cursor:pointer; text-align:center; white-space:nowrap; }
   .dow-tab.active { border-color:var(--primary); background:#e3f2fd; color:var(--primary); }
 
   /* GO乗客の過去履歴サジェスト */
-  .pax-history-item { background:var(--bg); border-radius:8px; padding:7px 10px; margin-top:5px; font-size:12px; color:var(--text); cursor:pointer; }
+  .pax-history-item { background:rgba(120,120,128,0.08); border-radius:8px; padding:7px 10px; margin-top:5px; font-size:12px; color:var(--text); cursor:pointer; }
   .pax-history-item:active { background:#e3f2fd; }
   .pax-history-item .ph-date { font-weight:700; color:var(--primary); }
   .pax-history-item .ph-route { color:var(--muted); }
 
   /* タイムライン */
-  .sched-item { background:white; border-radius:12px; padding:12px 14px; margin-bottom:8px; box-shadow:0 1px 4px rgba(0,0,0,0.07); border-left:4px solid var(--border); }
-  .sched-item.vacant { background:var(--bg); box-shadow:none; border-left-color:#bbb; }
+  .sched-item { background:var(--glass-bg-strong); backdrop-filter:var(--glass-blur); -webkit-backdrop-filter:var(--glass-blur); border:1px solid var(--glass-border); border-radius:14px; padding:12px 14px; margin-bottom:8px; box-shadow:var(--glass-shadow); border-left:4px solid var(--border); }
+  .sched-item.vacant { background:rgba(120,120,128,0.08); box-shadow:none; border-left-color:#bbb; }
   .sched-item.break { background:#fff8e1; box-shadow:none; border-left-color:#f5a623; }
   .sched-item.fuel { background:#e8f5e9; box-shadow:none; border-left-color:#43a047; }
   .sched-time { font-size:13px; font-weight:700; color:var(--text); }
