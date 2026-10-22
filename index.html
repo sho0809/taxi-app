@@ -32,17 +32,22 @@
   body { font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; overflow-x: hidden; }
 
   /* Header */
-  .header { background: var(--primary); color: white; padding: 14px 18px 12px; padding-top: calc(14px + env(safe-area-inset-top, 0px)); position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
+  .header { background: linear-gradient(155deg, var(--primary), var(--primary-dark)); color: white; padding: 14px 18px 14px; padding-top: calc(14px + env(safe-area-inset-top, 0px)); position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 10px rgba(0,0,0,0.18); }
   .header-row { display: flex; justify-content: space-between; align-items: center; }
-  .header h1, .header .header-big { font-size: 28px; font-weight: 800; letter-spacing: -0.3px; }
-  .header .date { font-size: 12px; opacity: 0.85; margin-bottom: 2px; }
-  /* 件数・時給も営収額と同じ大きさで並べる。時給だけ色付きの背景を付けるピル状に */
-  .header-metrics { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; margin-top: 2px; }
-  .header-metrics .header-big { line-height: 1.1; }
-  #headerHourly.header-big { padding: 2px 10px; border-radius: 10px; }
-  /* GO・流し・配車の件数。背景を塗りつぶしにして、ヘッダーの青地でも視認性を保つ
-     （色自体はこれまでと同じ：GO=青／流し=緑／配車=オレンジ） */
-  .header-type-badge { display: inline-block; padding: 4px 10px; border-radius: 10px; font-size: 13px; font-weight: 800; color: white; }
+  .header .date { font-size: 12px; opacity: 0.8; margin-bottom: 2px; letter-spacing: 0.1px; }
+  /* 営収額だけを主役にし、他の数字はひと回り小さい控えめな表示にする */
+  .header-hero-label { font-size: 10px; font-weight: 700; letter-spacing: 0.6px; opacity: 0.6; display: block; margin-top: 10px; }
+  .header h1 { font-size: 30px; font-weight: 800; letter-spacing: -0.5px; line-height: 1.15; margin-top: 1px; }
+  /* 件数・時給・GO/流し/配車は、同じ小さめのピル型チップで統一する */
+  .header-chips { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
+  .header-chip { display: inline-flex; align-items: center; gap: 4px; background: rgba(255,255,255,0.14); border: 1px solid rgba(255,255,255,0.16); border-radius: 999px; padding: 4px 10px; font-size: 12px; font-weight: 700; letter-spacing: 0.1px; }
+  .header-chip .chip-label { opacity: 0.68; font-weight: 600; }
+  /* 時給は背景を少し濃くして、金額に応じた色をにじませる程度にとどめる（文字は常に白） */
+  .header-chip.wage-low  { background: rgba(234,67,53,0.38); border-color: rgba(234,67,53,0.45); }
+  .header-chip.wage-mid  { background: rgba(221,149,0,0.4); border-color: rgba(221,149,0,0.45); }
+  .header-chip.wage-high { background: rgba(52,168,83,0.38); border-color: rgba(52,168,83,0.45); }
+  /* GO・流し・配車は色付きの小さいドットで示す（色はこれまでと同じ：GO=青／流し=緑／配車=オレンジ） */
+  .header-type-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
   .reload-btn { background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.4); border-radius: 8px; color: white; font-size: 12px; font-weight: 700; padding: 6px 10px; cursor: pointer; white-space: nowrap; transition: all 0.15s; }
   .reload-btn:active { background: rgba(255,255,255,0.35); }
   .reload-btn.loading { background: rgba(255,255,255,0.9); color: var(--primary); border-color: white; }
@@ -348,12 +353,13 @@
     <div class="date" id="headerDate"></div>
     <button class="reload-btn" id="reloadBtn" onclick="triggerReload()">↻ 更新</button>
   </div>
-  <div class="header-metrics">
-    <h1 id="headerSales">¥0</h1>
-    <span class="header-big" id="headerCount">0件</span>
-    <span class="header-big" id="headerHourly" style="display:none;"></span>
+  <span class="header-hero-label">本日の営収額</span>
+  <h1 id="headerSales">¥0</h1>
+  <div class="header-chips">
+    <span class="header-chip" id="headerCount">0件</span>
+    <span class="header-chip" id="headerHourly" style="display:none;"></span>
+    <span id="headerTypeBadges" style="display:contents;"></span>
   </div>
-  <div id="headerTypeBadges" style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;"></div>
 </div>
 
 <!-- Pages -->
@@ -5632,31 +5638,31 @@ function updateHeader() {
   document.getElementById('headerSales').textContent = `¥${dayTotalExTax(date).toLocaleString()}`;
 
   const trips = getTrips().filter(t => t.date === date);
-  document.getElementById('headerCount').textContent = `${trips.length}件`;
+  document.getElementById('headerCount').innerHTML = `<span class="chip-label">件数</span> ${trips.length}件`;
 
   // 時給はタイムラインと同じ計算方法・色分け（赤＜1000／黄＜1200／緑）
   const scheduleResult = computeScheduleSegments(date);
   const allMin = scheduleResult ? scheduleResult.allMin : 0;
   const hourlyWage = allMin > 0 ? Math.round(dayTotalExTax(date) / (allMin / 60) * 0.5) : null;
   const hourlyEl = document.getElementById('headerHourly');
+  hourlyEl.classList.remove('wage-low', 'wage-mid', 'wage-high');
   if (hourlyWage !== null) {
-    hourlyEl.style.background = hourlyWage < 1000 ? 'var(--danger)' : hourlyWage < 1200 ? '#dd9500' : 'var(--success)';
-    hourlyEl.style.color = 'white';
-    hourlyEl.textContent = `時給¥${hourlyWage.toLocaleString()}`;
+    hourlyEl.classList.add(hourlyWage < 1000 ? 'wage-low' : hourlyWage < 1200 ? 'wage-mid' : 'wage-high');
+    hourlyEl.innerHTML = `<span class="chip-label">時給</span> ¥${hourlyWage.toLocaleString()}`;
     hourlyEl.style.display = '';
   } else {
     hourlyEl.style.display = 'none';
   }
 
   // GO・流し・配車の件数。色はこれまでと同じ（GO=青／流し=緑／配車=オレンジ）だが、
-  // ヘッダーの青地でも埋もれないよう背景を塗りつぶしにして視認性を上げる。
+  // 大きな塗りつぶしバッジではなく、他のチップと揃えた小さな色ドット付きチップにする。
   // GO・流しは0件でも表示し、配車だけ0件のときは表示しない
   const types = {};
   trips.forEach(t => { const tp = t.tripType || '流し'; types[tp] = (types[tp] || 0) + 1; });
   const typeColors = { '配車': '#ff6b00', 'GO': '#1a73e8', '流し': '#00a152' };
   document.getElementById('headerTypeBadges').innerHTML = ['GO','流し','配車']
     .filter(tp => tp !== '配車' || types[tp] > 0)
-    .map(tp => `<span class="header-type-badge" style="background:${typeColors[tp]};">${tp} ${types[tp] || 0}</span>`)
+    .map(tp => `<span class="header-chip"><span class="header-type-dot" style="background:${typeColors[tp]};"></span>${tp} ${types[tp] || 0}</span>`)
     .join('');
 }
 
