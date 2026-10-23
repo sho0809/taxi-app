@@ -70,7 +70,9 @@
        スクロールで余白が見えてしまうのを防ぐ */
     overscroll-behavior-y: none;
   }
-  html { overscroll-behavior-y: none; }
+  /* iOSはノッチ・ステータスバーなどのセーフエリア部分をhtml要素の背景色で塗るため、
+     ここを青にしておかないとその部分だけbody側の背景が透けて見えてしまう */
+  html { overscroll-behavior-y: none; background: var(--primary-dark); }
 
   /* Header */
   /* ステータスバー・ノッチの帯専用の塗りつぶし。position:fixedで常に画面最上部に固定し、
