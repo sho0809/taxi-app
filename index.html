@@ -73,6 +73,9 @@
   html { overscroll-behavior-y: none; }
 
   /* Header */
+  /* ステータスバー・ノッチの帯専用の塗りつぶし。position:fixedで常に画面最上部に固定し、
+     スクロールやposition:stickyの挙動に左右されず確実に青くする */
+  .status-bar-fill { position: fixed; top: 0; left: 0; right: 0; height: env(safe-area-inset-top, 0px); background: linear-gradient(155deg, var(--primary), var(--primary-dark)); z-index: 101; }
   .header { background: linear-gradient(155deg, var(--primary), var(--primary-dark)); color: white; padding: 14px 18px 14px; padding-top: calc(14px + env(safe-area-inset-top, 0px)); position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 10px rgba(0,0,0,0.18); }
   .header-row { display: flex; justify-content: space-between; align-items: center; }
   .header .date { font-size: 12px; opacity: 0.8; margin-bottom: 2px; letter-spacing: 0.1px; }
@@ -427,6 +430,10 @@
 </style>
 </head>
 <body>
+
+<!-- ステータスバー・ノッチの帯を常に青で塗りつぶす。position:stickyのヘッダーだけだと
+     この部分にbody側の背景が透けて見えてしまうことがあるため、独立した固定要素で確実に覆う -->
+<div class="status-bar-fill"></div>
 
 <!-- Header -->
 <div class="header">
