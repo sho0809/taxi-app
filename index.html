@@ -1752,7 +1752,7 @@ function onGoPaxNameInput() {
     const fare = getTripFare(t);
     return `
       <div class="pax-history-item" onclick="applyGoPaxHistory(${t.id})">
-        <span class="ph-date">${parseInt(mm)}/${parseInt(dd)}(${dow}) ${t.pickupTime||''}</span> ${t.paxName} ${t.paxGender||''}${t.paxAge||''}　<b>¥${fare.toLocaleString()}</b>
+        <span class="ph-date">${parseInt(mm)}/${parseInt(dd)}(${dow}) ${t.pickupTime||''}</span> ${t.paxName} ${t.paxGender||''}${t.paxAge||''}　<b>¥${fare.toLocaleString()}</b>${t.tip > 0 ? ` <span style="color:var(--muted);">+チップ¥${t.tip.toLocaleString()}</span>` : ''}
         <div class="ph-route">${formatTripRoute(t)}</div>
       </div>
     `;
@@ -1802,7 +1802,7 @@ function onPlainMemoInput() {
     const fare = getTripFare(t);
     return `
       <div class="pax-history-item" onclick="applyPlainMemoHistory(${t.id})">
-        <span class="ph-date">${parseInt(mm)}/${parseInt(dd)}(${dow}) ${t.pickupTime||''}</span> ${formatPaxLabel(t)}　<b>¥${fare.toLocaleString()}</b>
+        <span class="ph-date">${parseInt(mm)}/${parseInt(dd)}(${dow}) ${t.pickupTime||''}</span> ${formatPaxLabel(t)}　<b>¥${fare.toLocaleString()}</b>${t.tip > 0 ? ` <span style="color:var(--muted);">+チップ¥${t.tip.toLocaleString()}</span>` : ''}
         <div class="ph-route">${formatTripRoute(t)}</div>
       </div>
     `;
@@ -4828,7 +4828,7 @@ function renderSchedule() {
           <div style="position:absolute;top:10px;right:12px;text-align:right;">
             <div style="font-size:12px;font-weight:800;color:var(--muted);">${rideNumber}</div>
           </div>
-          <div class="sched-time">${fmtHM(seg.start)}〜${fmtHM(seg.end)} <span class="sched-dur">（${fmtWait(durMin)}）</span> <span style="color:var(--success);font-weight:700;">¥${fare.toLocaleString()}</span> <span style="color:var(--muted);font-size:12px;font-weight:700;">（${t.payMethod || '現金'}）</span></div>
+          <div class="sched-time">${fmtHM(seg.start)}〜${fmtHM(seg.end)} <span class="sched-dur">（${fmtWait(durMin)}）</span> <span style="color:var(--success);font-weight:700;">¥${fare.toLocaleString()}</span> <span style="color:var(--muted);font-size:12px;font-weight:700;">（${t.payMethod || '現金'}）</span>${t.tip > 0 ? `<span style="color:var(--muted);font-size:12px;font-weight:700;"> +チップ¥${t.tip.toLocaleString()}</span>` : ''}</div>
           <div class="sched-body">
             <span class="sched-type-badge" style="background:${typeColor}22;color:${typeColor};">${type}</span>
             ${[t.pickup||'（乗車場所未設定）', ...getTripViaPoints(t), (t.dropoff||'（降車場所未設定）') + (t.dropoffDetail ? `（${t.dropoffDetail}）` : '')].join(' → ')}
