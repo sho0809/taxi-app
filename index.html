@@ -280,6 +280,7 @@
      場所選択モーダルはこの上に正しく表示される */
   .break-fullscreen { position: fixed; inset: 0; z-index: 250; display: none; flex-direction: column; align-items: center; justify-content: center; gap: 10px; background: linear-gradient(165deg, #ffb94d, #f5a623); cursor: pointer; animation: breakFullscreenIn 0.25s ease; }
   .break-fullscreen-text { font-size: 44px; font-weight: 800; color: white; letter-spacing: 1px; }
+  .break-fullscreen-time { font-size: 17px; font-weight: 700; color: rgba(255,255,255,0.95); background: rgba(255,255,255,0.18); border-radius: 999px; padding: 6px 16px; }
   .break-fullscreen-hint { font-size: 14px; font-weight: 600; color: rgba(255,255,255,0.85); }
   @keyframes breakFullscreenIn { from { opacity: 0; } to { opacity: 1; } }
 
@@ -1077,6 +1078,7 @@
 <!-- 休憩中は、どの画面を見ていても全画面で表示する。タップで休憩を終了し時刻を記録する -->
 <div class="break-fullscreen" id="breakFullscreen" style="display:none;" onclick="toggleSchedStop('break')">
   <div class="break-fullscreen-text">休憩中</div>
+  <div class="break-fullscreen-time" id="breakFullscreenTime"></div>
   <div class="break-fullscreen-hint">タップして終了</div>
 </div>
 
@@ -4179,6 +4181,20 @@ function toggleSchedStop(kind) {
   renderSchedule();
 }
 
+// 休憩の全画面表示に「開始時刻〜現在（経過分）」を出す。休憩中でなければ空にする。
+// startHM は "HH:MM" 形式の開始時刻（タイムラインの他の表示と同じ形式）
+function updateBreakFullscreenTime(startHM) {
+  const el = document.getElementById('breakFullscreenTime');
+  if (!el) return;
+  if (!startHM) { el.textContent = ''; return; }
+  const [h, m] = startHM.split(':').map(Number);
+  const start = new Date();
+  start.setHours(h, m, 0, 0);
+  let diffMin = Math.round((Date.now() - start.getTime()) / 60000);
+  if (diffMin < 0) diffMin += 1440; // 日をまたいだ場合
+  el.textContent = `${startHM}〜現在（${fmtWait(diffMin)}経過）`;
+}
+
 // 進行中かどうかに応じてタブの表示を切り替える
 function renderSchedTabs() {
   const date = schedCurrentDate;
@@ -4198,6 +4214,8 @@ function renderSchedTabs() {
     if (kind === 'break') {
       document.getElementById('schedBreakCard').classList.toggle('ongoing-break', ongoing);
       document.getElementById('breakFullscreen').style.display = ongoing ? 'flex' : 'none';
+      const ongoingBreak = list.find(item => !item.end);
+      updateBreakFullscreenTime(ongoingBreak ? ongoingBreak.start : null);
     }
   });
 }
@@ -5786,6 +5804,9 @@ setInterval(() => {
   updateTodaySummary();
   if (document.getElementById('page-recommend').classList.contains('active')) renderRecommend();
   if (document.getElementById('page-schedule').classList.contains('active')) renderSchedule();
+  // 休憩の全画面表示はどのページを見ていても出るため、タイムライン画面を開いていなくても
+  // 経過時間だけは毎分更新する
+  else renderSchedTabs();
 }, 60000);
 selectType(getDefaultType()); // 起動時の種別を時間帯で設定
 
