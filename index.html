@@ -76,16 +76,16 @@
   .header { background: linear-gradient(155deg, var(--primary), var(--primary-dark)); color: white; padding: 14px 18px 14px; padding-top: calc(14px + env(safe-area-inset-top, 0px)); position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 10px rgba(0,0,0,0.18); }
   .header-row { display: flex; justify-content: space-between; align-items: center; }
   .header .date { font-size: 12px; opacity: 0.8; margin-bottom: 2px; letter-spacing: 0.1px; }
-  /* 営収額を主役にし、時給はその右横に同じ大きさで並べる。件数・GO/流し/配車は
-     ひと回り小さい控えめな表示にする */
-  .header-hero-row { display: flex; align-items: flex-end; gap: 18px; flex-wrap: wrap; }
+  /* 営収額を主役にし、時給はその右横にひと回り小さく並べる。件数・GO/流し/配車は
+     さらに控えめな表示にする */
+  .header-hero-row { display: flex; align-items: flex-end; gap: 14px; flex-wrap: wrap; }
   .header-hero-label { font-size: 10.5px; font-weight: 700; letter-spacing: 0.8px; opacity: 0.62; display: block; margin-top: 10px; }
   .header h1 { font-size: 35px; font-weight: 800; letter-spacing: -0.8px; line-height: 1.12; margin-top: 2px; }
-  /* 時給は背景に溶け込む半透明ではなく、はっきり読める彩度の高い実色にする */
-  .header-hourly-value { color: white; }
-  .header-hourly-value.wage-low  { color: #ff6a5c; }
-  .header-hourly-value.wage-mid  { color: #ffd34d; }
-  .header-hourly-value.wage-high { color: #4ee087; }
+  /* 時給は営収額より小さく、濃くはっきりした色の背景バッジで表す（文字は白） */
+  .header-hourly-value { display: inline-block; color: white; font-size: 22px; font-weight: 800; letter-spacing: -0.3px; line-height: 1.2; padding: 4px 14px; border-radius: 12px; margin-bottom: 3px; }
+  .header-hourly-value.wage-low  { background: linear-gradient(155deg, #f1584a, #d93a2b); }
+  .header-hourly-value.wage-mid  { background: linear-gradient(155deg, #f0ab00, #c17e00); }
+  .header-hourly-value.wage-high { background: linear-gradient(155deg, #3dbb63, #268a44); }
   /* 件数・GO/流し/配車は、同じ小さめのピル型チップで統一する。
      折り返すと配車が2段目に落ちてしまうため、常に横1列に収まるようにし、
      画面が狭くて入り切らない場合だけ横スクロールさせる（スクロールバーは隠す） */
@@ -441,7 +441,7 @@
     </div>
     <div id="headerHourlyWrap" style="display:none;">
       <span class="header-hero-label">時給</span>
-      <h1 id="headerHourly" class="header-hourly-value">¥0</h1>
+      <div id="headerHourly" class="header-hourly-value">¥0</div>
     </div>
   </div>
   <div class="header-chips">
