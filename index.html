@@ -82,9 +82,9 @@
   /* 件数・時給・GO/流し/配車は、同じ小さめのピル型チップで統一する。
      折り返すと配車が2段目に落ちてしまうため、常に横1列に収まるようにし、
      画面が狭くて入り切らない場合だけ横スクロールさせる（スクロールバーは隠す） */
-  .header-chips { display: flex; align-items: center; gap: 5px; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; -ms-overflow-style: none; -webkit-overflow-scrolling: touch; margin-top: 10px; margin-right: -18px; padding-right: 18px; }
+  .header-chips { display: flex; align-items: center; gap: 7px; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; -ms-overflow-style: none; -webkit-overflow-scrolling: touch; margin-top: 11px; margin-right: -18px; padding-right: 18px; }
   .header-chips::-webkit-scrollbar { display: none; }
-  .header-chip { display: inline-flex; align-items: center; gap: 4px; flex-shrink: 0; background: rgba(255,255,255,0.14); border: 1px solid rgba(255,255,255,0.16); border-radius: 999px; padding: 4px 9px; font-size: 11.5px; font-weight: 700; letter-spacing: 0.1px; white-space: nowrap; }
+  .header-chip { display: inline-flex; align-items: center; gap: 5px; flex-shrink: 0; background: rgba(255,255,255,0.14); border: 1px solid rgba(255,255,255,0.16); border-radius: 999px; padding: 6px 13px; font-size: 14px; font-weight: 700; letter-spacing: 0.1px; white-space: nowrap; }
   .header-chip .chip-label { opacity: 0.68; font-weight: 600; }
   /* 時給は背景を少し濃くして、金額に応じた色をにじませる程度にとどめる（文字は常に白） */
   .header-chip.wage-low  { background: rgba(234,67,53,0.38); border-color: rgba(234,67,53,0.45); }
@@ -92,7 +92,7 @@
   .header-chip.wage-high { background: rgba(52,168,83,0.38); border-color: rgba(52,168,83,0.45); }
   /* GO・流し・配車は色付きの小さいドットで示す（色はこれまでと同じ：GO=青／流し=緑／配車=オレンジ）。
      白いリングを添えることで、GOの青が背景の青地に埋もれず常にはっきり見えるようにする */
-  .header-type-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; box-shadow: 0 0 0 1.5px rgba(255,255,255,0.85); }
+  .header-type-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; box-shadow: 0 0 0 1.5px rgba(255,255,255,0.85); }
   .reload-btn { background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.4); border-radius: 8px; color: white; font-size: 12px; font-weight: 700; padding: 6px 10px; cursor: pointer; white-space: nowrap; transition: all 0.15s; }
   .reload-btn:active { background: rgba(255,255,255,0.35); }
   .reload-btn.loading { background: rgba(255,255,255,0.9); color: var(--primary); border-color: white; }
