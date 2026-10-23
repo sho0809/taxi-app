@@ -5804,8 +5804,25 @@ function updateHeader() {
   const typeColors = { '配車': '#ff6b00', 'GO': '#1a73e8', '流し': '#00a152' };
   document.getElementById('headerTypeBadges').innerHTML = ['GO','流し','配車']
     .filter(tp => tp !== '配車' || types[tp] > 0)
-    .map(tp => `<span class="header-chip"><span class="header-type-dot" style="background:${typeColors[tp]};"></span>${tp} ${types[tp] || 0}</span>`)
+    .map(tp => `<span class="header-chip"${tp === '流し' ? ' id="headerChipNashi"' : ''}><span class="header-type-dot" style="background:${typeColors[tp]};"></span>${tp} ${types[tp] || 0}</span>`)
     .join('');
+
+  // 時給バッジの左端を、下の行にある「流し」チップの左端に揃える
+  alignHourlyWithNashi();
+}
+
+// 営収額の文字数で左端の位置が変わるため、毎回「流し」チップの実際の位置を測って
+// 時給バッジの左マージンを調整する
+function alignHourlyWithNashi() {
+  const hourlyWrap = document.getElementById('headerHourlyWrap');
+  const nashiChip = document.getElementById('headerChipNashi');
+  if (!hourlyWrap || !nashiChip || hourlyWrap.style.display === 'none') return;
+  hourlyWrap.style.marginLeft = '0px';
+  const headerEl = document.querySelector('.header');
+  const targetLeft = nashiChip.getBoundingClientRect().left - headerEl.getBoundingClientRect().left;
+  const currentLeft = hourlyWrap.getBoundingClientRect().left - headerEl.getBoundingClientRect().left;
+  const diff = targetLeft - currentLeft;
+  hourlyWrap.style.marginLeft = `${diff}px`;
 }
 
 updateTodaySummary();
@@ -5853,6 +5870,7 @@ function syncHeaderHeightVar() {
 }
 syncHeaderHeightVar();
 window.addEventListener('resize', syncHeaderHeightVar);
+window.addEventListener('resize', alignHourlyWithNashi);
 // 起動時は運行記録が開いているので、下の余白の詰め方も合わせておく
 document.querySelector('.content').classList.toggle(
   'record-page', !!document.querySelector('#page-record.active'));
