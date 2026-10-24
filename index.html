@@ -72,9 +72,12 @@
   /* Header */
   /* セーフエリア（ステータスバー・ノッチ）はbody/html背景の濃い青で塗られるため、
      ヘッダー側は境目ができないよう同じ濃い色から始まるグラデーションにする */
-  .header { background: linear-gradient(155deg, var(--primary-dark), var(--primary)); color: white; padding: 14px 18px 14px; padding-top: calc(14px + env(safe-area-inset-top, 0px)); position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 10px rgba(0,0,0,0.18); }
+  /* グラデーションの薄い側（var(--primary)）が日付や更新ボタンの文字にかかって
+     薄く見えないよう、ヘッダーの実高さの範囲内では常に濃い側の色が主になるよう
+     薄い色の到達点を140%まで外側に押し出している */
+  .header { background: linear-gradient(155deg, var(--primary-dark) 0%, var(--primary) 140%); color: white; padding: 14px 18px 14px; padding-top: calc(14px + env(safe-area-inset-top, 0px)); position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 10px rgba(0,0,0,0.18); }
   .header-row { display: flex; justify-content: space-between; align-items: center; }
-  .header .date { font-size: 12px; opacity: 0.8; margin-bottom: 2px; letter-spacing: 0.1px; }
+  .header .date { font-size: 12px; opacity: 0.94; margin-bottom: 2px; letter-spacing: 0.1px; }
   /* 営収額を主役にし、時給はその右横にひと回り小さく並べる。件数・GO/流し/配車は
      さらに控えめな表示にする */
   .header-hero-row { display: flex; align-items: flex-end; gap: 14px; flex-wrap: wrap; }
