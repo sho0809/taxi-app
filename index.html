@@ -58,20 +58,15 @@
   body {
     font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", 'Helvetica Neue', sans-serif;
     font-variant-numeric: tabular-nums;
-    background:
-      radial-gradient(900px 600px at -5% -10%, rgba(26,115,232,0.10), transparent 60%),
-      radial-gradient(800px 600px at 105% 8%, rgba(142,36,170,0.07), transparent 55%),
-      radial-gradient(700px 500px at 100% 100%, rgba(200,150,40,0.06), transparent 55%),
-      radial-gradient(900px 700px at 50% 115%, rgba(52,168,83,0.06), transparent 55%),
-      var(--bg);
-    background-attachment: fixed;
+    /* iOSはノッチ・ステータスバー、画面端の余白などの「セーフエリア」をbody／html要素の
+       背景色で塗るため、ここは淡いグラデーションではなくヘッダーと同じ濃い青の単色にする。
+       ページの淡い背景は.contentに移し、そちらだけに適用する */
+    background: var(--primary-dark);
     color: var(--text); min-height: 100vh; overflow-x: hidden;
     /* 運行記録など内容が画面にほぼ収まるページで、一番下まで来た後もiOSのバウンス
        スクロールで余白が見えてしまうのを防ぐ */
     overscroll-behavior-y: none;
   }
-  /* iOSはノッチ・ステータスバーなどのセーフエリア部分をhtml要素の背景色で塗るため、
-     ここを青にしておかないとその部分だけbody側の背景が透けて見えてしまう */
   html { overscroll-behavior-y: none; background: var(--primary-dark); }
 
   /* Header */
@@ -108,8 +103,19 @@
   .reload-btn.loading { background: rgba(255,255,255,0.9); color: var(--primary); border-color: white; }
   .reload-btn.loading span { display: inline-block; animation: spin 0.6s linear infinite; }
 
-  /* Content area */
-  .content { padding: 14px; padding-bottom: calc(var(--nav-h) + var(--safe-bottom) + 14px); }
+  /* Content area：淡いグラデーションの「地」はここに持たせる（bodyはセーフエリア用に
+     ヘッダーと同じ濃い青の単色）。ヘッダー直下からナビの上までを必ず覆うよう
+     min-heightで最低限の高さを確保し、内容が短いページでも青が透けないようにする */
+  .content { padding: 14px; padding-bottom: calc(var(--nav-h) + var(--safe-bottom) + 14px);
+    background:
+      radial-gradient(900px 600px at -5% -10%, rgba(26,115,232,0.10), transparent 60%),
+      radial-gradient(800px 600px at 105% 8%, rgba(142,36,170,0.07), transparent 55%),
+      radial-gradient(700px 500px at 100% 100%, rgba(200,150,40,0.06), transparent 55%),
+      radial-gradient(900px 700px at 50% 115%, rgba(52,168,83,0.06), transparent 55%),
+      var(--bg);
+    background-attachment: fixed;
+    min-height: calc(100vh - var(--header-actual, 160px));
+  }
   /* 運行記録は保存ボタンを下のタブのすぐ上まで下げ、余白を残さない */
   .content.record-page { padding-bottom: calc(var(--nav-actual, var(--nav-h)) + var(--safe-bottom)); }
   /* 場所を入力している間は、入力欄を画面上部まで巻き上げられるよう下に余白を確保する */
