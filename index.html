@@ -1208,6 +1208,10 @@
     <div class="modal-title">乗降記録を修正</div>
 
     <div class="input-group">
+      <label class="input-label"><span class="label-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></span>日付</label>
+      <input class="input-field" id="editTripDate" type="date">
+    </div>
+    <div class="input-group">
       <label class="input-label"><span class="label-dot pickup" aria-hidden="true"></span>乗車場所</label>
       <input class="input-field" id="editPickupLoc" type="text" placeholder="例：渋谷駅前" autocomplete="off" oninput="onLocInput('editPickupLoc','editPickupLocSuggest')" onfocus="onLocInput('editPickupLoc','editPickupLocSuggest');scrollLocFieldToTop('editPickupLoc')" onblur="hideLocSuggest('editPickupLocSuggest')">
       <div id="editPickupLocSuggest" class="loc-suggest"></div>
@@ -3492,6 +3496,7 @@ function openTripEditModal(id) {
   const trip = getTrips().find(t => t.id === id);
   if (!trip) return;
   editTripId = id;
+  document.getElementById('editTripDate').value = trip.date || '';
   document.getElementById('editPickupLoc').value = trip.pickup || '';
   document.getElementById('editDropoffLoc').value = trip.dropoff || '';
   document.getElementById('editPickupTime').value = trip.pickupTime || '';
@@ -3576,6 +3581,7 @@ function saveTripEdit() {
   const tripType = document.getElementById('tripEditModal').dataset.tripType || '流し';
   trips[idx] = {
     ...trips[idx],
+    date: document.getElementById('editTripDate').value || trips[idx].date,
     pickup: document.getElementById('editPickupLoc').value.trim(),
     dropoff: document.getElementById('editDropoffLoc').value.trim(),
     viaPoints: getEditViaPointValues(),
