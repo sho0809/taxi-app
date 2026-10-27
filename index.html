@@ -1315,6 +1315,13 @@
     <div class="input-group" id="editPlainMemoGroup">
       <label class="input-label"><span class="label-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></span>メモ</label>
       <textarea class="input-field" id="editPlainMemo" rows="2" placeholder="自由記入" style="resize:vertical;"></textarea>
+      <!-- 性別は人員（乗車人数）とは独立した任意項目。同じお客様の来店履歴の判定にのみ使う -->
+      <label class="input-label" style="margin-top:10px;">性別（任意・同じお客様の判定に使用）</label>
+      <div style="display:flex;gap:6px;">
+        <button type="button" class="pay-btn" id="editPlainGenderBtn-男性" onclick="setEditPlainGender('男性')" style="flex:1;">男性</button>
+        <button type="button" class="pay-btn" id="editPlainGenderBtn-女性" onclick="setEditPlainGender('女性')" style="flex:1;">女性</button>
+        <button type="button" class="pay-btn" id="editPlainGenderBtn-" onclick="setEditPlainGender('')" style="flex:1;">指定なし</button>
+      </div>
       <input type="hidden" id="editPlainPaxGender" value="">
     </div>
     <div class="input-group">
@@ -3438,6 +3445,10 @@ function selectEditGoGender(g) {
 }
 function setEditPlainGender(g) {
   document.getElementById('editPlainPaxGender').value = g;
+  ['男性','女性',''].forEach(v => {
+    const btn = document.getElementById(`editPlainGenderBtn-${v}`);
+    if (btn) btn.className = 'pay-btn' + (v === g ? ' active' : '');
+  });
 }
 // 人員（男性・女性の人数）から性別タグを決める。片方だけなら明確に判定でき、
 // 両方いる・どちらも0人のときは単一の性別に決められないため空にする
