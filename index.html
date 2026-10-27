@@ -2807,10 +2807,10 @@ function incrementEditPax(gender) {
     if (editPaxMale + editPaxFemale > 4) editPaxMale = Math.max(0, 4 - editPaxFemale);
   }
   updateEditPaxDisplay();
-  // 性別タグ用の専用ボタンは廃止したため、人員（男性・女性の人数）から自動で決める
-  const derived = deriveEditPaxGender();
-  selectEditGoGender(derived);
-  setEditPlainGender(derived);
+  // GOは性別タグ用の専用ボタンを廃止したため、人員（男性・女性の人数）から自動で決める。
+  // 流し・配車は人員が純粋な乗車人数の入力であり、性別の申告ではないため、
+  // ここから自動で性別タグを付けないようにする
+  selectEditGoGender(deriveEditPaxGender());
 }
 function updateEditPaxDisplay() {
   document.getElementById('editPaxMaleCount').textContent = editPaxMale;
@@ -5044,34 +5044,57 @@ function shiftMinToHM(min) {
   const total = (7 * 60 + 30 + Math.round(min)) % (24 * 60);
   return `${pad(Math.floor(total / 60))}:${pad(total % 60)}`;
 }
-// 1日分の乗降記録を「降車時刻ごとの累計営収額（税抜）」の階段グラフの折れ点にする
+// 1日分の乗降記録を、乗車時刻から降車時刻にかけて営収額が積み上がっていく
+// 区間（乗車前後は横ばい）の列にする
 function buildDayCumulative(date) {
   // exTaxは10円単位への丸めのため、1件ごとに丸めてから足すと合計が本来の
   // 「その日の営収額」（税込合計をまとめて丸めたもの）とずれてしまう。
   // そのため税込のまま累計し、各時点でまとめて丸めることで、最終値が
   // タイムラインの「この日の営収額」と必ず一致するようにする。
   const sorted = getTrips().filter(t => t.date === date && t.dropoffTime)
-    .map(t => ({ min: Math.min(minutesFromShiftStart(t.dropoffTime), GRAPH_DAY_SPAN_MIN), amt: getTripFare(t) }))
-    .sort((a, b) => a.min - b.min);
-  const points = [];
-  let runningRaw = 0;
+    .map(t => {
+      const dropoffMin = Math.min(minutesFromShiftStart(t.dropoffTime), GRAPH_DAY_SPAN_MIN);
+      // 乗車時刻が無い・降車より後になっている記録ミス等は、従来通りその場で切り替える
+      let pickupMin = t.pickupTime ? Math.min(minutesFromShiftStart(t.pickupTime), GRAPH_DAY_SPAN_MIN) : dropoffMin;
+      if (pickupMin > dropoffMin) pickupMin = dropoffMin;
+      return { pickupMin, dropoffMin, amt: getTripFare(t) };
+    })
+    .sort((a, b) => a.pickupMin - b.pickupMin || a.dropoffMin - b.dropoffMin);
+  const segments = [];
+  let runningRaw = 0, cumBefore = 0;
   sorted.forEach(p => {
     runningRaw += p.amt;
-    const lastPt = points[points.length - 1];
-    if (lastPt && lastPt.min === p.min) lastPt.cum = exTax(runningRaw);
-    else points.push({ min: p.min, cum: exTax(runningRaw) });
+    const cumAfter = exTax(runningRaw);
+    segments.push({ pickupMin: p.pickupMin, dropoffMin: p.dropoffMin, cumBefore, cumAfter });
+    cumBefore = cumAfter;
   });
-  return points;
+  return segments;
 }
-// 階段グラフ上の任意の時点の値（直近の折れ点の値をそのまま引き継ぐ）
-function cumAtMinute(points, min) {
+// 任意の時点の営収額累計。乗車〜降車の間はその区間の増加分を時間で線形補間し、
+// それ以外（降車後〜次の乗車まで）は直近の値を横ばいで引き継ぐ
+function cumAtMinute(segments, min) {
   let val = 0;
-  for (const p of points) {
-    if (p.min <= min) val = p.cum; else break;
+  for (const seg of segments) {
+    if (seg.pickupMin > min) break;
+    const span = seg.dropoffMin - seg.pickupMin;
+    if (min >= seg.dropoffMin || span <= 0) val = seg.cumAfter;
+    else val = seg.cumBefore + (seg.cumAfter - seg.cumBefore) * (min - seg.pickupMin) / span;
   }
   return val;
 }
 const SALES_GRAPH_STEP_MIN = 30;
+// 30分刻みの点に加え、各乗車の乗車・降車の瞬間も折れ点として加えることで、
+// 短い乗車でも「乗車時から上がって降車時に止まる」形が折れ線にはっきり出るようにする
+function buildCurveSamples(segments, maxMin) {
+  const minutesSet = new Set();
+  for (let min = 0; min <= maxMin; min += SALES_GRAPH_STEP_MIN) minutesSet.add(min);
+  minutesSet.add(maxMin);
+  segments.forEach(seg => {
+    if (seg.pickupMin <= maxMin) minutesSet.add(seg.pickupMin);
+    if (seg.dropoffMin <= maxMin) minutesSet.add(seg.dropoffMin);
+  });
+  return [...minutesSet].sort((a, b) => a - b).map(min => ({ min, val: cumAtMinute(segments, min) }));
+}
 // 曜日で絞り込んで平均の元になる日を選べるようにする（対象は月・水・金のみ。「全体」が既定）
 function filterDatesByDow(dates, dow) {
   if (!dow || dow === 'all') return dates;
@@ -5095,12 +5118,7 @@ function buildTodayCurve() {
   if (getTrips().some(t => t.date === today)) {
     const pts = buildDayCumulative(today);
     const nowMin = nowMinutesIntoShift();
-    const samples = [];
-    for (let min = 0; min <= nowMin; min += SALES_GRAPH_STEP_MIN) {
-      samples.push({ min, val: cumAtMinute(pts, min) });
-    }
-    const last = samples[samples.length - 1];
-    if (!last || last.min < nowMin) samples.push({ min: nowMin, val: cumAtMinute(pts, nowMin) });
+    const samples = buildCurveSamples(pts, nowMin);
     return { samples, nowMin, nowVal: cumAtMinute(pts, nowMin), date: today, isFallback: false };
   }
   // 当日の記録がまだなければ、記録がある直近の日を代わりに1日分フルで表示する
@@ -5110,19 +5128,13 @@ function buildTodayCurve() {
     return { samples: [{ min: 0, val: 0 }], nowMin: 0, nowVal: 0, date: today, isFallback: false };
   }
   const pts = buildDayCumulative(fallbackDate);
-  const samples = [];
-  for (let min = 0; min <= GRAPH_DAY_SPAN_MIN; min += SALES_GRAPH_STEP_MIN) {
-    samples.push({ min, val: cumAtMinute(pts, min) });
-  }
+  const samples = buildCurveSamples(pts, GRAPH_DAY_SPAN_MIN);
   return { samples, nowMin: GRAPH_DAY_SPAN_MIN, nowVal: cumAtMinute(pts, GRAPH_DAY_SPAN_MIN), date: fallbackDate, isFallback: true };
 }
 // 選んだ過去1日分を、当日線と同じ刻みで1日ぶんフルに描けるようにする
 function buildDateCurve(date) {
   const pts = buildDayCumulative(date);
-  const samples = [];
-  for (let min = 0; min <= GRAPH_DAY_SPAN_MIN; min += SALES_GRAPH_STEP_MIN) {
-    samples.push({ min, val: cumAtMinute(pts, min) });
-  }
+  const samples = buildCurveSamples(pts, GRAPH_DAY_SPAN_MIN);
   return { samples, total: cumAtMinute(pts, GRAPH_DAY_SPAN_MIN) };
 }
 function shiftDateLabel(date) {
@@ -5277,7 +5289,7 @@ function renderSalesCompareGraph() {
 
   // ---- SVGチャート ----
   // 縦軸は¥10,000刻み・¥60,000までを目盛表示。実際の記録は¥67,000まで収まるよう余白を確保する
-  const W = 640, H = 600, padL = 66, padR = 12, padT = 10, padB = 26;
+  const W = 640, H = 600, padL = 78, padR = 12, padT = 10, padB = 26;
   const plotW = W - padL - padR, plotH = H - padT - padB;
   const AXIS_MAX_VAL = 67000;
   const maxVal = AXIS_MAX_VAL;
@@ -5303,7 +5315,7 @@ function renderSalesCompareGraph() {
   const yTickVals = [10000, 20000, 30000, 40000, 50000, 60000];
   const yTicksHTML = yTickVals.map(v => `
     <line x1="${padL}" y1="${y(v).toFixed(1)}" x2="${W - padR}" y2="${y(v).toFixed(1)}" stroke="var(--border)" stroke-width="1" stroke-dasharray="3,4" opacity="0.8"/>
-    <text x="${padL - 6}" y="${(y(v) + 3).toFixed(1)}" font-size="11" font-weight="600" fill="var(--muted)" text-anchor="end">¥${(v/1000)}k</text>
+    <text x="${padL - 6}" y="${(y(v) + 3).toFixed(1)}" font-size="11" font-weight="600" fill="var(--muted)" text-anchor="end">¥${v.toLocaleString()}</text>
   `).join('');
 
   const nowX = x(today.nowMin), nowY = y(today.nowVal);
