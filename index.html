@@ -2007,7 +2007,13 @@ function locationMatchesQuery(name, q, hintMap) {
   }
   if (stripDakuten(name).includes(qBase)) return true;
   const hint = hints[name];
-  return !!hint && stripDakuten(hint).startsWith(qBase);
+  if (!hint) return false;
+  const hintBase = stripDakuten(hint);
+  if (hintBase.startsWith(qBase)) return true;
+  // 読み方の登録は頭文字1文字だけのことが多く、その1文字しか見ていないと
+  // 続けてもう1文字入力しただけで候補から消えてしまう。頭文字が一致していれば、
+  // そのあと何文字入力しても候補に残るようにする
+  return hintBase.length === 1 && qBase.startsWith(hintBase);
 }
 let locSuggestCache = {};
 function getLocationSuggestions(query) {
@@ -2048,7 +2054,12 @@ function dropoffDetailMatchesQuery(name, q, hintMap) {
   const qBase = stripDakuten(q);
   if (stripDakuten(name).includes(qBase)) return true;
   const hint = hints[name];
-  return !!hint && stripDakuten(hint).startsWith(qBase);
+  if (!hint) return false;
+  const hintBase = stripDakuten(hint);
+  if (hintBase.startsWith(qBase)) return true;
+  // 読み方の登録は頭文字1文字だけのことが多く、頭文字が一致していれば
+  // そのあと何文字入力しても候補に残るようにする（乗車・降車場所と同じ扱い）
+  return hintBase.length === 1 && qBase.startsWith(hintBase);
 }
 function getDropoffDetailSuggestions(query) {
   const q = (query || '').trim();
