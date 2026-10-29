@@ -1310,7 +1310,12 @@
           </select>
         </div>
       </div>
-      <input type="hidden" id="editGoPaxGender" value="男性">
+      <label class="input-label" style="margin-top:2px;">性別</label>
+      <div style="display:flex;gap:6px;">
+        <button type="button" class="pay-btn" id="editGoGender-男性" onclick="selectEditGoGender('男性', true)" style="flex:1;">男性</button>
+        <button type="button" class="pay-btn" id="editGoGender-女性" onclick="selectEditGoGender('女性', true)" style="flex:1;">女性</button>
+      </div>
+      <input type="hidden" id="editGoPaxGender" value="">
     </div>
     <div class="input-group" id="editPlainMemoGroup">
       <label class="input-label"><span class="label-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></span>メモ</label>
@@ -2825,10 +2830,6 @@ function incrementEditPax(gender) {
     if (editPaxMale + editPaxFemale > 4) editPaxMale = Math.max(0, 4 - editPaxFemale);
   }
   updateEditPaxDisplay();
-  // GOは性別タグ用の専用ボタンを廃止したため、人員（男性・女性の人数）から自動で決める。
-  // 流し・配車は人員が純粋な乗車人数の入力であり、性別の申告ではないため、
-  // ここから自動で性別タグを付けないようにする
-  selectEditGoGender(deriveEditPaxGender());
 }
 function updateEditPaxDisplay() {
   document.getElementById('editPaxMaleCount').textContent = editPaxMale;
@@ -3450,9 +3451,16 @@ function carryOverEditPaxInfo(prev, type) {
   }
 }
 
-// GOアプリ乗客情報（メモ・修正画面）。性別は専用ボタンを廃止し、人員（男性・女性の人数）から自動で決める
-function selectEditGoGender(g) {
-  document.getElementById('editGoPaxGender').value = g;
+// GOアプリ乗客情報（修正画面）。運行記録の入力画面と同じく、男性・女性ボタンで直接選べる。
+// 同じボタンをもう一度押すと選択を解除できる（誤タップの取り消し用）
+function selectEditGoGender(g, userChose) {
+  const current = document.getElementById('editGoPaxGender').value;
+  const next = (userChose && current === g) ? '' : g;
+  document.getElementById('editGoPaxGender').value = next;
+  ['男性','女性'].forEach(x => {
+    const btn = document.getElementById(`editGoGender-${x}`);
+    if (btn) btn.className = 'pay-btn' + (x === next ? ' active' : '');
+  });
 }
 function setEditPlainGender(g) {
   document.getElementById('editPlainPaxGender').value = g;
@@ -3460,13 +3468,6 @@ function setEditPlainGender(g) {
     const btn = document.getElementById(`editPlainGenderBtn-${v}`);
     if (btn) btn.className = 'pay-btn' + (v === g ? ' active' : '');
   });
-}
-// 人員（男性・女性の人数）から性別タグを決める。片方だけなら明確に判定でき、
-// 両方いる・どちらも0人のときは単一の性別に決められないため空にする
-function deriveEditPaxGender() {
-  if (editPaxMale > 0 && editPaxFemale === 0) return '男性';
-  if (editPaxFemale > 0 && editPaxMale === 0) return '女性';
-  return '';
 }
 function buildEditGoMemo() {
   const name = document.getElementById('editGoPaxName').value.trim();
@@ -3540,7 +3541,7 @@ function openTripEditModal(id) {
   document.getElementById('editGoPaxAge').value = (trip.tripType === 'GO') ? (trip.paxAge || '') : '';
   document.getElementById('editDropoffDetail').value = trip.dropoffDetail || '';
   document.getElementById('editPlainMemo').value = (trip.tripType !== 'GO') ? (trip.memo || '') : '';
-  selectEditGoGender((trip.tripType === 'GO' && trip.paxGender) ? trip.paxGender : '男性');
+  selectEditGoGender((trip.tripType === 'GO' && trip.paxGender) ? trip.paxGender : '');
   setEditPlainGender((trip.tripType !== 'GO' && trip.paxGender) ? trip.paxGender : '');
   // 開いた時点の種別を先に記録しておき、引き継ぎ処理が誤って走らないようにする
   document.getElementById('tripEditModal').dataset.tripType = trip.tripType || '流し';
