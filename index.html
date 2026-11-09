@@ -1806,9 +1806,10 @@ function onGoPaxNameInput() {
     const [,mm,dd] = t.date.split('-');
     const dow = ['日','月','火','水','木','金','土'][new Date(t.date + 'T00:00:00').getDay()];
     const fare = getTripFare(t);
+    const duration = t.pickupTime && t.dropoffTime ? calcDuration(t.pickupTime, t.dropoffTime) : '';
     return `
       <div class="pax-history-item" onclick="applyGoPaxHistory(${t.id})">
-        <span class="ph-date">${parseInt(mm)}/${parseInt(dd)}(${dow}) ${t.pickupTime||''}</span> ${t.paxName} ${t.paxGender||''}${t.paxAge||''}　<b>¥${fare.toLocaleString()}</b>${t.tip > 0 ? ` <span style="color:var(--muted);">+チップ¥${t.tip.toLocaleString()}</span>` : ''}
+        <span class="ph-date">${parseInt(mm)}/${parseInt(dd)}(${dow}) ${t.pickupTime||''}${duration ? `(${duration})` : ''}</span> ${t.paxName} ${t.paxGender||''}${t.paxAge||''}　<b>¥${fare.toLocaleString()}</b>${t.tip > 0 ? ` <span style="color:var(--muted);">+チップ¥${t.tip.toLocaleString()}</span>` : ''}
         <div class="ph-route">${formatTripRoute(t)}</div>
       </div>
     `;
@@ -1856,9 +1857,10 @@ function onPlainMemoInput() {
     const [,mm,dd] = t.date.split('-');
     const dow = ['日','月','火','水','木','金','土'][new Date(t.date + 'T00:00:00').getDay()];
     const fare = getTripFare(t);
+    const duration = t.pickupTime && t.dropoffTime ? calcDuration(t.pickupTime, t.dropoffTime) : '';
     return `
       <div class="pax-history-item" onclick="applyPlainMemoHistory(${t.id})">
-        <span class="ph-date">${parseInt(mm)}/${parseInt(dd)}(${dow}) ${t.pickupTime||''}</span> ${formatPaxLabel(t)}　<b>¥${fare.toLocaleString()}</b>${t.tip > 0 ? ` <span style="color:var(--muted);">+チップ¥${t.tip.toLocaleString()}</span>` : ''}
+        <span class="ph-date">${parseInt(mm)}/${parseInt(dd)}(${dow}) ${t.pickupTime||''}${duration ? `(${duration})` : ''}</span> ${formatPaxLabel(t)}　<b>¥${fare.toLocaleString()}</b>${t.tip > 0 ? ` <span style="color:var(--muted);">+チップ¥${t.tip.toLocaleString()}</span>` : ''}
         <div class="ph-route">${formatTripRoute(t)}</div>
       </div>
     `;
