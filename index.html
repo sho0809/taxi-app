@@ -2913,9 +2913,13 @@ function getTripViaPoints(t) {
   if (t.viaPoint) return [t.viaPoint];
   return [];
 }
-// 経由地・降車場所詳細を含めた1行のルート表示（履歴・乗客情報・タイムラインで共通して使う）
+// 経由地・降車場所詳細を含めた1行のルート表示（履歴・乗客情報・タイムラインで共通して使う）。
+// 降車場所詳細が降車地名と同じ文字列のときは「松山空港（松山空港）」のように
+// 二重表示になってしまうため、その場合は括弧書きを省く
 function formatTripRoute(t) {
-  const dropoffLabel = t.dropoffDetail ? `${t.dropoff||'?'}（${t.dropoffDetail}）` : (t.dropoff || '?');
+  const dropoff = t.dropoff || '?';
+  const detail = t.dropoffDetail && t.dropoffDetail.trim();
+  const dropoffLabel = (detail && detail !== dropoff.trim()) ? `${dropoff}（${detail}）` : dropoff;
   return [t.pickup||'?', ...getTripViaPoints(t), dropoffLabel].join(' → ');
 }
 
@@ -3949,16 +3953,16 @@ function showDropoffDetailHistory(encodedDetail) {
       const duration = t.pickupTime && t.dropoffTime ? calcDuration(t.pickupTime, t.dropoffTime) : '';
       return `
         <div style="padding:8px;border-bottom:1px solid var(--border);cursor:pointer;" onclick="closeHourLocationModal();openTripEditModal(${t.id})">
-          <div style="display:flex;justify-content:space-between;align-items:center;">
-            <div style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;">
-              <span class="sched-type-badge" style="background:${typeColor}22;color:${typeColor};display:inline-block;width:38px;flex-shrink:0;text-align:center;">${type}</span>
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
+            <div style="display:flex;align-items:center;flex-wrap:wrap;gap:6px;font-size:13px;font-weight:700;">
+              <span class="sched-type-badge" style="background:${typeColor}22;color:${typeColor};display:inline-block;width:44px;flex-shrink:0;white-space:nowrap;text-align:center;">${type}</span>
               <span style="display:inline-block;width:58px;flex-shrink:0;font-variant-numeric:tabular-nums;">${parseInt(mm)}/${parseInt(dd)}(${dow})</span>
+              <span style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${t.pickup || '?'}</span>
               <span style="display:inline-block;width:42px;flex-shrink:0;font-variant-numeric:tabular-nums;">${t.pickupTime||''}</span>
               <span style="color:var(--muted);font-weight:600;font-variant-numeric:tabular-nums;">${duration ? `(${duration})` : ''}</span>
             </div>
             <span style="font-weight:700;color:var(--success);flex-shrink:0;">¥${fare.toLocaleString()}</span>
           </div>
-          <div style="font-size:12px;color:var(--muted);margin-top:2px;">${formatTripRoute(t)}</div>
           ${name ? `<div style="font-size:12px;font-weight:700;color:var(--primary);margin-top:2px;">👤 ${name}</div>` : ''}
         </div>
       `;
@@ -4037,16 +4041,21 @@ function showLocationHistory(encodedLoc) {
       // 種別バッジ。色はタイムラインと同じ（GO=青／流し=緑／配車=橙）
       const type = t.tripType || '流し';
       const typeColor = { '配車': '#ff6b00', 'GO': '#1a73e8', '流し': '#00a152' }[type] || '#1a73e8';
+      const duration = t.pickupTime && t.dropoffTime ? calcDuration(t.pickupTime, t.dropoffTime) : '';
+      // 乗車地はこの一覧ではすべて同じ（絞り込み元）なので表示せず、代わりに降車地を出す。
       // 記録をタップするとそのまま修正できるようにする（見た目は変えない）
       return `
         <div style="padding:8px;border-bottom:1px solid var(--border);cursor:pointer;" onclick="closeHourLocationModal();openTripEditModal(${t.id})">
-          <div style="display:flex;justify-content:space-between;align-items:center;">
-            <span style="font-size:13px;font-weight:700;">
-              <span class="sched-type-badge" style="background:${typeColor}22;color:${typeColor};">${type}</span>${parseInt(mm)}/${parseInt(dd)}(${dow}) ${t.pickupTime||''}
-            </span>
-            <span style="font-weight:700;color:var(--success);">¥${fare.toLocaleString()}</span>
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
+            <div style="display:flex;align-items:center;flex-wrap:wrap;gap:6px;font-size:13px;font-weight:700;">
+              <span class="sched-type-badge" style="background:${typeColor}22;color:${typeColor};display:inline-block;width:44px;flex-shrink:0;white-space:nowrap;text-align:center;">${type}</span>
+              <span style="display:inline-block;width:58px;flex-shrink:0;font-variant-numeric:tabular-nums;">${parseInt(mm)}/${parseInt(dd)}(${dow})</span>
+              <span style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${t.dropoff || '?'}</span>
+              <span style="display:inline-block;width:42px;flex-shrink:0;font-variant-numeric:tabular-nums;">${t.pickupTime||''}</span>
+              <span style="color:var(--muted);font-weight:600;font-variant-numeric:tabular-nums;">${duration ? `(${duration})` : ''}</span>
+            </div>
+            <span style="font-weight:700;color:var(--success);flex-shrink:0;">¥${fare.toLocaleString()}</span>
           </div>
-          <div style="font-size:12px;color:var(--muted);margin-top:2px;">→ ${t.dropoff||'?'}</div>
           ${name ? `<div style="font-size:12px;font-weight:700;color:var(--primary);margin-top:2px;">👤 ${name}</div>` : ''}
         </div>
       `;
