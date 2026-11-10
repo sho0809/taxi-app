@@ -1809,7 +1809,7 @@ function onGoPaxNameInput() {
     const duration = t.pickupTime && t.dropoffTime ? calcDuration(t.pickupTime, t.dropoffTime) : '';
     return `
       <div class="pax-history-item" onclick="applyGoPaxHistory(${t.id})">
-        <span class="ph-date">${parseInt(mm)}/${parseInt(dd)}(${dow}) ${t.pickupTime||''}${duration ? `(${duration})` : ''}</span> ${t.paxName} ${t.paxGender||''}${t.paxAge||''}　<b>¥${fare.toLocaleString()}</b>${t.tip > 0 ? ` <span style="color:var(--muted);">+チップ¥${t.tip.toLocaleString()}</span>` : ''}
+        <span class="ph-date" style="display:inline-flex;gap:4px;"><span style="display:inline-block;width:52px;font-variant-numeric:tabular-nums;">${parseInt(mm)}/${parseInt(dd)}(${dow})</span><span style="display:inline-block;width:38px;font-variant-numeric:tabular-nums;">${t.pickupTime||''}</span><span style="font-variant-numeric:tabular-nums;">${duration ? `(${duration})` : ''}</span></span> ${t.paxName} ${t.paxGender||''}${t.paxAge||''}　<b>¥${fare.toLocaleString()}</b>${t.tip > 0 ? ` <span style="color:var(--muted);">+チップ¥${t.tip.toLocaleString()}</span>` : ''}
         <div class="ph-route">${formatTripRoute(t)}</div>
       </div>
     `;
@@ -1860,7 +1860,7 @@ function onPlainMemoInput() {
     const duration = t.pickupTime && t.dropoffTime ? calcDuration(t.pickupTime, t.dropoffTime) : '';
     return `
       <div class="pax-history-item" onclick="applyPlainMemoHistory(${t.id})">
-        <span class="ph-date">${parseInt(mm)}/${parseInt(dd)}(${dow}) ${t.pickupTime||''}${duration ? `(${duration})` : ''}</span> ${formatPaxLabel(t)}　<b>¥${fare.toLocaleString()}</b>${t.tip > 0 ? ` <span style="color:var(--muted);">+チップ¥${t.tip.toLocaleString()}</span>` : ''}
+        <span class="ph-date" style="display:inline-flex;gap:4px;"><span style="display:inline-block;width:52px;font-variant-numeric:tabular-nums;">${parseInt(mm)}/${parseInt(dd)}(${dow})</span><span style="display:inline-block;width:38px;font-variant-numeric:tabular-nums;">${t.pickupTime||''}</span><span style="font-variant-numeric:tabular-nums;">${duration ? `(${duration})` : ''}</span></span> ${formatPaxLabel(t)}　<b>¥${fare.toLocaleString()}</b>${t.tip > 0 ? ` <span style="color:var(--muted);">+チップ¥${t.tip.toLocaleString()}</span>` : ''}
         <div class="ph-route">${formatTripRoute(t)}</div>
       </div>
     `;
@@ -3950,10 +3950,13 @@ function showDropoffDetailHistory(encodedDetail) {
       return `
         <div style="padding:8px;border-bottom:1px solid var(--border);cursor:pointer;" onclick="closeHourLocationModal();openTripEditModal(${t.id})">
           <div style="display:flex;justify-content:space-between;align-items:center;">
-            <span style="font-size:13px;font-weight:700;">
-              <span class="sched-type-badge" style="background:${typeColor}22;color:${typeColor};">${type}</span>${parseInt(mm)}/${parseInt(dd)}(${dow}) ${t.pickupTime||''}${duration ? `(${duration})` : ''}
-            </span>
-            <span style="font-weight:700;color:var(--success);">¥${fare.toLocaleString()}</span>
+            <div style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;">
+              <span class="sched-type-badge" style="background:${typeColor}22;color:${typeColor};display:inline-block;width:38px;flex-shrink:0;text-align:center;">${type}</span>
+              <span style="display:inline-block;width:58px;flex-shrink:0;font-variant-numeric:tabular-nums;">${parseInt(mm)}/${parseInt(dd)}(${dow})</span>
+              <span style="display:inline-block;width:42px;flex-shrink:0;font-variant-numeric:tabular-nums;">${t.pickupTime||''}</span>
+              <span style="color:var(--muted);font-weight:600;font-variant-numeric:tabular-nums;">${duration ? `(${duration})` : ''}</span>
+            </div>
+            <span style="font-weight:700;color:var(--success);flex-shrink:0;">¥${fare.toLocaleString()}</span>
           </div>
           <div style="font-size:12px;color:var(--muted);margin-top:2px;">${formatTripRoute(t)}</div>
           ${name ? `<div style="font-size:12px;font-weight:700;color:var(--primary);margin-top:2px;">👤 ${name}</div>` : ''}
