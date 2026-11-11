@@ -1830,6 +1830,8 @@ function applyGoPaxHistory(id) {
   // 「70代以上」は旧ボタン表記の記録。現行のボタン（70代）に合わせて読み替える
   if (t.paxAge) document.getElementById('goPaxAge').value = t.paxAge === '70代以上' ? '70代' : t.paxAge;
   syncGoAgeButtons();
+  // 同じお客様は支払方法も前回と同じことが多いため、前回の支払方法を自動選択する
+  if (t.payMethod) selectPay(t.payMethod);
   // 履歴は閉じずに、選んだ内容で絞り込み直して表示したままにする
   onGoPaxNameInput();
   showToast(`前回: ${t.date.split('-').slice(1).map(n=>parseInt(n)).join('/')} ${t.pickup||''} → ${t.dropoff||''}`);
@@ -1883,6 +1885,9 @@ function applyPlainMemoHistory(id) {
     text = t.memo || '';
   }
   document.getElementById('plainMemo').value = text;
+  // 同じお客様は支払方法も前回と同じことが多いため、前回の支払方法を自動選択する。
+  // 支払方法がGOでも、今選んでいる流し・配車の種別は変えない
+  if (t.payMethod) selectPay(t.payMethod, true);
   // 履歴は閉じずに、選んだ内容で絞り込み直して表示したままにする
   onPlainMemoInput();
   showToast(`前回: ${t.date.split('-').slice(1).map(n=>parseInt(n)).join('/')} ${t.pickup||''} → ${t.dropoff||''}`);
@@ -2852,7 +2857,7 @@ function setEditPaxCounts(male, female) {
   updateEditPaxDisplay();
 }
 
-function selectPay(method) {
+function selectPay(method, skipTypeSwitch) {
   currentPayMethod = method;
   document.getElementById('payMethod').value = method;
   ['現金','GO','PayPay','楽天Pay','クレジット','d払い','チケット','その他'].forEach(m => {
@@ -2861,8 +2866,9 @@ function selectPay(method) {
     btn.className = 'pay-btn' + ({GO:' go', PayPay:' paypay', '楽天Pay':' rakuten', クレジット:' credit', 'd払い':' dpay', 'チケット':' ticket'}[m]||'');
     if (m === method) btn.className += ' active';
   });
-  // 支払方法GOを選んだら種別もGOに
-  if (method === 'GO' && currentTripType !== 'GO') selectType('GO');
+  // 支払方法GOを選んだら種別もGOに。ただし過去の履歴から支払方法だけを引き継ぐ場合は、
+  // 流し・配車として選んだ種別を支払方法GOで勝手に上書きしないようにする
+  if (!skipTypeSwitch && method === 'GO' && currentTripType !== 'GO') selectType('GO');
   // 料金ラベルを支払方法に応じて更新
   const label = document.getElementById('fareLabelMain');
   if (label) {
