@@ -318,6 +318,15 @@
   .break-fullscreen-hint { font-size: 14px; font-weight: 600; color: rgba(255,255,255,0.85); }
   @keyframes breakFullscreenIn { from { opacity: 0; } to { opacity: 1; } }
 
+  /* 新しいバージョンが見つかったとき、画面中央に大きく表示する。タップで更新を適用する。
+     休憩中の全画面表示より上、場所入力などのモーダルより下に置き、進行中の入力画面は
+     遮らないようにする */
+  .update-available-fullscreen { position: fixed; inset: 0; z-index: 260; display: none; flex-direction: column; align-items: center; justify-content: center; gap: 12px; background: linear-gradient(165deg, var(--primary), var(--primary-dark)); cursor: pointer; animation: breakFullscreenIn 0.25s ease; }
+  .update-available-icon { font-size: 52px; color: white; animation: updateAvailableSpin 1.8s linear infinite; }
+  .update-available-text { font-size: 28px; font-weight: 800; color: white; letter-spacing: 0.5px; text-align: center; padding: 0 24px; }
+  .update-available-hint { font-size: 15px; font-weight: 700; color: rgba(255,255,255,0.95); background: rgba(255,255,255,0.18); border-radius: 999px; padding: 8px 20px; }
+  @keyframes updateAvailableSpin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
   /* Modal：奥の画面がうっすら透けるガラスのシートとして立ち上がる */
   .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.42); backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px); z-index: 300; display: flex; align-items: flex-end; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
   .modal-overlay.open { opacity: 1; pointer-events: all; }
@@ -1118,6 +1127,13 @@
   <div class="break-fullscreen-text">休憩中</div>
   <div class="break-fullscreen-time" id="breakFullscreenTime"></div>
   <div class="break-fullscreen-hint">タップして終了</div>
+</div>
+
+<!-- 新しいバージョンが見つかったときに画面中央へ大きく表示する。タップで更新を適用する -->
+<div class="update-available-fullscreen" id="updateAvailableFullscreen" style="display:none;" onclick="applyAppUpdate()">
+  <div class="update-available-icon">↻</div>
+  <div class="update-available-text">アップデートがあります</div>
+  <div class="update-available-hint">タップして更新</div>
 </div>
 
 <!-- Schedule Graph Modal -->
@@ -5930,8 +5946,12 @@ selectType(getDefaultType()); // 起動時の種別を時間帯で設定
 // ==================== 自動アップデート ====================
 // 以前はService Workerでキャッシュしようとしていたが、blob URLのスクリプトは
 // Service Workerとして登録できない仕様のため、実際には一度も動作していなかった。
-// 代わりに、起動時にサーバー上のファイルを直接確認して、新しい版があれば自動で読み込み直す。
+// 代わりに、サーバー上のファイルを直接確認して、新しい版があれば画面中央に大きく
+// 知らせ、タップされたら読み込み直す（入力中にいきなり画面が切り替わらないよう、
+// 自動では読み込み直さない）
+let pendingUpdateVersion = null;
 async function checkForAppUpdate() {
+  if (pendingUpdateVersion) return; // 既に通知済みなら重複して確認しない
   try {
     // cache: 'no-store' でブラウザのキャッシュを迂回して必ず最新を取得する
     const res = await fetch('./index.html', { cache: 'no-store' });
@@ -5939,14 +5959,19 @@ async function checkForAppUpdate() {
     const text = await res.text();
     const m = text.match(/const APP_VERSION = '([^']+)'/);
     if (m && m[1] !== APP_VERSION) {
-      const url = new URL(location.href);
-      url.searchParams.set('v', m[1]);
-      location.replace(url.toString());
+      pendingUpdateVersion = m[1];
+      document.getElementById('updateAvailableFullscreen').style.display = 'flex';
     }
   } catch (e) { /* オフライン時などは何もしない */ }
 }
-// 起動直後（まだ入力していない状態）に確認するので、自動で読み込み直しても入力内容は失われない
+function applyAppUpdate() {
+  const url = new URL(location.href);
+  url.searchParams.set('v', pendingUpdateVersion || Date.now().toString());
+  location.replace(url.toString());
+}
+// 起動直後に確認し、以後は長時間開きっぱなしでも気づけるよう一定間隔でも確認する
 checkForAppUpdate();
+setInterval(checkForAppUpdate, 5 * 60000);
 
 // ヘッダーの高さは端末やセーフエリアで変わるため、実測値をCSS変数に入れる。
 // 運行記録のフォームを画面の高さぴったりに広げるのに使う
